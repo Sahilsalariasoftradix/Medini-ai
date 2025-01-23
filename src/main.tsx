@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.scss"; //Global CSS file path
+import "./styles/global.scss"; //Global CSS file path
 import App from "./App.tsx"; //Base App Component
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";

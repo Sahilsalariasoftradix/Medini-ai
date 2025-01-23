@@ -6,6 +6,7 @@ import MainLayout from '../../layouts/MainLayout';
 import Home from '../../pages/Home';
 import AuthFlow from '../../layouts/AuthFlowLayout';
 import VerifyEmail from '../../pages/verification/verify-email';
+import SignUp from '../../pages/Auth/sign-up';
 
 
 
@@ -20,7 +21,7 @@ const AppRoutes: React.FC = () => {
         {/* Auth Layout */}
         <Route element={<AnonymousLayout />}>
           <Route path="/login" element={<Login />} />
-          {/* <Route path="/signup" element={<Signup />} /> */}
+          <Route path="/sign-up" element={<SignUp />} />
         </Route>
 
         {/* Dashboard Layout */}

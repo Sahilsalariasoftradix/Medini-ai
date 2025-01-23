@@ -32,11 +32,19 @@ const components: Components<Omit<Theme, "components">> = {
           backgroundColor: "#424242", // Darker gray on hover
         },
       },
+      outlinedPrimary: {
+        borderColor: "#E2E8F0",
+        color: "#1A202C",
+        // "&:hover": {
+        //   borderColor: "#1565C0",
+        // },
+      },
     },
     defaultProps: {
       disableRipple: true, // Disable ripple effect globally for buttons
     },
   },
+
   MuiTextField: {
     styleOverrides: {
       root: {
@@ -59,18 +67,102 @@ const components: Components<Omit<Theme, "components">> = {
           "&::placeholder": {
             color: "#A0AEC0",
             opacity: 1,
+            fontWeight: "400",
           },
         },
+       
       },
+      
+      
     },
+
     defaultProps: {
       variant: "outlined",
     },
   },
-  MuiTypography: {
+  MuiFormHelperText: {
     styleOverrides: {
       root: {
-        color: "#1A202C", // Default text color
+        color: '#FF4747',
+        }
+      }
+    },
+  MuiOutlinedInput: {
+    styleOverrides: {
+      root: {
+        borderRadius: "12px",
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderColor: "#E2E8F0",
+        },
+        "&:hover .MuiOutlinedInput-notchedOutline": {
+          borderColor: "#1E88E5",
+        },
+        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+          borderColor: "#1E88E5",
+        },
+        "& .MuiInputBase-input": {
+          color: "#1A202C",
+          fontSize: "16px",
+          fontWeight: "500",
+          "&::placeholder": {
+            color: "#A0AEC0",
+            opacity: 1,
+            fontWeight: "400",
+          },
+        },
+      },
+    },
+  },
+  MuiCheckbox: {
+    styleOverrides: {
+      root: {
+        "& .MuiCheckbox-icon": {
+          borderRadius: 50,
+        },
+      },
+    },
+  },
+  MuiFormControlLabel: {
+    styleOverrides: {
+      label: {
+        fontSize: "16px", // Example: custom font size
+        color: "#1A202C", // Example: custom color for the label
+        fontWeight: "600", // Example: bold label text
+        "&.Mui-checked": {
+          color: "blue", // Example: change label color when checked
+        },
+      },
+    },
+  },
+
+  MuiTypography: {
+    // styleOverrides: {
+    //   root: {
+    //     color: "#1A202C", // Default text color
+    //   },
+    // },
+    defaultProps: {
+      variantMapping: {
+        bodyXLargeExtraBold: "p",
+        bodyXLargeSemiBold: "p",
+        bodyXLargeMedium: "p",
+        bodyXLargeRegular: "p",
+        bodyLargeExtraBold: "p",
+        bodyLargeSemiBold: "p",
+        bodyLargeMedium: "p",
+        bodyLargeRegular: "p",
+        bodyMediumExtraBold: "p",
+        bodyMediumSemiBold: "p",
+        bodyMediumMedium: "p",
+        bodyMediumRegular: "p",
+        bodySmallExtraBold: "p",
+        bodySmallSemiBold: "p",
+        bodySmallMedium: "p",
+        bodySmallRegular: "p",
+        bodyXSmallExtraBold: "p",
+        bodyXSmallSemiBold: "p",
+        bodyXSmallMedium: "p",
+        bodyXSmallRegular: "p",
       },
     },
   },

@@ -1,9 +1,15 @@
 import { Box, Button } from "@mui/material";
 import mainLogo from "../../assets/logos/medini-ai-logo.svg";
+import { useLocation } from "react-router-dom";
 const AuthHeader = () => {
+  const location = useLocation();
+  const path = location.pathname;
+
   return (
     <Box>
-      <Box sx={{ px: 6,py:3 ,display: "flex", justifyContent: "space-between" }}>
+      <Box
+        sx={{ px: 6, py: 3, display: "flex", justifyContent: "space-between" }}
+      >
         <Box
           component="img"
           sx={{
@@ -15,13 +21,15 @@ const AuthHeader = () => {
           alt="logo"
           src={mainLogo}
         />
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ height: "56px", width: "150px" }}
-        >
-          Sign up
-        </Button>
+        {/* {path === "/login" && (
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ height: "56px", width: "150px" }}
+          >
+            Sign up
+          </Button>
+        )} */}
       </Box>
     </Box>
   );

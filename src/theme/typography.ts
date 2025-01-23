@@ -1,4 +1,78 @@
 import { TypographyOptions } from "@mui/material/styles/createTypography";
+// Extend TypographyVariants and TypographyVariantsOptions
+declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    bodyXLargeExtraBold: React.CSSProperties;
+    bodyXLargeSemiBold: React.CSSProperties;
+    bodyXLargeMedium: React.CSSProperties;
+    bodyXLargeRegular: React.CSSProperties;
+    bodyLargeExtraBold: React.CSSProperties;
+    bodyLargeSemiBold: React.CSSProperties;
+    bodyLargeMedium: React.CSSProperties;
+    bodyLargeRegular: React.CSSProperties;
+    bodyMediumExtraBold: React.CSSProperties;
+    bodyMediumSemiBold: React.CSSProperties;
+    bodyMediumMedium: React.CSSProperties;
+    bodyMediumRegular: React.CSSProperties;
+    bodySmallExtraBold: React.CSSProperties;
+    bodySmallSemiBold: React.CSSProperties;
+    bodySmallMedium: React.CSSProperties;
+    bodySmallRegular: React.CSSProperties;
+    bodyXSmallExtraBold: React.CSSProperties;
+    bodyXSmallSemiBold: React.CSSProperties;
+    bodyXSmallMedium: React.CSSProperties;
+    bodyXSmallRegular: React.CSSProperties;
+  }
+
+  interface TypographyVariantsOptions {
+    bodyXLargeExtraBold?: React.CSSProperties;
+    bodyXLargeSemiBold?: React.CSSProperties;
+    bodyXLargeMedium?: React.CSSProperties;
+    bodyXLargeRegular?: React.CSSProperties;
+    bodyLargeExtraBold?: React.CSSProperties;
+    bodyLargeSemiBold?: React.CSSProperties;
+    bodyLargeMedium?: React.CSSProperties;
+    bodyLargeRegular?: React.CSSProperties;
+    bodyMediumExtraBold?: React.CSSProperties;
+    bodyMediumSemiBold?: React.CSSProperties;
+    bodyMediumMedium?: React.CSSProperties;
+    bodyMediumRegular?: React.CSSProperties;
+    bodySmallExtraBold?: React.CSSProperties;
+    bodySmallSemiBold?: React.CSSProperties;
+    bodySmallMedium?: React.CSSProperties;
+    bodySmallRegular?: React.CSSProperties;
+    bodyXSmallExtraBold?: React.CSSProperties;
+    bodyXSmallSemiBold?: React.CSSProperties;
+    bodyXSmallMedium?: React.CSSProperties;
+    bodyXSmallRegular?: React.CSSProperties;
+  }
+}
+
+// Update Typography's variant prop options
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    bodyXLargeExtraBold: true;
+    bodyXLargeSemiBold: true;
+    bodyXLargeMedium: true;
+    bodyXLargeRegular: true;
+    bodyLargeExtraBold: true;
+    bodyLargeSemiBold: true;
+    bodyLargeMedium: true;
+    bodyLargeRegular: true;
+    bodyMediumExtraBold: true;
+    bodyMediumSemiBold: true;
+    bodyMediumMedium: true;
+    bodyMediumRegular: true;
+    bodySmallExtraBold: true;
+    bodySmallSemiBold: true;
+    bodySmallMedium: true;
+    bodySmallRegular: true;
+    bodyXSmallExtraBold: true;
+    bodyXSmallSemiBold: true;
+    bodyXSmallMedium: true;
+    bodyXSmallRegular: true;
+  }
+}
 
 const typography: TypographyOptions = {
   fontFamily: "'Manrope', sans-serif",
@@ -16,7 +90,7 @@ const typography: TypographyOptions = {
   },
   h3: {
     fontSize: "2rem", // Equivalent to 32px
-    fontWeight: 500,
+    fontWeight: 800,
     lineHeight: 1.5,
     letterSpacing: "0em",
   },
@@ -81,6 +155,86 @@ const typography: TypographyOptions = {
     lineHeight: 1.75,
     letterSpacing: "0.02857em",
     textTransform: "uppercase",
+  },
+  bodyXLargeExtraBold: {
+    fontSize: "18px",
+    fontWeight: 800,
+  },
+  bodyXLargeSemiBold: {
+    fontSize: "18px",
+    fontWeight: 600,
+  },
+  bodyXLargeMedium: {
+    fontSize: "18px",
+    fontWeight: 500,
+  },
+  bodyXLargeRegular: {
+    fontSize: "18px",
+    fontWeight: 400,
+  },
+  bodyLargeExtraBold: {
+    fontSize: "16px",
+    fontWeight: 800,
+  },
+  bodyLargeSemiBold: {
+    fontSize: "16px",
+    fontWeight: 600,
+  },
+  bodyLargeMedium: {
+    fontSize: "16px",
+    fontWeight: 500,
+  },
+  bodyLargeRegular: {
+    fontSize: "16px",
+    fontWeight: 400,
+  },
+  bodyMediumExtraBold: {
+    fontSize: "14px",
+    fontWeight: 800,
+  },
+  bodyMediumSemiBold: {
+    fontSize: "14px",
+    fontWeight: 600,
+  },
+  bodyMediumMedium: {
+    fontSize: "14px",
+    fontWeight: 500,
+  },
+  bodyMediumRegular: {
+    fontSize: "14px",
+    fontWeight: 400,
+  },
+  bodySmallExtraBold: {
+    fontSize: "12px",
+    fontWeight: 800,
+  },
+  bodySmallSemiBold: {
+    fontSize: "12px",
+    fontWeight: 600,
+  },
+  bodySmallMedium: {
+    fontSize: "12px",
+    fontWeight: 500,
+  },
+  bodySmallRegular: {
+    fontSize: "12px",
+    fontWeight: 400,
+  },
+  bodyXSmallExtraBold: {
+    fontSize: "10px",
+    fontWeight: 800,
+  },
+  bodyXSmallSemiBold: {
+    fontSize: "10px",
+    fontWeight: 600,
+  },
+  bodyXSmallMedium: {
+    fontSize: "10px",
+    fontWeight: 500,
+  },
+  bodyXSmallRegular: {
+    fontSize: "10px",
+    fontWeight: 400,
   },
 };
 
