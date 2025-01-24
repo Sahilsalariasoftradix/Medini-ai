@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Link, Typography } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import AuthHeader from "../components/Header/AuthHeader";
 import Grid from "@mui/material/Grid2";
@@ -7,26 +7,45 @@ import background2 from "../assets/images/auth-bg/bg-1.svg";
 import background3 from "../assets/images/auth-bg/bg-4.svg";
 import background4 from "../assets/images/auth-bg/bg-3.svg";
 import background5 from "../assets/images/auth-bg/bg-5.svg";
+import { staticText } from "../assets/staticText";
+import { Link as RouterLink } from "react-router-dom";
 const AnonymousLayout = () => {
+  const text = staticText.auth;
   return (
     <Box sx={{ bgcolor: "grey.200", height: "100vh" }}>
       <Grid container spacing={2} sx={{ height: "100vh" }}>
-        <Grid
-          size={6}
-          // display={"flex"}
-          // justifyContent={"center"}
-          // alignItems={"center"}
-          // minHeight={"calc(100vh - 104px)"}
-        >
+        <Grid size={6}>
           <AuthHeader />
-          <Outlet />
+          <Outlet context={[text]} />
+          <Box
+            px={4}
+            display={"flex"}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+          >
+            <Link
+              component={RouterLink}
+              to="/privacy-policy"
+              variant="bodyLargeSemiBold"
+              sx={{ textDecoration: "none" }}
+            >
+              {text.privacyPolicyLink}
+            </Link>
+            <Link
+              component={RouterLink}
+              to="#"
+              variant="bodyLargeSemiBold"
+              sx={{ textDecoration: "none" }}
+            >
+              {text.copyright} {new Date().getFullYear()}
+            </Link>
+          </Box>
         </Grid>
         <Grid size={6} p={3}>
           <Box
             sx={{
               backgroundColor: "primary.main",
               position: "relative",
-              // backgroundImage: "url('src/assets/images/Auth-bg.svg')",
               height: "100%",
               width: "100%",
             }}
@@ -89,11 +108,26 @@ const AnonymousLayout = () => {
                 transform: "translate(-30%, -30%)",
               }}
             >
-              <Typography sx={{color:'additional.white',fontWeight:'700',fontSize:'40px'}} align="center">Something Short and..</Typography>
-              <Typography sx={{color:'additional.white',fontWeight:'500',fontSize:'14px'}} my={2} align="center">
-                ipsum crack later keep asserts as place seat model. Anomalies
-                anomalies place marketing backwards social needle job q1 dear.
-                Centric shift due.
+              <Typography
+                sx={{
+                  color: "additional.white",
+                  fontWeight: "700",
+                  fontSize: "40px",
+                }}
+                align="center"
+              >
+                {text.rightPanelHeading}
+              </Typography>
+              <Typography
+                sx={{
+                  color: "additional.white",
+                  fontWeight: "500",
+                  fontSize: "14px",
+                }}
+                my={2}
+                align="center"
+              >
+                {text.rightPanelText}
               </Typography>
             </Box>
           </Box>

@@ -1,0 +1,25 @@
+export const staticText = {
+  auth: {
+    title: "Sign in to Medini",
+    subtitle: "Something short and sweet",
+    emailPlaceholder: "username@Medini.ai",
+    googleSignInButton: "Sign In with Google",
+    appleSignInButton: "Sign In with Apple",
+    orText: "or with Email",
+    passwordPlaceholder: "Password",
+    rememberMe: "Remember me",
+    forgotPassword: "Forgot Password?",
+    signInButton: "Sign In",
+    signupText: "Don't have an account?",
+    signupLink: "Sign Up",
+    privacyPolicyLink: "Privacy Policy",
+    copyright: "Copyright",
+    rightPanelHeading: "Something Short and..",
+    rightPanelText:
+      "ipsum crack later keep asserts as place seat model. Anomaliesanomalies place marketing backwards social needle job q1 dear.Centric shift due.",
+    signupPageText: "Sign up for an account",
+    privacyPolicyText: "By creating an account, you agreeing to our  ",
+    ElectronicsPolicyText: "Electronics Communication Policy.",
+    signUpButton:'Sign Up',
+  },
+};

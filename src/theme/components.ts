@@ -7,7 +7,7 @@ const components: Components<Omit<Theme, "components">> = {
         borderRadius: "12px", // Rounded corners
         textTransform: "none", // Disable uppercase transformation
         padding: "8px 16px", // Default padding
-        fontWeight: 600, // Bold text
+        fontWeight: 800, // Bold text
         boxShadow: "none",
       },
       sizeSmall: {
@@ -87,6 +87,7 @@ const components: Components<Omit<Theme, "components">> = {
         }
       }
     },
+    
   MuiOutlinedInput: {
     styleOverrides: {
       root: {
@@ -98,7 +99,8 @@ const components: Components<Omit<Theme, "components">> = {
           borderColor: "#1E88E5",
         },
         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-          borderColor: "#1E88E5",
+          borderColor: "#358FF7",
+          borderWidth:'1px'
         },
         "& .MuiInputBase-input": {
           color: "#1A202C",
