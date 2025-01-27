@@ -5,10 +5,36 @@ import {
   OAuthProvider,
   signInWithPopup,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
-import { doc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { firebaseAuth, firebaseFirestore } from "./BaseConfig";
 import { getAuthErrorMessage } from "../utils/errorHandler";
+
+//* Function to check if the email exists in the Firestore 'users' collection
+const checkIfEmailExists = async (email: string) => {
+  const db = getFirestore();
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("email", "==", email));
+
+  try {
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty; // Returns true if the email exists, false otherwise
+  } catch (error) {
+    console.error("Error checking email in Firestore:", error);
+    throw new Error("Error checking email in Firestore.");
+  }
+};
 
 // Sign-up function
 export const signUpWithEmail = async (
@@ -52,7 +78,6 @@ export const signUpWithEmail = async (
   }
 };
 
-
 //* Sign in function firebase
 export const signInWithEmail = async (
   email: string,
@@ -71,7 +96,7 @@ export const signInWithEmail = async (
     if (!user.emailVerified) {
       const message =
         "Your email is not verified. Please verify your email to access your account.";
-    //   await sendEmailVerification(user);
+      //   await sendEmailVerification(user);
       return message; // Return the message for further handling (e.g., snackbar or alert)
     }
 
@@ -84,11 +109,32 @@ export const signInWithEmail = async (
     console.log(successMessage);
     return successMessage;
   } catch (error: any) {
-    console.log("🚀 ~ error:", error)
     // Step 5: Handle errors and throw a meaningful message
     const errorMessage = getAuthErrorMessage(error.code);
     console.error(errorMessage);
     throw new Error(errorMessage); // Pass error for UI handling
+  }
+};
+
+// * Reset Password
+export const resetPasswordWithEmail = async (
+  email: string
+): Promise<string> => {
+  try {
+    // Step 1: Check if the email exists in Firestore
+    const emailExists = await checkIfEmailExists(email);
+
+    if (!emailExists) {
+      // If the email is not registered, throw an error
+      throw new Error("Looks like this email isn’t registered with us. Please check and enter the correct one.");
+    }
+
+    // Step 2: If the email exists, send the password reset email
+    await sendPasswordResetEmail(firebaseAuth, email);
+    return "Password reset email sent successfully. Check your inbox.";
+  } catch (error: any) {
+    // Handle any errors
+    throw new Error(getAuthErrorMessage(error.code));
   }
 };
 

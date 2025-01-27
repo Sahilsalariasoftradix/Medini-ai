@@ -1,6 +1,9 @@
 import { Box, Button } from "@mui/material";
 import mainLogo from "../../assets/logos/medini-ai-logo.svg";
 import { useLocation } from "react-router-dom";
+import { routes } from "../../utils/links";
+import { useAuthHook } from "../../hooks/useAuth";
+import CommonButton from "../common/CommonButton";
 const AuthHeader = () => {
   const location = useLocation();
   const path = location.pathname;
@@ -21,15 +24,15 @@ const AuthHeader = () => {
           alt="logo"
           src={mainLogo}
         />
-        {/* {path === "/login" && (
-          <Button
+        {!(path === routes.auth.signIn || path === routes.auth.signUp) && (
+          <CommonButton
             variant="contained"
             color="primary"
             sx={{ height: "56px", width: "150px" }}
-          >
-            Sign up
-          </Button>
-        )} */}
+            text={"Sign up"}
+            type="submit"
+          />
+        )}
       </Box>
     </Box>
   );

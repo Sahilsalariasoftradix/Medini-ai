@@ -1,10 +1,13 @@
 import AppRoutes from "./routes/AppRoutes";
 import { AuthProvider } from "./store/AuthContext";
+import { StepFormProvider } from "./store/StepFormContext";
 
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <StepFormProvider>
+        <AppRoutes />
+      </StepFormProvider>
     </AuthProvider>
   );
 }

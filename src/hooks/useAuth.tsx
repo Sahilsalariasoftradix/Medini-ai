@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { z } from "zod";
-
-// Type declaration for schema
-export type SignInSchemaType = z.infer<typeof SignInSchema>;
-// Validation schema
-export const SignInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(20),
-});
 // Validation schema
 export const SignUpSchema = z.object({
   email: z.string().email(),
@@ -22,10 +14,25 @@ export const SignUpSchema = z.object({
     .min(1, "Last name is required")
     .max(50, "Last name is too long"),
 });
+// Validation schema
+export const SignInSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(20),
+});
+// Validation schema
+export const ResetPasswordSchema = z.object({
+  email: z.string().email(),
+});
+// Type declaration for schema
+export type ResetPasswordSchemaType = z.infer<typeof ResetPasswordSchema>;
+// Type declaration for schema
+export type SignInSchemaType = z.infer<typeof SignInSchema>;
 // Type declaration for schema
 export type SignUpSchemaType = z.infer<typeof SignUpSchema>;
+
 export const useAuthHook = () => {
   const [showPassword, setShowPassword] = useState<Boolean>(false);
+  const [isLoading,setIsLoading] = useState<boolean>(false);
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -34,8 +41,10 @@ export const useAuthHook = () => {
   );
   // Navigate
   const navigate = useNavigate();
- // Static text
- const [text] = useOutletContext<any>();
+  // Static text
+  const context = useOutletContext<any>();
+  const text = Array.isArray(context) ? context[0] : undefined;
+  
   // Remember me checkbox
   const [checked, setChecked] = useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -73,6 +82,8 @@ export const useAuthHook = () => {
     handleSnackbarClose,
     setSnackbarSeverity,
     text,
-    navigate
+    navigate,
+    setIsLoading,
+    isLoading
   };
 };

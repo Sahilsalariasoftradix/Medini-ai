@@ -1,3 +1,4 @@
+// Override the error messages give by firebase 
 export const getAuthErrorMessage = (errorCode: string): string => {
   switch (errorCode) {
     case "auth/email-already-in-use":
@@ -18,6 +19,8 @@ export const getAuthErrorMessage = (errorCode: string): string => {
       return "Sign-in popup was closed before completing the process.";
     case "auth/cancelled-popup-request":
       return "Another popup is already open. Please wait.";
+      case 'auth/too-many-requests':
+        return "Too many requests. Please try again later.";
     default:
       return "An unexpected error occurred. Please try again.";
   }

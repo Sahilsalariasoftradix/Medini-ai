@@ -7,8 +7,8 @@ import background2 from "../assets/images/auth-bg/bg-1.svg";
 import background3 from "../assets/images/auth-bg/bg-4.svg";
 import background4 from "../assets/images/auth-bg/bg-3.svg";
 import background5 from "../assets/images/auth-bg/bg-5.svg";
-import { staticText } from "../assets/staticText";
-import { Link as RouterLink } from "react-router-dom";
+import { staticText } from "../utils/staticText";
+import AuthFooter from "../components/Footer/AuthFooter";
 const AnonymousLayout = () => {
   const text = staticText.auth;
   return (
@@ -17,29 +17,7 @@ const AnonymousLayout = () => {
         <Grid size={6}>
           <AuthHeader />
           <Outlet context={[text]} />
-          <Box
-            px={4}
-            display={"flex"}
-            justifyContent={"space-between"}
-            alignItems={"center"}
-          >
-            <Link
-              component={RouterLink}
-              to="/privacy-policy"
-              variant="bodyLargeSemiBold"
-              sx={{ textDecoration: "none" }}
-            >
-              {text.privacyPolicyLink}
-            </Link>
-            <Link
-              component={RouterLink}
-              to="#"
-              variant="bodyLargeSemiBold"
-              sx={{ textDecoration: "none" }}
-            >
-              {text.copyright} {new Date().getFullYear()}
-            </Link>
-          </Box>
+          <AuthFooter />
         </Grid>
         <Grid size={6} p={3}>
           <Box

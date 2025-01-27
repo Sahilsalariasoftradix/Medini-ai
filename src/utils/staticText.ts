@@ -20,6 +20,18 @@ export const staticText = {
     signupPageText: "Sign up for an account",
     privacyPolicyText: "By creating an account, you agreeing to our  ",
     ElectronicsPolicyText: "Electronics Communication Policy.",
-    signUpButton:'Sign Up',
+    signUpButton: "Sign Up",
+    resetPasswordHeading: "Need help with your account?",
+    resetPasswordDescription:
+      "Enter the email address associated with your account and we will send you a link to reset your password.",
+    resetPasswordButton: "Send Link",
+    forgotEmailText: "Forgot your Email?",
+    nameYourCalenderText: "Name your calendar",
+    nameYourCalenderDescription: "eg. Dr. Zee Cal",
+    stepContinueText: "Continue",
+    inviteCollaboratorText: "Invite Collaborators?",
+    inviteCollaboratorDescription:
+      "email up to 10 people to co-manage your calendar.",
+    inviteBUttonText: "Invite",
   },
 };
