@@ -1,19 +1,57 @@
-import React from "react";
-import {
-  Box,
-  Button,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Typography,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Skeleton } from "@mui/material";
 import { useStepForm } from "../../../store/StepFormContext";
+import { Icons } from "../../../utils/Icons";
+import { getReasons } from "../../../firebase/AuthService";
+import {
+  fetchingReasonsErrorMessage,
+} from "../../../utils/errorHandler";
 
 const ReasonForUsing: React.FC = () => {
   const { userDetails, updateUserDetails, goToNextStep } = useStepForm();
+  const [reasons, setReasons] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleReasonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    updateUserDetails({ reasonForUsing: event.target.value });
+  useEffect(() => {
+    const fetchReasons = async () => {
+      try {
+        const reasonsList = await getReasons();
+        // Map over reasons and assign an icon based on the name
+
+        // Map over reasons and assign an icon based on the id
+        const reasonsWithIcons = reasonsList?.map((reason: any) => {
+          // Create the key for the icon based on the id
+          const iconKey = `option${reason.id}` as
+            | "option1"
+            | "option2"
+            | "option3"
+            | "option4";
+
+          // Fetch the corresponding icon
+          const icon = Icons[iconKey];
+
+          // Return the reason with the added icon
+          return { ...reason, icon };
+        });
+        setReasons(reasonsWithIcons as any);
+      } catch (error: any) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReasons();
+  }, []);
+
+  const handleReasonChange = (reasonId: string, reasonText: string) => {
+    // Update the user details with the selected reason
+    updateUserDetails({
+      reasonForUsing: reasonId,
+      reasonForUsingStep: reasonText,
+    });
+    // As soon as we select the value go to the next step
+    goToNextStep();
   };
 
   return (
@@ -24,41 +62,112 @@ const ReasonForUsing: React.FC = () => {
       minHeight={"calc(100vh - 134px)"}
     >
       <Box>
-        <Typography variant="h3">
-          Tell us your main reason for using Medini?
+        <Typography align="center" variant="h3">
+          Tell us your main reason for <br /> using Medini?
         </Typography>
-        <Typography variant="bodyLargeMedium" sx={{ color: "grey.600" }}>
-          Tell us about your practice and we will make the right recommendations
-          for you
-        </Typography>{" "}
-
-        <Box
-          sx={{
-            bgcolor: "additional.white",
-            borderRadius: "20px",
-            p: 5,
-            boxShadow: "border: 1px solid #E2E8F0",
-            "&:hover": {
-              background: "#358FF7",
-              color: "white",
-              
-            },
-          }}
+        <Typography
+          mt={2}
+          align="center"
+          variant="bodyLargeMedium"
+          sx={{ color: "grey.600" }}
         >
-          <RadioGroup
-            value={userDetails.reasonForUsing}
-            onChange={handleReasonChange}
-          >
-            <FormControlLabel
-              value="option1"
-              control={<Radio />}
-              label="Option 1"
-            />
-          </RadioGroup>
+          Tell us about your practice and we will make the right <br />{" "}
+          recommendations for you
+        </Typography>{" "}
+        <Box
+          mt={8}
+          display={"flex"}
+          justifyContent={"center"}
+          alignItems={"center"}
+          gap={2}
+        >
+          {error && (
+            <Box
+              sx={{
+                backgroundColor: "#f8d7da",
+                color: "#721c24",
+                padding: "10px",
+                borderRadius: "5px",
+              }}
+            >
+              <Typography variant="h3">
+                {fetchingReasonsErrorMessage}
+              </Typography>
+            </Box>
+          )}
+          {loading ? (
+            <>
+              {[...Array(4)].map((e, i) => (
+                <Skeleton
+                  key={i}
+                  variant="rectangular"
+                  width={200}
+                  height={200}
+                  sx={{
+                    borderRadius: "40px",
+                  }}
+                />
+              ))}
+            </>
+          ) : (
+            <>
+              {reasons.map((reason) => (
+                <Box
+                  key={reason.id}
+                  display={"flex"}
+                  justifyContent={"center"}
+                  alignItems={"center"}
+                  gap={2}
+                  flexDirection={"column"}
+                  sx={{
+                    bgcolor:
+                      userDetails.reasonForUsing === reason.id
+                        ? "primary.main"
+                        : "additional.white",
+                    color:
+                      userDetails.reasonForUsing === reason.id
+                        ? "additional.white"
+                        : "secondary.main",
+                    borderRadius: "40px",
+                    border: "1px solid #E2E8F0",
+                    // p: 10,
+                    height: "200px",
+                    width: "200px",
+                    "&:hover": {
+                      background: "#358FF7",
+                      color: "white",
+                    },
+                  }}
+                  className={
+                    userDetails.reasonForUsing === reason.id ? "active" : ""
+                  }
+                  onClick={() => handleReasonChange(reason.id, reason.name)}
+                >
+                  <Box
+                    sx={{
+                      height: "56px",
+                      width: "56px",
+                      background: "#FAFAFA",
+                      borderRadius: "50% ",
+                    }}
+                    display={"flex"}
+                    justifyContent={"center"}
+                    alignItems={"center"}
+                  >
+                    <Box
+                      component="img"
+                      alt="The house from the offer."
+                      src={reason.icon}
+                    />
+                  </Box>
+                  <Typography align="center" px={2} variant="bodyLargeSemiBold">
+                    {reason.name}
+                  </Typography>
+                </Box>
+              ))}
+            </>
+          )}
         </Box>
-        <Button variant="contained" onClick={goToNextStep}>
-          Next
-        </Button>
       </Box>
     </Box>
   );

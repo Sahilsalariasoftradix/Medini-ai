@@ -13,6 +13,7 @@ import {
   getDocs,
   getFirestore,
   query,
+  serverTimestamp,
   setDoc,
   Timestamp,
   updateDoc,
@@ -20,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { firebaseAuth, firebaseFirestore } from "./BaseConfig";
 import { getAuthErrorMessage } from "../utils/errorHandler";
+import { IUserDetails } from "../types/api/Interfaces";
 
 //* Function to check if the email exists in the Firestore 'users' collection
 const checkIfEmailExists = async (email: string) => {
@@ -33,6 +35,50 @@ const checkIfEmailExists = async (email: string) => {
   } catch (error) {
     console.error("Error checking email in Firestore:", error);
     throw new Error("Error checking email in Firestore.");
+  }
+};
+// Current user
+export const getCurrentUserId = (): string | null => {
+  const user = firebaseAuth.currentUser;
+  return user ? user.uid : null;
+};
+// Update the user doc with other details
+export const updateUserDetailsInFirestore = async (
+  userId: string,
+  userDetails: Partial<IUserDetails> // Using Partial to allow partial updates
+): Promise<void> => {
+  try {
+    // Create an update object with the new details and timestamps
+    const userDocUpdate = {
+      ...userDetails,
+      updatedAt: serverTimestamp(), // Only update the `updatedAt` field
+    };
+
+    // Reference the user's document in Firestore
+    const userRef = doc(firebaseFirestore, "users", userId);
+
+    // Update the document with the new details
+    await updateDoc(userRef, userDocUpdate);
+
+    console.log("User details successfully updated in Firestore!");
+  } catch (error) {
+    console.error("Error updating user details in Firestore:", error);
+    throw new Error("Failed to update user details. Please try again.");
+  }
+};
+export const getReasons = async () => {
+  const db = getFirestore();
+  const reasonsCollection = collection(db, "reasons");
+
+  try {
+    const snapshot = await getDocs(reasonsCollection);
+    const reasonsList = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return reasonsList; 
+  } catch (error) {
+    console.error("Error fetching reasons: ", error);
   }
 };
 
@@ -126,7 +172,9 @@ export const resetPasswordWithEmail = async (
 
     if (!emailExists) {
       // If the email is not registered, throw an error
-      throw new Error("Looks like this email isn’t registered with us. Please check and enter the correct one.");
+      throw new Error(
+        "Looks like this email isn’t registered with us. Please check and enter the correct one."
+      );
     }
 
     // Step 2: If the email exists, send the password reset email

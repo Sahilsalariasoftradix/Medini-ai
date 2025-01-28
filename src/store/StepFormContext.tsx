@@ -1,9 +1,32 @@
 import { createContext, useContext, useState } from "react";
 import { IStepFormContextType, IUserDetails } from "../types/api/Interfaces";
+import { z } from "zod";
 
 const StepFormContext = createContext<IStepFormContextType | undefined>(
   undefined
 );
+// Validation Schema
+export const CompanyDetailsSchema = z.object({
+  officeName: z
+    .string()
+    .min(8, "Office name should be at least 8 characters")
+    .max(50, "Office name can be up to 50 characters"),
+  apartment: z
+    .string()
+    .min(8, "Apartment name should be at least 8 characters")
+    .max(50, "Apartment name can be up to 50 characters"),
+  address: z
+    .string()
+    .min(8, "Address should be at least 8 characters")
+    .max(50, "Address can be up to 50 characters"),
+  city: z.string().min(1, "City is required"),
+  country: z.string().min(1, "Country is required"),
+  appointment: z.boolean().optional(), 
+  appointmentTime: z.string().min(1, "Appointment time is required"),
+});
+
+// Type declaration for schema
+export type CompanyDetailsSchemaType = z.infer<typeof CompanyDetailsSchema>;
 
 export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -11,6 +34,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [userDetails, setUserDetails] = useState<IUserDetails>({
     reasonForUsing: "",
+    reasonForUsingStep: "",
     calendarName: "",
     collaborators: [],
     companyDetails: {
@@ -19,9 +43,11 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       apartmentSuite: "",
       city: "",
       country: "",
+      appointment: false,
       maxAppointmentTime: "",
     },
   });
+  console.log("🚀 ~ userDetails:", userDetails)
 
   // Navigate to the next step
   const goToNextStep = () => {

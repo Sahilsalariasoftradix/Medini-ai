@@ -34,6 +34,10 @@ import CommonTextField from "../../common/CommonTextField";
 import CommonLink from "../../common/CommonLink";
 import { externalLinks, routes } from "../../../utils/links";
 import CommonSnackbar from "../../common/CommonSnackbar";
+import {
+  successfullyRegisteredMessage,
+  unexpectedErrorMessage,
+} from "../../../utils/errorHandler";
 // Static Icons
 const GoogleIcon = <img alt="edit" src={googleIcon} />;
 const AppleIcon = <img alt="edit" src={appleIcon} />;
@@ -77,16 +81,14 @@ const SignUpForm = () => {
         data.lastName
       );
       setSnackbarSeverity("success");
-      setSnackbarMessage(successMessage || "Successfully registered!");
+      setSnackbarMessage(successMessage || successfullyRegisteredMessage);
       setSnackbarOpen(true);
       reset();
       setIsLoading(false);
       // navigate('/login')
     } catch (error: any) {
       setSnackbarSeverity("error");
-      setSnackbarMessage(
-        error.message || "An error occurred. Please try again."
-      );
+      setSnackbarMessage(error.message || unexpectedErrorMessage);
       setIsLoading(false);
       setSnackbarOpen(true);
     }
@@ -143,6 +145,7 @@ const SignUpForm = () => {
             <Box sx={{ display: "flex" }} gap={2}>
               <Box>
                 <CommonTextField
+                fullWidth
                   placeholder="First name"
                   register={register("firstName")}
                   errorMessage={errors.firstName?.message}
@@ -150,6 +153,7 @@ const SignUpForm = () => {
               </Box>
               <Box>
                 <CommonTextField
+                fullWidth
                   placeholder="Last name"
                   register={register("lastName")}
                   errorMessage={errors.lastName?.message}

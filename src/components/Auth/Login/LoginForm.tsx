@@ -30,6 +30,10 @@ import CommonButton from "../../common/CommonButton";
 import CommonLink from "../../common/CommonLink";
 import { routes } from "../../../utils/links";
 import CommonSnackbar from "../../common/CommonSnackbar";
+import {
+  credentialsRequiredMessage,
+  unexpectedErrorMessage,
+} from "../../../utils/errorHandler";
 // Static Icons
 const GoogleIcon = <img alt="edit" src={googleIcon} />;
 const AppleIcon = <img alt="edit" src={appleIcon} />;
@@ -67,7 +71,7 @@ const LoginForm = () => {
     //* Check if email and password are not empty
     if (data.email !== "" || data.password !== "") {
       setSnackbarSeverity("error");
-      setSnackbarMessage("Email and password are required.");
+      setSnackbarMessage(credentialsRequiredMessage);
     }
     try {
       const message = await signInWithEmail(data.email, data.password);
@@ -78,9 +82,7 @@ const LoginForm = () => {
       setIsLoading(false);
     } catch (error: any) {
       setSnackbarSeverity("error");
-      setSnackbarMessage(
-        error.message || "An error occurred. Please try again."
-      );
+      setSnackbarMessage(error.message || unexpectedErrorMessage);
       setSnackbarOpen(true);
       setIsLoading(false);
     }

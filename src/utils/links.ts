@@ -5,7 +5,7 @@ export const routes = {
     signUp: "/auth/sign-up",
     forgotPassword: "/auth/forgot-password",
     verifyEmail: "/auth/verify-email",
-    stepForm:'/auth/step'
+    stepForm:'/auth/onboarding'
   },
   dashboard: {
     home: "/",

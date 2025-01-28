@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { z } from "zod";
+import {
+  firstNameErrorMessage,
+  firstNameTooLongMessage,
+  lastNameErrorMessage,
+  lastNameTooLongMessage,
+} from "../utils/errorHandler";
 // Validation schema
 export const SignUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(20),
   firstName: z
     .string()
-    .min(1, "First name is required")
-    .max(50, "First name is too long"),
+    .min(1, firstNameErrorMessage)
+    .max(50, firstNameTooLongMessage),
   lastName: z
     .string()
-    .min(1, "Last name is required")
-    .max(50, "Last name is too long"),
+    .min(1, lastNameErrorMessage)
+    .max(50, lastNameTooLongMessage),
 });
 // Validation schema
 export const SignInSchema = z.object({
@@ -32,7 +38,7 @@ export type SignUpSchemaType = z.infer<typeof SignUpSchema>;
 
 export const useAuthHook = () => {
   const [showPassword, setShowPassword] = useState<Boolean>(false);
-  const [isLoading,setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -44,7 +50,7 @@ export const useAuthHook = () => {
   // Static text
   const context = useOutletContext<any>();
   const text = Array.isArray(context) ? context[0] : undefined;
-  
+
   // Remember me checkbox
   const [checked, setChecked] = useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -84,6 +90,6 @@ export const useAuthHook = () => {
     text,
     navigate,
     setIsLoading,
-    isLoading
+    isLoading,
   };
 };

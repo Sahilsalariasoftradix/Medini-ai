@@ -13,6 +13,10 @@ import {
 import { SubmitHandler, useForm } from "react-hook-form";
 import { resetPasswordWithEmail } from "../../../firebase/AuthService";
 import CommonSnackbar from "../../common/CommonSnackbar";
+import {
+  resetPasswordEmailAlreadyRegisteredMessage,
+  resetPasswordEmailSentMessage,
+} from "../../../utils/errorHandler";
 
 const ResetPasswordForm = () => {
   // Validate hook
@@ -43,21 +47,16 @@ const ResetPasswordForm = () => {
       //* Calling resetPassword with email and password from form data
       const successMessage = await resetPasswordWithEmail(data.email);
       setSnackbarSeverity("success");
-      setSnackbarMessage(
-        successMessage ||
-          "Password reset link sent successfully. Please check your email"
-      );
+      setSnackbarMessage(successMessage || resetPasswordEmailSentMessage);
       setSnackbarOpen(true);
       reset();
       setIsLoading(false);
       setTimeout(function () {
-        navigate(routes.auth.signIn);
+        navigate(routes.auth.signIn, { replace: true });
       }, 1000);
     } catch (error: any) {
       setSnackbarSeverity("error");
-      setSnackbarMessage(
-        "Looks like this email isn’t registered with us. Please check and enter the correct one."
-      );
+      setSnackbarMessage(resetPasswordEmailAlreadyRegisteredMessage);
       setIsLoading(false);
       setSnackbarOpen(true);
     }

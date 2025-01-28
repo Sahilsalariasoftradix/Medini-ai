@@ -1,39 +1,39 @@
 @import './variables';
 .auth-form {
-    max-width: 507px;
+    max-width: 600px;
     border-radius: 50px;
     box-shadow: 0px 16px 24px 0px #5D6A8305;
     background: $primary-contrast;
 
   
-    &__title {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
+    // &__title {
+    //   font-size: 24px;
+    //   margin-bottom: 20px;
+    // }
   
-    &__field {
-      margin-bottom: 15px;
+    // &__field {
+    //   margin-bottom: 15px;
   
-      input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-      }
-    }
+    //   input {
+    //     width: 100%;
+    //     padding: 10px;
+    //     border: 1px solid #ddd;
+    //     border-radius: 5px;
+    //   }
+    // }
   
-    &__button {
-      width: 100%;
-      padding: 10px;
-      background-color: #1976d2;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    // &__button {
+    //   width: 100%;
+    //   padding: 10px;
+    //   background-color: #1976d2;
+    //   color: #fff;
+    //   border: none;
+    //   border-radius: 5px;
+    //   cursor: pointer;
   
-      &:hover {
-        background-color: #1565c0;
-      }
-    }
+    //   &:hover {
+    //     background-color: #1565c0;
+    //   }
+    // }
   }
   
