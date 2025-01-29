@@ -25,6 +25,22 @@ export const getAuthErrorMessage = (errorCode: string): string => {
       return "An unexpected error occurred. Please try again.";
   }
 };
+export const zodErrorMessages = {
+  required: "This field is required.",
+  invalidEmail: "Please enter a valid email address.",
+  minLength: (length: number) => `Must be at least ${length} characters long.`,
+  maxLength: (length: number) => `Must be at most ${length} characters long.`,
+  invalidNumber: "Please enter a valid number.",
+  minValue: (value: number) => `Value must be at least ${value}.`,
+  maxValue: (value: number) => `Value must be at most ${value}.`,
+  invalidUrl: "Please enter a valid URL.",
+};
+// Firestore errors
+export const emailCheckingErrorPlaceholder = "Error checking email in Firestore:";
+export const emailCheckingError="Error checking email in Firestore.";
+export const updateUserErrorPlaceholder="Error updating user details in Firestore:";
+export const updateUserError="Failed to update user details. Please try again.";
+
 // Data fetching error message
 export const fetchingReasonsErrorMessage =
   "Error while fetching data please try again later";
@@ -37,7 +53,15 @@ export const firstNameErrorMessage = "First name is required";
 export const firstNameTooLongMessage = "First name is too long";
 export const lastNameErrorMessage = "Last name is required";
 export const lastNameTooLongMessage = "Last name is too long";
-
+export const errorFetchingReasonsMessage ="Error fetching reasons:"
+export const emailNotVerifiedMessage ="Your email is not verified. Please verify your email to access your account.";
+export const emailNotExistMessage ="Looks like this email isn't registered with us. Please check and enter the correct one."
+export const userNotSignedInErrorMessage ="User is not signed in."
+export const errorSavingUserDetailsMessage ="Error saving user details to Firestore:";
+export const onBoardingFieldNotFoundMessage ="onboardingStatus field is not found."; 
+export const userDocDoesNotExistMessage ="User document does not exist."
+export const onboardingStatusErrorMessage ="Error fetching onboardingStatus"; 
+export const onboardingStatusError="Unable to fetch onboarding status."
 // Unexpected error
 export const unexpectedErrorMessage = "An error occurred. Please try again.";
 // Registration Message
@@ -49,4 +73,4 @@ export const credentialsRequiredMessage = "mail and password are required.";
 export const resetPasswordEmailSentMessage =
   "Password reset link sent successfully. Please check your email";
 export const resetPasswordEmailAlreadyRegisteredMessage =
-  "Looks like this email isn’t registered with us. Please check and enter the correct one.";
+  "Looks like this email isn't registered with us. Please check and enter the correct one.";

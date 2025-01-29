@@ -11,8 +11,25 @@ import ResetPassword from "../../pages/Auth/reset-password";
 import { routes } from "../../utils/links";
 import NotFoundPage from "../../pages/NotFound";
 import StepForm from "../../components/StepForm/StepForm";
+import { useAuth } from "../../store/AuthContext";
+import GuestRoute from "../GuestRoute";
+import ProtectedRoute from "../ProtectedRoute";
+import { Box, CircularProgress } from "@mui/material";
 
 const AppRoutes: React.FC = () => {
+  const { loading } = useAuth();
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
   return (
     <Router>
       <Routes>
@@ -25,15 +42,19 @@ const AppRoutes: React.FC = () => {
           />
           <Route path={routes.auth.stepForm} element={<StepForm />} />
         </Route>
-        {/* Auth Layout */}
-        <Route element={<AnonymousLayout />}>
-          <Route path={routes.auth.signIn} element={<Login />} />
-          <Route path={routes.auth.signUp} element={<SignUp />} />
+        {/* Guest Layout (For Unauthenticated Users Only) */}
+        <Route element={<GuestRoute />}>
+          <Route element={<AnonymousLayout />}>
+            <Route path={routes.auth.signIn} element={<Login />} />
+            <Route path={routes.auth.signUp} element={<SignUp />} />
+          </Route>
         </Route>
 
-        {/* Dashboard Layout */}
-        <Route element={<MainLayout />}>
-          <Route path={routes.dashboard.home} element={<Home />} />
+        {/* Protected Routes (Only for Authenticated & Verified Users) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path={routes.dashboard.home} element={<Home />} />
+          </Route>
         </Route>
 
         {/* Catch-all route */}

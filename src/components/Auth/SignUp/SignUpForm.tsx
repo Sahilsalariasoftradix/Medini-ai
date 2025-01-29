@@ -38,6 +38,7 @@ import {
   successfullyRegisteredMessage,
   unexpectedErrorMessage,
 } from "../../../utils/errorHandler";
+import Grid from "@mui/material/Grid2";
 // Static Icons
 const GoogleIcon = <img alt="edit" src={googleIcon} />;
 const AppleIcon = <img alt="edit" src={appleIcon} />;
@@ -85,7 +86,9 @@ const SignUpForm = () => {
       setSnackbarOpen(true);
       reset();
       setIsLoading(false);
-      // navigate('/login')
+      setTimeout(() => {
+        navigate(routes.auth.signIn);
+      }, 2000);
     } catch (error: any) {
       setSnackbarSeverity("error");
       setSnackbarMessage(error.message || unexpectedErrorMessage);
@@ -113,7 +116,35 @@ const SignUpForm = () => {
           >
             {text.subtitle}
           </Typography>
-          <Box sx={{ display: "flex" }} gap={2} my={3}>
+          <Grid container spacing={2} my={3}>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={GoogleIcon}
+                onClick={signInWithGoogle}
+                sx={{ py: 1.5 }}
+              >
+                <Typography variant="bodyLargeMedium">
+                  {text.googleSignInButton}
+                </Typography>
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={AppleIcon}
+                onClick={signInWithApple}
+                sx={{ py: 1.5 }}
+              >
+                <Typography variant="bodyLargeMedium">
+                  {text.appleSignInButton}
+                </Typography>
+              </Button>
+            </Grid>
+          </Grid>
+          {/* <Box sx={{ display: "flex" }} gap={2} my={3}>
             <Button
               variant="outlined"
               startIcon={GoogleIcon}
@@ -134,7 +165,7 @@ const SignUpForm = () => {
                 {text.appleSignInButton}
               </Typography>
             </Button>
-          </Box>
+          </Box> */}
           <Divider>
             <Typography variant="bodyLargeRegular" color="grey.600">
               {text.orText}
@@ -142,24 +173,25 @@ const SignUpForm = () => {
           </Divider>
           {/* Input fields */}
           <Box my={4}>
-            <Box sx={{ display: "flex" }} gap={2}>
-              <Box>
+            <Grid container spacing={2}>
+              <Grid size={6}>
                 <CommonTextField
-                fullWidth
+                  fullWidth
                   placeholder="First name"
                   register={register("firstName")}
                   errorMessage={errors.firstName?.message}
                 />
-              </Box>
-              <Box>
+              </Grid>
+              <Grid size={6}>
                 <CommonTextField
-                fullWidth
+                  fullWidth
                   placeholder="Last name"
                   register={register("lastName")}
                   errorMessage={errors.lastName?.message}
                 />
-              </Box>
-            </Box>
+              </Grid>
+            </Grid>
+
             <Box mt={3}>
               <CommonTextField
                 placeholder="Email"
@@ -170,6 +202,7 @@ const SignUpForm = () => {
             <Box mt={2}>
               <OutlinedInput
                 {...register("password")}
+                error={!!errors.password?.message}
                 placeholder="Password"
                 type={showPassword ? "text" : "password"}
                 fullWidth

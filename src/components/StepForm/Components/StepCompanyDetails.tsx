@@ -1,20 +1,5 @@
 import React from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  FormControl,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControlLabel,
-  Switch,
-  SwitchProps,
-  styled,
-  SelectChangeEvent,
-  FormHelperText,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import {
   CompanyDetailsSchema,
   CompanyDetailsSchemaType,
@@ -23,74 +8,31 @@ import {
 import Grid from "@mui/material/Grid2";
 import StepFormLayout from "../StepFormLayout";
 import CommonTextField from "../../common/CommonTextField";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CommonButton from "../../common/CommonButton";
-import { IUserDetails } from "../../../types/api/Interfaces";
-import { getCurrentUserId, saveUserDetailsToFirestore, updateUserDetailsInFirestore } from "../../../firebase/AuthService";
-import { firebaseAuth } from "../../../firebase/BaseConfig";
-const IOSSwitch = styled((props: SwitchProps) => (
-  <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
-))(({ theme }) => ({
-  width: 41,
-  height: 24,
-  padding: 0,
-  "& .MuiSwitch-switchBase": {
-    padding: 0,
-    margin: 2,
-    transitionDuration: "300ms",
-    "&.Mui-checked": {
-      transform: "translateX(16px)",
-      color: "#fff",
-      "& + .MuiSwitch-track": {
-        backgroundColor: "primary.main",
-        opacity: 1,
-        border: 0,
-        ...theme.applyStyles("dark", {
-          backgroundColor: "#2ECA45",
-        }),
-      },
-      "&.Mui-disabled + .MuiSwitch-track": {
-        opacity: 0.5,
-      },
-    },
-    "&.Mui-focusVisible .MuiSwitch-thumb": {
-      color: "#33cf4d",
-      border: "6px solid #fff",
-    },
-    "&.Mui-disabled .MuiSwitch-thumb": {
-      color: theme.palette.grey[100],
-      ...theme.applyStyles("dark", {
-        color: theme.palette.grey[600],
-      }),
-    },
-    "&.Mui-disabled + .MuiSwitch-track": {
-      opacity: 0.7,
-      ...theme.applyStyles("dark", {
-        opacity: 0.3,
-      }),
-    },
-  },
-  "& .MuiSwitch-thumb": {
-    boxSizing: "border-box",
-    width: 20,
-    height: 20,
-  },
-  "& .MuiSwitch-track": {
-    borderRadius: 26 / 2,
-    backgroundColor: "#E9E9EA",
-    opacity: 1,
-    transition: theme.transitions.create(["background-color"], {
-      duration: 500,
-    }),
-    ...theme.applyStyles("dark", {
-      backgroundColor: "#39393D",
-    }),
-  },
-}));
+import {
+  getCurrentUserId,
+  updateUserDetailsInFirestore,
+} from "../../../firebase/AuthService";
+import CustomSwitch from "../../common/CustomSwitch";
+import {
+  errorSavingUserDetailsMessage,
+  userNotSignedInErrorMessage,
+} from "../../../utils/errorHandler";
+import CustomSelect from "../../common/CustomSelect";
+import {
+  APPOINTMENT_OPTIONS,
+  CITY_OPTIONS,
+  COUNTRY_OPTIONS,
+} from "../../../utils/options";
+import { useAuthHook } from "../../../hooks/useAuth";
+import { routes } from "../../../utils/links";
 
 const CompanyDetails: React.FC = () => {
-  const { userDetails, updateUserDetails, goToPreviousStep } = useStepForm();
+  const { userDetails, updateUserDetails, goToPreviousStep, resetForm } =
+    useStepForm();
+  const { navigate } = useAuthHook();
   // Validate hook
   const {
     register,
@@ -107,30 +49,15 @@ const CompanyDetails: React.FC = () => {
       appointmentTime: "", // Default value prevents uncontrolled-to-controlled issue
     },
   });
-  // const onSubmit = async (data: IUserDetails) => {
-  //   try {
-  //     // Save to context
-  //     updateUserDetails(data);
 
-  //     // Save to Firestore
-  //     const userId = "user-uid"; // Replace with the logged-in user's UID from Firebase Auth
-  //     await saveUserDetailsToFirestore(userId, data);
-
-  //     console.log("User details saved successfully!");
-  //   } catch (error) {
-  //     console.error("Error saving user details:", error);
-  //   }
-  // };
-
-  
   const onSubmit = async (data: CompanyDetailsSchemaType) => {
     try {
       // Step 1: Get the current user ID
       const userId = getCurrentUserId();
       if (!userId) {
-        throw new Error("User is not signed in.");
+        throw new Error(userNotSignedInErrorMessage);
       }
-  
+
       // Step 2: Prepare updated details
       const updatedDetails = {
         companyDetails: {
@@ -143,22 +70,24 @@ const CompanyDetails: React.FC = () => {
           maxAppointmentTime: data.appointmentTime,
         },
       };
-  
+
       // Step 3: Update context with new user details
       updateUserDetails(updatedDetails);
-  
+
       // Step 4: Retrieve the latest user details from context
       const currentUserDetails = {
         ...userDetails, // Ensure existing details are preserved
         ...updatedDetails,
       };
-  
+
       // Step 5: Save to Firestore
       await updateUserDetailsInFirestore(userId, currentUserDetails);
-  
-      console.log("User details saved successfully!");
+      resetForm();
+      navigate(routes.dashboard.home);
+
+      // console.log("User details saved successfully!");
     } catch (error) {
-      console.error("Error saving user details to Firestore:", error);
+      console.error(errorSavingUserDetailsMessage, error);
     }
   };
 
@@ -214,22 +143,13 @@ const CompanyDetails: React.FC = () => {
             <Typography mb={1} variant="bodyLargeExtraBold" color="grey.600">
               City
             </Typography>
-
             {/* City */}
-            <Controller
+            <CustomSelect
               name="city"
               control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.city}>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="">Select City</MenuItem>
-                    <MenuItem value="city1">City 1</MenuItem>
-                    <MenuItem value="city2">City 2</MenuItem>
-                    <MenuItem value="city3">City 3</MenuItem>
-                  </Select>
-                  <FormHelperText>{errors.city?.message}</FormHelperText>
-                </FormControl>
-              )}
+              errors={errors}
+              placeholder="Select city"
+              options={CITY_OPTIONS}
             />
           </Grid>
           <Grid size={6}>
@@ -237,20 +157,12 @@ const CompanyDetails: React.FC = () => {
               Country
             </Typography>
             {/* Country */}
-            <Controller
+            <CustomSelect
               name="country"
               control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.country}>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="">Select Country</MenuItem>
-                    <MenuItem value="Country1">Country 1</MenuItem>
-                    <MenuItem value="Country2">Country 2</MenuItem>
-                    <MenuItem value="Country3">Country 3</MenuItem>
-                  </Select>
-                  <FormHelperText>{errors.country?.message}</FormHelperText>
-                </FormControl>
-              )}
+              errors={errors}
+              placeholder="Select country"
+              options={COUNTRY_OPTIONS}
             />
           </Grid>
           <Grid
@@ -263,35 +175,11 @@ const CompanyDetails: React.FC = () => {
             <Typography variant="bodyLargeMedium" color="grey.600">
               Do you take in person appointments?{" "}
             </Typography>
-            {/* <FormControlLabel
-              label=""
-              control={
-                <IOSSwitch {...register("appointment")} defaultChecked />
-              }
-            /> */}
             {/* Appointment Switch */}
-            <Controller
+            <CustomSwitch
               name="appointment"
               control={control}
-              render={({ field }) => (
-                <Box>
-                  <FormControlLabel
-                    label=""
-                    control={
-                      <IOSSwitch
-                        {...field}
-                        checked={field.value} // Ensure it's controlled
-                        onChange={(e) => field.onChange(e.target.checked)} // Update Hook Form state
-                      />
-                    }
-                  />
-                  {errors.appointment && (
-                    <FormHelperText error>
-                      {errors.appointment.message}
-                    </FormHelperText>
-                  )}
-                </Box>
-              )}
+              errors={errors}
             />
           </Grid>
           <Grid size={6} my={2}>
@@ -301,22 +189,12 @@ const CompanyDetails: React.FC = () => {
           </Grid>
           <Grid size={6}>
             {/* Appointment Time */}
-            <Controller
+            <CustomSelect
               name="appointmentTime"
               control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.appointmentTime}>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="">Select appointment</MenuItem>
-                    <MenuItem value="appointment1">appointment 1</MenuItem>
-                    <MenuItem value="appointment2">appointment 2</MenuItem>
-                    <MenuItem value="appointment3">appointment 3</MenuItem>
-                  </Select>
-                  <FormHelperText>
-                    {errors.appointmentTime?.message}
-                  </FormHelperText>
-                </FormControl>
-              )}
+              errors={errors}
+              placeholder="Select appointment"
+              options={APPOINTMENT_OPTIONS}
             />
           </Grid>
         </Grid>

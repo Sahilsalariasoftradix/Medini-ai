@@ -21,9 +21,15 @@ export const CompanyDetailsSchema = z.object({
     .max(50, "Address can be up to 50 characters"),
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
-  appointment: z.boolean().optional(), 
+  appointment: z.boolean().optional(),
   appointmentTime: z.string().min(1, "Appointment time is required"),
 });
+// Validation schema
+export const CalenderNameSchema = z.object({
+  calenderName: z.string().min(1, "Calender name is required"),
+});
+// Type declaration for schema
+export type CalenderNameSchemaType = z.infer<typeof CalenderNameSchema>;
 
 // Type declaration for schema
 export type CompanyDetailsSchemaType = z.infer<typeof CompanyDetailsSchema>;
@@ -47,7 +53,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       maxAppointmentTime: "",
     },
   });
-  console.log("🚀 ~ userDetails:", userDetails)
+  // console.log("🚀 ~ userDetails:", userDetails);
 
   // Navigate to the next step
   const goToNextStep = () => {
@@ -65,15 +71,24 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Reset the form to its initial state
-  //   const resetForm = () => {
-  //     setCurrentStep(0);
-  //     setUserDetails({
-  //       firstName: '',
-  //       lastName: '',
-  //       email: '',
-  //       password: '',
-  //     });
-  //   };
+  const resetForm = () => {
+    setCurrentStep(0);
+    setUserDetails({
+      reasonForUsing: "",
+      reasonForUsingStep: "",
+      calendarName: "",
+      collaborators: [],
+      companyDetails: {
+        businessName: "",
+        address: "",
+        apartmentSuite: "",
+        city: "",
+        country: "",
+        appointment: false,
+        maxAppointmentTime: "",
+      },
+    });
+  };
 
   return (
     <StepFormContext.Provider
@@ -83,6 +98,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
         goToNextStep,
         goToPreviousStep,
         updateUserDetails,
+        resetForm
       }}
     >
       {children}

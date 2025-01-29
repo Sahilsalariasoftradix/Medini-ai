@@ -1,12 +1,24 @@
 import { Box, Button } from "@mui/material";
 import mainLogo from "../../assets/logos/medini-ai-logo.svg";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../utils/links";
 import { useAuthHook } from "../../hooks/useAuth";
 import CommonButton from "../common/CommonButton";
+import { useAuth } from "../../store/AuthContext";
 const AuthHeader = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth(); // Get user and logout function
   const path = location.pathname;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate(routes.auth.signIn); // Redirect to sign-in after logout
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <Box>
@@ -24,14 +36,26 @@ const AuthHeader = () => {
           alt="logo"
           src={mainLogo}
         />
-        {!(path === routes.auth.signIn || path === routes.auth.signUp) && (
+
+        {user && !(path === routes.auth.signIn || path === routes.auth.signUp) ? (
           <CommonButton
             variant="contained"
-            color="primary"
+            color="secondary"
             sx={{ height: "56px", width: "150px" }}
-            text={"Sign up"}
-            type="submit"
+            text={"Logout"}
+            type="button"
+            onClick={handleLogout} // Logout action
           />
+        ) : (
+          !(path === routes.auth.signIn || path === routes.auth.signUp) && (
+            <CommonButton
+              variant="contained"
+              color="primary"
+              sx={{ height: "56px", width: "150px" }}
+              text={"Sign up"}
+              type="submit"
+            />
+          )
         )}
       </Box>
     </Box>

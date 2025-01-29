@@ -1,14 +1,10 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import { useStepForm } from "../../../store/StepFormContext";
+import { Typography } from "@mui/material";
+import { CalenderNameSchema, CalenderNameSchemaType, useStepForm } from "../../../store/StepFormContext";
 import { staticText } from "../../../utils/staticText";
 import CommonButton from "../../common/CommonButton";
 import CommonTextField from "../../common/CommonTextField";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ResetPasswordSchema,
-  ResetPasswordSchemaType,
-} from "../../../hooks/useAuth";
 import { SubmitHandler, useForm } from "react-hook-form";
 import StepFormLayout from "../StepFormLayout";
 
@@ -20,11 +16,11 @@ const NameYourCalendar: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ResetPasswordSchemaType>({
-    resolver: zodResolver(ResetPasswordSchema),
+  } = useForm<CalenderNameSchemaType>({
+    resolver: zodResolver(CalenderNameSchema),
   });
-  const onSubmit: SubmitHandler<ResetPasswordSchemaType> = async (data) => {
-    updateUserDetails({ calendarName: data.email });
+  const onSubmit: SubmitHandler<CalenderNameSchemaType> = async (data) => {
+    updateUserDetails({ calendarName: data.calenderName });
     goToNextStep();
   };
 
@@ -44,10 +40,9 @@ const NameYourCalendar: React.FC = () => {
       </Typography>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CommonTextField
-          placeholder="Enter Email"
-          register={register("email")}
-          errorMessage={errors.email?.message}
-          type="email"
+          placeholder="Calendar name..."
+          register={register("calenderName")}
+          errorMessage={errors.calenderName?.message}
         />
         <CommonButton
           text={staticText.auth.stepContinueText}

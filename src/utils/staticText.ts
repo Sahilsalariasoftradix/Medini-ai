@@ -34,4 +34,11 @@ export const staticText = {
       "email up to 10 people to co-manage your calendar.",
     inviteBUttonText: "Invite",
   },
+  firestore:{
+    accountSucceededMessage:"Account created successfully.",
+    successLoggedInMessage:"Welcome back! You are successfully logged in.",
+    passwordResetText: "Password reset email sent successfully. Check your inbox.",
+    signInWithGoogleMessage: "Successfully signed in with Google!",
+    signInWithAppMessage: "Successfully signed in with Apple!"
+  }
 };
