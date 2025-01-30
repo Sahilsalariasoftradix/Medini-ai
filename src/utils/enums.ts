@@ -28,3 +28,8 @@ export enum EnCityOptions {
   CITY_2 = "City2",
   CITY_3 = "City3",
 }
+
+export enum EnUserBookingsOptions {
+  MANUAL = 0,
+  AUTO = 1,
+}

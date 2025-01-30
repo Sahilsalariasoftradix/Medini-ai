@@ -1,6 +1,8 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { IStepFormContextType, IUserDetails } from "../types/api/Interfaces";
 import { z } from "zod";
+import { EnUserBookingsOptions } from "../utils/enums";
+import { useAuth } from "./AuthContext";
 
 const StepFormContext = createContext<IStepFormContextType | undefined>(
   undefined
@@ -24,6 +26,7 @@ export const CompanyDetailsSchema = z.object({
   appointment: z.boolean().optional(),
   appointmentTime: z.string().min(1, "Appointment time is required"),
 });
+
 // Validation schema
 export const CalenderNameSchema = z.object({
   calenderName: z.string().min(1, "Calender name is required"),
@@ -38,7 +41,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [userDetails, setUserDetails] = useState<IUserDetails>({
+  const [userFormDetails, setUserFormDetails] = useState<IUserDetails>({
     reasonForUsing: "",
     reasonForUsingStep: "",
     calendarName: "",
@@ -52,8 +55,17 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       appointment: false,
       maxAppointmentTime: "",
     },
+    handleBookings: null,
   });
-  // console.log("🚀 ~ userDetails:", userDetails);
+  const { user, loading, userDetails } = useAuth();
+
+  useEffect(() => {
+    if (!loading) {
+      if (userDetails?.onboardingStatus === 1) {
+        setCurrentStep(5);
+      }
+    }
+  }, [user, loading, userDetails?.onboardingStatus]);
 
   // Navigate to the next step
   const goToNextStep = () => {
@@ -67,13 +79,13 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Update user details
   const updateUserDetails = (updates: Partial<IUserDetails>) => {
-    setUserDetails((prev) => ({ ...prev, ...updates }));
+    setUserFormDetails((prev) => ({ ...prev, ...updates }));
   };
 
   // Reset the form to its initial state
   const resetForm = () => {
     setCurrentStep(0);
-    setUserDetails({
+    setUserFormDetails({
       reasonForUsing: "",
       reasonForUsingStep: "",
       calendarName: "",
@@ -87,6 +99,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
         appointment: false,
         maxAppointmentTime: "",
       },
+      handleBookings: null,
     });
   };
 
@@ -94,11 +107,11 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
     <StepFormContext.Provider
       value={{
         currentStep,
-        userDetails,
+        userDetails: userFormDetails,
         goToNextStep,
         goToPreviousStep,
         updateUserDetails,
-        resetForm
+        resetForm,
       }}
     >
       {children}

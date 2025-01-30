@@ -4,14 +4,24 @@ import { useStepForm } from "../../../store/StepFormContext";
 import { Icons } from "../../../utils/Icons";
 import { getReasons } from "../../../firebase/AuthService";
 import {
-  fetchingReasonsErrorMessage,
+  errorFetchingReasonsMessageText,
 } from "../../../utils/errorHandler";
+import { useAuthHook } from "../../../hooks/useAuth";
+import CommonSnackbar from "../../common/CommonSnackbar";
 
 const ReasonForUsing: React.FC = () => {
   const { userDetails, updateUserDetails, goToNextStep } = useStepForm();
+  const {
+    setSnackbarOpen,
+    snackbarMessage,
+    setSnackbarMessage,
+    snackbarSeverity,
+    handleSnackbarClose,
+    setSnackbarSeverity,
+    snackbarOpen,
+  } = useAuthHook();
   const [reasons, setReasons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReasons = async () => {
@@ -36,7 +46,9 @@ const ReasonForUsing: React.FC = () => {
         });
         setReasons(reasonsWithIcons as any);
       } catch (error: any) {
-        setError(error.message);
+        setSnackbarSeverity("error");
+        setSnackbarMessage(error.message || errorFetchingReasonsMessageText);
+        setSnackbarOpen(true);
       } finally {
         setLoading(false);
       }
@@ -81,20 +93,7 @@ const ReasonForUsing: React.FC = () => {
           alignItems={"center"}
           gap={2}
         >
-          {error && (
-            <Box
-              sx={{
-                backgroundColor: "#f8d7da",
-                color: "#721c24",
-                padding: "10px",
-                borderRadius: "5px",
-              }}
-            >
-              <Typography variant="h3">
-                {fetchingReasonsErrorMessage}
-              </Typography>
-            </Box>
-          )}
+          
           {loading ? (
             <>
               {[...Array(4)].map((e, i) => (
@@ -168,6 +167,13 @@ const ReasonForUsing: React.FC = () => {
             </>
           )}
         </Box>
+        {/* Snackbar */}
+        <CommonSnackbar
+          open={snackbarOpen}
+          onClose={handleSnackbarClose}
+          message={snackbarMessage}
+          severity={snackbarSeverity}
+        />
       </Box>
     </Box>
   );

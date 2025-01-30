@@ -27,7 +27,7 @@ export interface UserFormValues {
 //*  Step form
 export interface IUserDetails {
   reasonForUsing: string;
-  reasonForUsingStep:string;
+  reasonForUsingStep: string;
   calendarName: string;
   collaborators: string[]; // For invited collaborators
   companyDetails: {
@@ -36,9 +36,10 @@ export interface IUserDetails {
     apartmentSuite: string;
     city: string;
     country: string;
-    appointment:boolean;
+    appointment: boolean;
     maxAppointmentTime: string;
   };
+  handleBookings: number | null;
   [key: string]: any; // For dynamic fields if needed
 }
 
@@ -48,5 +49,5 @@ export interface IStepFormContextType {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   updateUserDetails: (updates: Partial<IUserDetails>) => void;
-    resetForm: () => void;
+  resetForm: () => void;
 }

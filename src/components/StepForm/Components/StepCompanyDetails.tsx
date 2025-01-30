@@ -30,9 +30,10 @@ import { useAuthHook } from "../../../hooks/useAuth";
 import { routes } from "../../../utils/links";
 
 const CompanyDetails: React.FC = () => {
-  const { userDetails, updateUserDetails, goToPreviousStep, resetForm } =
+  const { userDetails, updateUserDetails, goToPreviousStep, resetForm,goToNextStep } =
     useStepForm();
-  const { navigate } = useAuthHook();
+
+  const { navigate, isLoading, setIsLoading } = useAuthHook();
   // Validate hook
   const {
     register,
@@ -51,6 +52,7 @@ const CompanyDetails: React.FC = () => {
   });
 
   const onSubmit = async (data: CompanyDetailsSchemaType) => {
+    setIsLoading(true);
     try {
       // Step 1: Get the current user ID
       const userId = getCurrentUserId();
@@ -73,7 +75,7 @@ const CompanyDetails: React.FC = () => {
 
       // Step 3: Update context with new user details
       updateUserDetails(updatedDetails);
-
+      goToNextStep();
       // Step 4: Retrieve the latest user details from context
       const currentUserDetails = {
         ...userDetails, // Ensure existing details are preserved
@@ -81,12 +83,14 @@ const CompanyDetails: React.FC = () => {
       };
 
       // Step 5: Save to Firestore
-      await updateUserDetailsInFirestore(userId, currentUserDetails);
-      resetForm();
-      navigate(routes.dashboard.home);
+      // await updateUserDetailsInFirestore(userId, currentUserDetails);
+      // setIsLoading(false);
+      // resetForm();
+      // navigate(routes.dashboard.home);
 
       // console.log("User details saved successfully!");
     } catch (error) {
+      setIsLoading(false);
       console.error(errorSavingUserDetailsMessage, error);
     }
   };
@@ -201,7 +205,7 @@ const CompanyDetails: React.FC = () => {
         <Box mt={4} justifyContent={"center"} display={"flex"}>
           <CommonButton
             sx={{ width: "70%", p: 1.5 }}
-            // loading={isLoading}
+            loading={isLoading}
             text={"Continue"}
             type="submit"
             fullWidth

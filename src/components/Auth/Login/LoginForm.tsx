@@ -38,6 +38,7 @@ import {
   unexpectedErrorMessage,
 } from "../../../utils/errorHandler";
 import { firebaseAuth } from "../../../firebase/BaseConfig";
+import { EnOnboardingStatus } from "../../../utils/enums";
 // Static Icons
 const GoogleIcon = <img alt="edit" src={googleIcon} />;
 const AppleIcon = <img alt="edit" src={appleIcon} />;
@@ -102,17 +103,19 @@ const LoginForm = () => {
         setTimeout(() => {
           navigate(routes.auth.stepForm, { replace: true });
         }, 500);
-      } else if (onboardingStatus === 1) {
+      } else if (onboardingStatus === EnOnboardingStatus.STATUS_2) {
         // If onboardingStatus is 1, route to the home page
         setIsLoading(false);
         setTimeout(() => {
           navigate(routes.dashboard.home, { replace: true });
         }, 500);
-      } else if (onboardingStatus === 2) {
-        // If onboardingStatus is 2, route to a "completed onboarding" page or any other route
-        setIsLoading(false);
-        // navigate(routes.dashboard.home, { replace: true });
-      } else {
+      }
+      //  else if (onboardingStatus === 2) {
+      //   // If onboardingStatus is 2, route to a "completed onboarding" page or any other route
+      //   setIsLoading(false);
+      //   // navigate(routes.dashboard.home, { replace: true });
+      // } 
+      else {
         // If the status is an unexpected value, handle that case (optional)
         throw new Error("Invalid onboarding status.");
       }

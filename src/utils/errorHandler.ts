@@ -25,21 +25,12 @@ export const getAuthErrorMessage = (errorCode: string): string => {
       return "An unexpected error occurred. Please try again.";
   }
 };
-export const zodErrorMessages = {
-  required: "This field is required.",
-  invalidEmail: "Please enter a valid email address.",
-  minLength: (length: number) => `Must be at least ${length} characters long.`,
-  maxLength: (length: number) => `Must be at most ${length} characters long.`,
-  invalidNumber: "Please enter a valid number.",
-  minValue: (value: number) => `Value must be at least ${value}.`,
-  maxValue: (value: number) => `Value must be at most ${value}.`,
-  invalidUrl: "Please enter a valid URL.",
-};
 // Firestore errors
 export const emailCheckingErrorPlaceholder = "Error checking email in Firestore:";
 export const emailCheckingError="Error checking email in Firestore.";
 export const updateUserErrorPlaceholder="Error updating user details in Firestore:";
 export const updateUserError="Failed to update user details. Please try again.";
+export const errorFetchingReasonsMessageText = "Error fetching user details from Firestore"
 
 // Data fetching error message
 export const fetchingReasonsErrorMessage =
