@@ -2,12 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { firebaseAuth, firebaseFirestore } from "../firebase/BaseConfig";
 import { doc, getDoc } from "firebase/firestore";
+import { getCurrentUserId } from "../firebase/AuthService";
 
 interface IAuthContextType {
   user: User | null;
   userDetails: any;
   loading: boolean;
   logout: () => Promise<void>;
+  setUserDetails:any
 }
 const AuthContext = createContext<IAuthContextType | undefined>(undefined);
 
@@ -15,9 +17,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  console.log("🚀 ~ user:", user)
   const [userDetails, setUserDetails] = useState<any>(null);
-  console.log("🚀 ~ userDetails:", userDetails)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <AuthContext.Provider value={{ user, userDetails, loading, logout }}>
+    <AuthContext.Provider value={{ user, userDetails, loading, logout,setUserDetails }}>
       {children}
     </AuthContext.Provider>
   );

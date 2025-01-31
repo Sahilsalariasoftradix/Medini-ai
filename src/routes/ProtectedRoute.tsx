@@ -1,25 +1,23 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { CircularProgress, Box } from "@mui/material";
 import { useAuth } from "../store/AuthContext";
 import { routes } from "../utils/links";
+import PageLoader from "../components/Loading/PageLoader";
+import { EnOnboardingStatus } from "../utils/enums";
 
 const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, userDetails } = useAuth();
 
   if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
+    return <PageLoader />;
   }
 
   if (!user) return <Navigate to={routes.auth.signIn} replace />;
+  if (
+    userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_0 ||
+    userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_1
+  ) {
+    return <Navigate to={routes.auth.stepForm} replace />;
+  }
   //   if (!user.emailVerified) return <Navigate to="/verify-email" replace />;
 
   return <Outlet />;

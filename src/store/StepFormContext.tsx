@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { IStepFormContextType, IUserDetails } from "../types/api/Interfaces";
 import { z } from "zod";
-import { EnUserBookingsOptions } from "../utils/enums";
+import { EnOnboardingStatus, EnUserBookingsOptions } from "../utils/enums";
 import { useAuth } from "./AuthContext";
 
 const StepFormContext = createContext<IStepFormContextType | undefined>(
@@ -61,9 +61,10 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (!loading) {
-      if (userDetails?.onboardingStatus === 1) {
+      if (userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_1) {
         setCurrentStep(5);
       }
+      
     }
   }, [user, loading, userDetails?.onboardingStatus]);
 

@@ -14,9 +14,16 @@ import {
 } from "../../../utils/errorHandler";
 import { EnOnboardingStatus } from "../../../utils/enums";
 import { routes } from "../../../utils/links";
+import { useAuth } from "../../../store/AuthContext";
+import { useEffect, useState } from "react";
 
 const ProceedAvailability = () => {
   const { navigate, isLoading, setIsLoading } = useAuthHook();
+  const { user, loading, userDetails, setUserDetails } = useAuth();
+  const [newOnboardingStatus, setNewOnboardingStatus] = useState(
+    userDetails?.onboardingStatus
+  );
+ 
 
   const handleContinue = async () => {
     setIsLoading(true);
@@ -26,16 +33,26 @@ const ProceedAvailability = () => {
       if (!userId) {
         throw new Error(userNotSignedInErrorMessage);
       }
+
+      const updatedStatus = EnOnboardingStatus.STATUS_2; // Store the new value
+
+      setNewOnboardingStatus(updatedStatus); // Update state
+
+      // Step 2: Update Firestore with the new status
       await updateUserDetailsInFirestore(userId, {
-        onboardingStatus: EnOnboardingStatus.STATUS_2,
+        onboardingStatus: updatedStatus, // Use updatedStatus directly
       });
-      navigate(routes.dashboard.home)
-      setIsLoading(false);
+      setUserDetails({ ...userDetails, onboardingStatus: updatedStatus });
+      setTimeout(() => {
+        navigate(routes.dashboard.home);
+      }, 2000);
     } catch (error) {
-      setIsLoading(false);
       console.error(errorSavingUserDetailsMessage, error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
   return (
     <StepFormLayout>
       <Typography align="center" variant="h3">
@@ -50,17 +67,17 @@ const ProceedAvailability = () => {
         Before we get started, let us know your work hours and if bookings
         should be in person or by phone in Availability.
       </Typography>
-      <Box display={'flex'} justifyContent={'center'} my={5}>
-     <Box
-        component="img"
-        sx={{
-          width: 280,
-          height: 266,
-        }}
-        alt="The house from the offer."
-        src={img}
-      />
-     </Box>
+      <Box display={"flex"} justifyContent={"center"} my={5}>
+        <Box
+          component="img"
+          sx={{
+            width: 280,
+            height: 266,
+          }}
+          alt="The house from the offer."
+          src={img}
+        />
+      </Box>
       <form>
         <Box mt={0}>
           <Box justifyContent={"center"} display={"flex"} mt={4}></Box>
@@ -70,6 +87,7 @@ const ProceedAvailability = () => {
             loading={isLoading}
             onClick={handleContinue}
             fullWidth
+            type="button"
           />
         </Box>
       </form>

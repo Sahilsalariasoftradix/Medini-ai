@@ -89,36 +89,37 @@ const LoginForm = () => {
       setSnackbarMessage(message);
       setSnackbarOpen(true);
       reset();
-      // Step 2: Fetch onboarding status after successful sign-in
-      const userId = firebaseAuth.currentUser?.uid; // Get the current user's UID
-      if (!userId) {
-        throw new Error("User ID not found.");
-      }
+      
+      // // Step 2: Fetch onboarding status after successful sign-in
+      // const userId = firebaseAuth.currentUser?.uid; // Get the current user's UID
+      // if (!userId) {
+      //   throw new Error("User ID not found.");
+      // }
 
-      const onboardingStatus = await getOnboardingStatus(userId);
+      // // const onboardingStatus = await getOnboardingStatus(userId);
 
-      // Step 3: Route based on the onboarding status
-      if (onboardingStatus === 0) {
-        setIsLoading(false);
-        setTimeout(() => {
-          navigate(routes.auth.stepForm, { replace: true });
-        }, 500);
-      } else if (onboardingStatus === EnOnboardingStatus.STATUS_2) {
-        // If onboardingStatus is 1, route to the home page
-        setIsLoading(false);
-        setTimeout(() => {
-          navigate(routes.dashboard.home, { replace: true });
-        }, 500);
-      }
-      //  else if (onboardingStatus === 2) {
-      //   // If onboardingStatus is 2, route to a "completed onboarding" page or any other route
-      //   setIsLoading(false);
-      //   // navigate(routes.dashboard.home, { replace: true });
-      // } 
-      else {
-        // If the status is an unexpected value, handle that case (optional)
-        throw new Error("Invalid onboarding status.");
-      }
+      // // // Step 3: Route based on the onboarding status
+      // // if (onboardingStatus === 0) {
+      // //   setIsLoading(false);
+      // //   setTimeout(() => {
+      // //     navigate(routes.auth.stepForm, { replace: true });
+      // //   }, 500);
+      // // } else if (onboardingStatus === EnOnboardingStatus.STATUS_2) {
+      // //   // If onboardingStatus is 1, route to the home page
+      // //   setIsLoading(false);
+      // //   setTimeout(() => {
+      // //     navigate(routes.dashboard.home, { replace: true });
+      // //   }, 500);
+      // // }
+      // //  else if (onboardingStatus === 2) {
+      // //   // If onboardingStatus is 2, route to a "completed onboarding" page or any other route
+      // //   setIsLoading(false);
+      // //   // navigate(routes.dashboard.home, { replace: true });
+      // // } 
+      // else {
+      //   // If the status is an unexpected value, handle that case (optional)
+      //   throw new Error("Invalid onboarding status.");
+      // }
     } catch (error: any) {
       setSnackbarSeverity("error");
       setSnackbarMessage(error.message || unexpectedErrorMessage);

@@ -1,29 +1,27 @@
-import { Box } from "@mui/material";
-import React, { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { Box, CircularProgress } from "@mui/material";
 import AuthHeader from "../components/Header/AuthHeader";
 import AuthFooter from "../components/Footer/AuthFooter";
 import { useAuth } from "../store/AuthContext";
 import { routes } from "../utils/links";
 import { EnOnboardingStatus } from "../utils/enums";
+import PageLoader from "../components/Loading/PageLoader";
 
 const AuthFlowLayout = () => {
   const { user, loading, userDetails } = useAuth();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate(routes.auth.signIn); // Redirect to login if not authenticated
-      }
-       else if (userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_0) {
-        navigate(routes.auth.stepForm); // Redirect to step 6 if status is 1
-      }
-       else if (userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_2) {
-        navigate(routes.dashboard.home); // Redirect to dashboard if onboarding is completed
-      }
-    }
-  }, [user, loading, userDetails?.onboardingStatus, navigate]);
+  // ✅ Show loading state while userDetails are still loading
+  if (loading || !userDetails) {
+    return <PageLoader />;
+  }
+  // ✅ Redirect logic
+  if (!user) {
+    return <Navigate to={routes.auth.signIn} replace />;
+  }
+ 
+  if (userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_2) {
+    return <Navigate to={routes.dashboard.home} replace />;
+  }
 
   return (
     <Box sx={{ bgcolor: "grey.200", height: "100vh" }}>

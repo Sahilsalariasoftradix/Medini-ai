@@ -107,6 +107,7 @@ export const getCurrentUserId = (): string | null => {
   return user ? user.uid : null; // user.uid contains the unique identifier for the authenticated user
 };
 
+
 //* Function to update a user's details in the Firestore database
 export const updateUserDetailsInFirestore = async (
   userId: string, // User ID to identify the document to update
@@ -177,6 +178,8 @@ export const signUpWithEmail = async (
     );
     // Get the user object from the created userCredential
     const user = userCredential.user;
+    // Optionally, sign out the user immediately after account creation if you don't want them signed in
+    await signOut(firebaseAuth);
 
     // Step 2: Save the user's details in Firestore
     const userData = {
@@ -199,8 +202,7 @@ export const signUpWithEmail = async (
     // Step 3: Send an email verification to the user
     await sendEmailVerification(user);
 
-    // Optionally, sign out the user immediately after account creation if you don't want them signed in
-    await signOut(firebaseAuth);
+    
     // Step 4: Return a success message
     return `Welcome, ${firstName}${" "}${lastName}! ${
       staticText.firestore.accountSucceededMessage
