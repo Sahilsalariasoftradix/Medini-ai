@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { firebaseAuth, firebaseFirestore } from "../firebase/BaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import { getCurrentUserId } from "../firebase/AuthService";
+import { EnFirebaseCollections } from "../utils/enums";
 
 interface IAuthContextType {
   user: User | null;
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (currentUser) {
           // Fetch user details from Firestore
           const userDoc = await getDoc(
-            doc(firebaseFirestore, "users", currentUser.uid)
+            doc(firebaseFirestore, EnFirebaseCollections.USERS, currentUser.uid)
           );
           if (userDoc.exists()) {
             setUserDetails(userDoc.data());

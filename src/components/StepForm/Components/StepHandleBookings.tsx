@@ -20,7 +20,7 @@ import {
 
 const HandleBookings = () => {
   const { userDetails, updateUserDetails, goToNextStep } = useStepForm();
-  const { navigate, isLoading, setIsLoading } = useAuthHook();
+  const { isLoading, setIsLoading } = useAuthHook();
   const [bookingType, setBookingType] = useState(EnUserBookingsOptions.MANUAL);
   const handleChangeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = +e.currentTarget.value;

@@ -15,15 +15,14 @@ import {
 import { EnOnboardingStatus } from "../../../utils/enums";
 import { routes } from "../../../utils/links";
 import { useAuth } from "../../../store/AuthContext";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const ProceedAvailability = () => {
   const { navigate, isLoading, setIsLoading } = useAuthHook();
-  const { user, loading, userDetails, setUserDetails } = useAuth();
+  const { userDetails, setUserDetails } = useAuth();
   const [newOnboardingStatus, setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
   );
- 
 
   const handleContinue = async () => {
     setIsLoading(true);
