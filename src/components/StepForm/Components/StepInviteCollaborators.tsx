@@ -25,7 +25,7 @@ const InviteCollaborators: React.FC = () => {
     setSnackbarSeverity,
     snackbarOpen,
   } = useAuthHook();
-  const { userDetails, updateUserDetails, goToNextStep, goToPreviousStep } =
+  const { userDetails, updateUserDetails, goToNextStep } =
     useStepForm();
   // Validate hook
   const {

@@ -15,6 +15,7 @@ import { useAuth } from "../../store/AuthContext";
 import GuestRoute from "../GuestRoute";
 import ProtectedRoute from "../ProtectedRoute";
 import { Box, CircularProgress } from "@mui/material";
+import Schedule from "../../pages/schedule";
 
 const AppRoutes: React.FC = () => {
   const { loading } = useAuth();
@@ -54,6 +55,7 @@ const AppRoutes: React.FC = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path={routes.dashboard.home} element={<Home />} />
+            <Route path={routes.sidebar.schedule.link} element={<Schedule />} />
           </Route>
         </Route>
 

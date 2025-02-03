@@ -77,10 +77,10 @@ const CompanyDetails: React.FC = () => {
       updateUserDetails(updatedDetails);
       goToNextStep();
       // Step 4: Retrieve the latest user details from context
-      const currentUserDetails = {
-        ...userDetails, // Ensure existing details are preserved
-        ...updatedDetails,
-      };
+      // const currentUserDetails = {
+      //   ...userDetails, // Ensure existing details are preserved
+      //   ...updatedDetails,
+      // };
 
       // Step 5: Save to Firestore
       // await updateUserDetailsInFirestore(userId, currentUserDetails);

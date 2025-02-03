@@ -1,8 +1,7 @@
-import { Box, Button } from "@mui/material";
+import { Box } from "@mui/material";
 import mainLogo from "../../assets/logos/medini-ai-logo.svg";
 import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../utils/links";
-import { useAuthHook } from "../../hooks/useAuth";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
 const AuthHeader = () => {

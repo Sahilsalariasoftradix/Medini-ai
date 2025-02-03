@@ -7,3 +7,9 @@
     font-weight: 500;
     font-size: 16px;
 }
+/* Assuming the arrow icon is facing right by default */
+.rotate {
+    transform: rotate(180deg); /* Adjust the degree based on your design */
+    transition: transform 0.3s ease; /* Smooth transition */
+  }
+  

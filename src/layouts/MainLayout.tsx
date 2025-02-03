@@ -1,19 +1,35 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Box, CssBaseline, Drawer, AppBar, Toolbar, Typography, IconButton, List, ListItem, ListItemIcon, ListItemText, Button, useMediaQuery, useTheme } from "@mui/material";
-import { Theme } from "@emotion/react";
-
-const drawerWidth = 240;
+import {
+  Box,
+  CssBaseline,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import Sidebar, { drawerWidth } from "../components/sidebar/Sidebar";
 
 const MainLayout = () => {
+  const location = useLocation(); // This hook provides the current route
   const [open, setOpen] = useState(true); // Sidebar state
-
+  const [nestedOpen, setNestedOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  
+
+  const handleNestedMenuToggle = () => {
+    setNestedOpen(!nestedOpen);
+  };
+  // Function to check if the route is active
+  const isActive = (link: string) => location.pathname === link;
 
   const toggleDrawer = () => {
     setOpen(!open);
+  };
+  const closeDrawerOnMobile = () => {
+    if (isMobile) setOpen(false);
   };
 
   return (
@@ -21,50 +37,47 @@ const MainLayout = () => {
       <CssBaseline />
 
       {/* Header */}
-      <AppBar position="fixed" sx={{ width: isMobile ? "100%" : `calc(100% - ${open ? drawerWidth : 60}px)`, transition: "0.3s" }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          width: isMobile
+            ? "100%"
+            : `calc(100% - ${open ? drawerWidth : 80}px)`,
+          transition: "0.3s",
+          borderRadius: 0,
+        }}
+      >
         <Toolbar>
-          <Button  onClick={toggleDrawer} >
-          {open ? "opem" : "sasas"}
-          </Button>
+          <Button onClick={toggleDrawer}>{open ? "opem" : "sasas"}</Button>
           <Typography variant="h6" noWrap>
             My Dashboard
-            <Button  onClick={toggleDrawer} >
-          {open ? "opem" : "sasas"}
-          </Button>
+            <Button onClick={toggleDrawer}>{open ? "opem" : "sasas"}</Button>
           </Typography>
         </Toolbar>
       </AppBar>
 
       {/* Sidebar */}
-      <Drawer
-       variant={isMobile ? "temporary" : "permanent"} // Temporary for mobile, Permanent for desktop
+      <Sidebar
         open={open}
-        sx={{
-          width: open ? drawerWidth : (isMobile ? 0 : 60),
-          flexShrink: 0,
-          transition: "width 0.3s",
-          "& .MuiDrawer-paper": { width: open ? drawerWidth : (isMobile ? 0 : 60), transition: "width 0.3s" },
-        }}
-      >
-        <Toolbar />
-        <List>
-          <ListItem >
-            {/* <ListItemIcon><Home /></ListItemIcon> */}
-            <ListItemText primary="Home" />
-          </ListItem>
-          <ListItem >
-            {/* <ListItemIcon><Dashboard /></ListItemIcon> */}
-            <ListItemText primary="Dashboard" />
-          </ListItem>
-          <ListItem >
-            {/* <ListItemIcon><Logout /></ListItemIcon> */}
-            <ListItemText primary="Logout" />
-          </ListItem>
-        </List>
-      </Drawer>
+        nestedOpen={nestedOpen}
+        isMobile={isMobile}
+        handleNestedMenuToggle={handleNestedMenuToggle}
+        isActive={isActive}
+        closeDrawerOnMobile={closeDrawerOnMobile}
+      />
 
       {/* Main Content */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: isMobile ? "100%" : `calc(100% - ${open ? drawerWidth : 60}px)`, transition: "0.3s" }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: isMobile
+            ? "100%"
+            : `calc(100% - ${open ? drawerWidth : 80}px)`,
+          transition: "0.3s",
+        }}
+      >
         <Toolbar />
         <Outlet />
       </Box>

@@ -70,10 +70,7 @@ const components: Components<Omit<Theme, "components">> = {
             fontWeight: "400",
           },
         },
-       
       },
-      
-      
     },
 
     defaultProps: {
@@ -83,11 +80,11 @@ const components: Components<Omit<Theme, "components">> = {
   MuiFormHelperText: {
     styleOverrides: {
       root: {
-        color: '#FF4747',
-        }
-      }
+        color: "#FF4747",
+      },
     },
-    
+  },
+
   MuiOutlinedInput: {
     styleOverrides: {
       root: {
@@ -100,7 +97,7 @@ const components: Components<Omit<Theme, "components">> = {
         },
         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
           borderColor: "#358FF7",
-          borderWidth:'1px'
+          borderWidth: "1px",
         },
         "& .MuiInputBase-input": {
           color: "#1A202C",
@@ -136,7 +133,54 @@ const components: Components<Omit<Theme, "components">> = {
       },
     },
   },
+  MuiListItem: {
+    styleOverrides: {
+      root: {
+        padding: "8px 20px", // Custom padding
+        cursor:"pointer",
+        borderRadius: "12px", // Rounded corners
+        transition: "0.3s", // Smooth transition for hover effects
+        color: "#718096", // Default text color
+        "&:hover": {
+          backgroundColor: "#358FF7", // Background color on hover
+          color: "#fff", // Text color on hover
+          fontWeight: "800", // Bold text on hover
+          "& img": {
+            filter:
+              "brightness(0) saturate(100%) invert(100%) sepia(100%) saturate(0%) hue-rotate(198deg) brightness(104%) contrast(104%)",
+            transition: "filter 0.3s", // Smooth transition for image color change
+          },
+        },
+        "&.Mui-selected": {
+          backgroundColor: "#358FF7", // Background color when selected
+          color: "#fff", // Text color when selected
+          "&:hover": {
+            backgroundColor: "#1565c0", // Darker blue on hover when selected
+          },
+        },
+      },
+    },
+  },
 
+  MuiListItemText: {
+    styleOverrides: {
+      primary: {
+        fontSize: "14px",
+        fontWeight: 500,
+      },
+    },
+  },
+  MuiBadge: {
+    styleOverrides: {
+      badge: {
+        backgroundColor: "#38BDF8", // ✅ Custom blue background
+        color: "white", // ✅ Text color
+        fontSize: "12px",
+        fontWeight: "bold",
+        padding: "4px 6px",
+      },
+    },
+  },
   MuiTypography: {
     // styleOverrides: {
     //   root: {

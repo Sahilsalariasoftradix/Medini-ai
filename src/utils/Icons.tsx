@@ -2,10 +2,38 @@ import pill from "../assets/icons/pill.svg";
 import medkit from "../assets/icons/medi-kit.svg";
 import health from "../assets/icons/health.svg";
 import heart from "../assets/icons/heart-rate.svg";
+import home from "../assets/icons/Home.svg";
+import sidebarlogo from "../assets/icons/sidebar-logo.svg";
+import activity from "../assets/icons/Activity.svg";
+import arrowdown from "../assets/icons/arrow-down.svg";
+import billing from "../assets/icons/Billing.svg";
+import patients from "../assets/icons/Patients.svg";
+import history from "../assets/icons/History.svg";
+import messages from "../assets/icons/Message.svg";
+import settings from "../assets/icons/settings.svg";
+import help from "../assets/icons/help.svg";
 
-export const Icons: { [key in 'option1' | 'option2' | 'option3' | 'option4']: string } = {
-  option1: pill,    // Assuming 'pill' is the icon for Option 1
-  option2: medkit,   // 'medkit' icon for Option 2
-  option3: health,   // 'health' icon for Option 3
-  option4: heart,    // 'heart' icon for Option 4
+export const Icons: {
+  [key in "option1" | "option2" | "option3" | "option4"]: string;
+} = {
+  option1: pill, // Assuming 'pill' is the icon for Option 1
+  option2: medkit, // 'medkit' icon for Option 2
+  option3: health, // 'health' icon for Option 3
+  option4: heart, // 'heart' icon for Option 4
+};
+
+export const SidebarIcons = {
+  logo: sidebarlogo,
+  home: home, // Assuming 'pill' is the icon for Option 1
+  activity:activity,
+  arrow:arrowdown,
+  billing: billing,
+  patients:patients,
+  history: history, 
+  messages: messages,
+  settings: settings,
+  help: help,  // 'help' icon for Option 4
+  // Add more icons as needed
+
+
 };
