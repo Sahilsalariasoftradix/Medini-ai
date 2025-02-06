@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { IStepFormContextType, IUserDetails } from "../types/api/Interfaces";
+import { IStepFormContextType, IUserDetails } from "../utils/Interfaces";
 import { z } from "zod";
 import { EnOnboardingStatus, EnUserBookingsOptions } from "../utils/enums";
 import { useAuth } from "./AuthContext";

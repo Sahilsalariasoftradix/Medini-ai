@@ -22,7 +22,7 @@ const AuthHeader = () => {
   return (
     <Box>
       <Box
-        sx={{ px: 6, py: 3, display: "flex", justifyContent: "space-between" }}
+        sx={{ px: { xs: 1, md: 6 }, py: 3, display: "flex", justifyContent: "space-between",alignItems: "center" }}
       >
         <Box
           component="img"

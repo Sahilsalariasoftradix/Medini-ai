@@ -13,7 +13,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CommonButton from "../../common/CommonButton";
 import {
   getCurrentUserId,
-  updateUserDetailsInFirestore,
 } from "../../../firebase/AuthService";
 import CustomSwitch from "../../common/CustomSwitch";
 import {
@@ -27,19 +26,17 @@ import {
   COUNTRY_OPTIONS,
 } from "../../../utils/options";
 import { useAuthHook } from "../../../hooks/useAuth";
-import { routes } from "../../../utils/links";
 
 const CompanyDetails: React.FC = () => {
-  const { userDetails, updateUserDetails, goToPreviousStep, resetForm,goToNextStep } =
+  const {  updateUserDetails, goToNextStep } =
     useStepForm();
 
-  const { navigate, isLoading, setIsLoading } = useAuthHook();
+  const { isLoading, setIsLoading } = useAuthHook();
   // Validate hook
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
     control,
   } = useForm<CompanyDetailsSchemaType>({
     resolver: zodResolver(CompanyDetailsSchema),
@@ -76,19 +73,7 @@ const CompanyDetails: React.FC = () => {
       // Step 3: Update context with new user details
       updateUserDetails(updatedDetails);
       goToNextStep();
-      // Step 4: Retrieve the latest user details from context
-      // const currentUserDetails = {
-      //   ...userDetails, // Ensure existing details are preserved
-      //   ...updatedDetails,
-      // };
-
-      // Step 5: Save to Firestore
-      // await updateUserDetailsInFirestore(userId, currentUserDetails);
-      // setIsLoading(false);
-      // resetForm();
-      // navigate(routes.dashboard.home);
-
-      // console.log("User details saved successfully!");
+     
     } catch (error) {
       setIsLoading(false);
       console.error(errorSavingUserDetailsMessage, error);
@@ -96,7 +81,7 @@ const CompanyDetails: React.FC = () => {
   };
 
   return (
-    <StepFormLayout>
+    <StepFormLayout  >
       <Typography align="center" variant="h3">
         Company Details
       </Typography>
@@ -123,7 +108,7 @@ const CompanyDetails: React.FC = () => {
             />
           </Grid>
           <Grid size={6}>
-            <Typography mb={1} variant="bodyLargeExtraBold" color="grey.600">
+            <Typography mb={1} noWrap variant="bodyLargeExtraBold" color="grey.600">
               Apartment, suite, or etc.
             </Typography>
             <CommonTextField
@@ -176,7 +161,7 @@ const CompanyDetails: React.FC = () => {
             justifyContent={"space-between"}
             alignItems={"center"}
           >
-            <Typography variant="bodyLargeMedium" color="grey.600">
+            <Typography variant="bodyLargeMedium" noWrap color="grey.600">
               Do you take in person appointments?{" "}
             </Typography>
             {/* Appointment Switch */}

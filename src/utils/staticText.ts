@@ -42,3 +42,4 @@ export const staticText = {
     signInWithAppMessage: "Successfully signed in with Apple!"
   }
 };
+

@@ -20,6 +20,7 @@ import { useState } from "react";
 const ProceedAvailability = () => {
   const { navigate, isLoading, setIsLoading } = useAuthHook();
   const { userDetails, setUserDetails } = useAuth();
+  const { resetForm } = useStepForm();
   const [newOnboardingStatus, setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
   );
@@ -42,6 +43,7 @@ const ProceedAvailability = () => {
         onboardingStatus: updatedStatus, // Use updatedStatus directly
       });
       setUserDetails({ ...userDetails, onboardingStatus: updatedStatus });
+      resetForm();
       setTimeout(() => {
         navigate(routes.dashboard.home);
       }, 2000);

@@ -101,10 +101,23 @@ const Sidebar = ({
       {/* <Toolbar /> */}
       <List sx={listContainerStyles}>
         <Box
+        
           display={"flex"}
           flexDirection={"column"}
           justifyContent={"space-between"}
           height={"100%"}
+          sx={{
+            "&::before": {
+              width: "80px",
+              content: '""',
+              position: "absolute",
+              zIndex: -3,
+              borderRadius: "30px",
+              height: "80px",
+              top: "-25px",
+              background: "#358FF7",
+            },
+          }}
         >
           <Box>
             <Box sx={{ px: 0, mb: 4, mt: 2 }}>

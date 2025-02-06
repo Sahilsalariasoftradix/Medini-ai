@@ -104,7 +104,7 @@ const SignUpForm = () => {
       minHeight={"calc(100vh - 134px)"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="form">
-        <Box sx={{ p: "40px", m: "auto" }} className="auth-form">
+        <Box sx={{ p: {xs: 3, md: "40px"}, m: "auto",maxHeight: {xs: "700px", md: "100%"},overflowY: "auto" }} className="auth-form">
           <Typography align="center" variant="h3">
             {text.signupPageText}
           </Typography>
@@ -117,7 +117,7 @@ const SignUpForm = () => {
             {text.subtitle}
           </Typography>
           <Grid container spacing={2} my={3}>
-            <Grid size={6}>
+            <Grid size={{xs: 12, md: 6}}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -130,7 +130,7 @@ const SignUpForm = () => {
                 </Typography>
               </Button>
             </Grid>
-            <Grid size={6}>
+            <Grid size={{xs: 12, md: 6}}>
               <Button
                 fullWidth
                 variant="outlined"

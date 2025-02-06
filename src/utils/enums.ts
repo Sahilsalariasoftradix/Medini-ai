@@ -33,3 +33,10 @@ export enum EnUserBookingsOptions {
   MANUAL = 0,
   AUTO = 1,
 }
+
+export enum EnCallPurpose {
+  CANCEL = 0,
+  BOOK = 1,
+  RESCHEDULE = 2,
+  REQUESTINFO = 3,
+}

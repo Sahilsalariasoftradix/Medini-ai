@@ -96,7 +96,7 @@ const typography: TypographyOptions = {
   },
   h4: {
     fontSize: "1.5rem", // Equivalent to 24px
-    fontWeight: 500,
+    fontWeight: 800,
     lineHeight: 1.5,
     letterSpacing: "0.00735em",
   },

@@ -77,6 +77,7 @@ const components: Components<Omit<Theme, "components">> = {
       variant: "outlined",
     },
   },
+
   MuiFormHelperText: {
     styleOverrides: {
       root: {
@@ -137,7 +138,7 @@ const components: Components<Omit<Theme, "components">> = {
     styleOverrides: {
       root: {
         padding: "8px 20px", // Custom padding
-        cursor:"pointer",
+        cursor: "pointer",
         borderRadius: "12px", // Rounded corners
         transition: "0.3s", // Smooth transition for hover effects
         color: "#718096", // Default text color
@@ -181,6 +182,35 @@ const components: Components<Omit<Theme, "components">> = {
       },
     },
   },
+  MuiChip: {
+    styleOverrides: {
+      root: ({ ownerState }: any) => ({
+        fontWeight: 600,
+        borderRadius: "8px",
+        fontSize: "14px",
+        height: "36px",
+        width:'120px',
+        padding: "4px 12px",
+        cursor: ownerState.onClick ? "pointer" : "default",
+        ...(ownerState.color === "success" && {
+          backgroundColor: "#F6FDF9",
+          color: "#22C55E",
+        }),
+        ...(ownerState.color === "error" && {
+          backgroundColor: "#FFF5F5",
+          color: "#FF4747",
+        }),
+        ...(ownerState.color === "warning" && {
+          backgroundColor: "#FFFCF0",
+          color: "#FACC15",
+        }),
+        ...(ownerState.color === "info" && {
+          backgroundColor: "#EFF6FF",
+          color: "#2563EB",
+        }),
+      }),
+    },
+  },
   MuiTypography: {
     // styleOverrides: {
     //   root: {
@@ -221,15 +251,15 @@ const components: Components<Omit<Theme, "components">> = {
       },
     },
   },
-  MuiChip: {
-    styleOverrides: {
-      root: {
-        borderRadius: "16px", // Rounded corners for Chips
-        fontWeight: 500,
-        padding: "4px 12px",
-      },
-    },
-  },
+  // MuiChip: {
+  //   styleOverrides: {
+  //     root: {
+  //       borderRadius: "16px", // Rounded corners for Chips
+  //       fontWeight: 500,
+  //       padding: "4px 12px",
+  //     },
+  //   },
+  // },
 };
 
 export default components;

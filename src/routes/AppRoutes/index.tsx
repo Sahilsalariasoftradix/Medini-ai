@@ -16,6 +16,7 @@ import GuestRoute from "../GuestRoute";
 import ProtectedRoute from "../ProtectedRoute";
 import { Box, CircularProgress } from "@mui/material";
 import Schedule from "../../pages/schedule";
+import CallCenter from "../../pages/call-center/CallCenter";
 
 const AppRoutes: React.FC = () => {
   const { loading } = useAuth();
@@ -37,10 +38,7 @@ const AppRoutes: React.FC = () => {
         {/* Authflow Layout */}
         <Route element={<AuthFlow />}>
           <Route path={routes.auth.verifyEmail} element={<VerifyEmail />} />
-          <Route
-            path={routes.auth.forgotPassword}
-            element={<ResetPassword />}
-          />
+
           <Route path={routes.auth.stepForm} element={<StepForm />} />
         </Route>
         {/* Guest Layout (For Unauthenticated Users Only) */}
@@ -48,6 +46,10 @@ const AppRoutes: React.FC = () => {
           <Route element={<AnonymousLayout />}>
             <Route path={routes.auth.signIn} element={<Login />} />
             <Route path={routes.auth.signUp} element={<SignUp />} />
+            <Route
+              path={routes.auth.forgotPassword}
+              element={<ResetPassword />}
+            />
           </Route>
         </Route>
 
@@ -56,6 +58,7 @@ const AppRoutes: React.FC = () => {
           <Route element={<MainLayout />}>
             <Route path={routes.dashboard.home} element={<Home />} />
             <Route path={routes.sidebar.schedule.link} element={<Schedule />} />
+            <Route path={routes.sidebar.callCenter.link} element={<CallCenter />} />
           </Route>
         </Route>
 

@@ -73,7 +73,7 @@ const ReasonForUsing: React.FC = () => {
       alignItems={"center"}
       minHeight={"calc(100vh - 134px)"}
     >
-      <Box>
+      <Box mx={{ xs: 1, md: 0 }}>
         <Typography align="center" variant="h3">
           Tell us your main reason for <br /> using Medini?
         </Typography>
@@ -92,6 +92,7 @@ const ReasonForUsing: React.FC = () => {
           justifyContent={"center"}
           alignItems={"center"}
           gap={2}
+          flexWrap={"wrap"}
         >
           
           {loading ? (
@@ -100,10 +101,11 @@ const ReasonForUsing: React.FC = () => {
                 <Skeleton
                   key={i}
                   variant="rectangular"
-                  width={200}
-                  height={200}
+             
                   sx={{
                     borderRadius: "40px",
+                    width: { xs: "180px", md: "200px" },
+                    height: { xs: "180px", md: "200px" },
                   }}
                 />
               ))}
@@ -130,8 +132,8 @@ const ReasonForUsing: React.FC = () => {
                     borderRadius: "40px",
                     border: "1px solid #E2E8F0",
                     // p: 10,
-                    height: "200px",
-                    width: "200px",
+                    height: { xs: "180px", md: "200px" },
+                    width: { xs: "180px", md: "200px" },
                     "&:hover": {
                       background: "#358FF7",
                       color: "white",

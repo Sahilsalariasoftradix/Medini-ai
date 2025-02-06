@@ -92,18 +92,17 @@ export function RoundCheckbox({
   return (
     <FormControlLabel
       labelPlacement={labelPlacement}
-      control={
-        React.cloneElement(control as React.ReactElement, {
-          sx: { "&:hover": { bgcolor: "transparent" } },
-          disableRipple: true,
-          color: "default",
-          checkedIcon,
-          icon,
-          inputProps: { "aria-label": label },
-          ...props, // Pass all other props to the Checkbox component
-        })
-      }
+      control={React.cloneElement(control as React.ReactElement, {
+        sx: { "&:hover": { bgcolor: "transparent" } },
+        disableRipple: true,
+        color: "default",
+        checkedIcon,
+        icon,
+        inputProps: { "aria-label": label },
+        ...props, // Pass all other props to the Checkbox component
+      })}
       label={label}
+      sx={{ margin: label ? undefined : 0 }} // Conditionally set marginLeft to 0 if label is not available
     />
   );
 }

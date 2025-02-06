@@ -26,11 +26,15 @@ export const getAuthErrorMessage = (errorCode: string): string => {
   }
 };
 // Firestore errors
-export const emailCheckingErrorPlaceholder = "Error checking email in Firestore:";
-export const emailCheckingError="Error checking email in Firestore.";
-export const updateUserErrorPlaceholder="Error updating user details in Firestore:";
-export const updateUserError="Failed to update user details. Please try again.";
-export const errorFetchingReasonsMessageText = "Error fetching user details from Firestore"
+export const emailCheckingErrorPlaceholder =
+  "Error checking email in Firestore:";
+export const emailCheckingError = "Error checking email in Firestore.";
+export const updateUserErrorPlaceholder =
+  "Error updating user details in Firestore:";
+export const updateUserError =
+  "Failed to update user details. Please try again.";
+export const errorFetchingReasonsMessageText =
+  "Error fetching user details from Firestore";
 
 // Data fetching error message
 export const fetchingReasonsErrorMessage =
@@ -39,20 +43,19 @@ export const fetchingReasonsErrorMessage =
 export const collaboratorsErrorMessage =
   "This email is already in the collaborators list.";
 
-// Auth Page error messages
-export const firstNameErrorMessage = "First name is required";
-export const firstNameTooLongMessage = "First name is too long";
-export const lastNameErrorMessage = "Last name is required";
-export const lastNameTooLongMessage = "Last name is too long";
-export const errorFetchingReasonsMessage ="Error fetching reasons:"
-export const emailNotVerifiedMessage ="Your email is not verified. Please verify your email to access your account.";
-export const emailNotExistMessage ="Looks like this email isn't registered with us. Please check and enter the correct one."
-export const userNotSignedInErrorMessage ="User is not signed in."
-export const errorSavingUserDetailsMessage ="Error saving user details to Firestore:";
-export const onBoardingFieldNotFoundMessage ="onboardingStatus field is not found."; 
-export const userDocDoesNotExistMessage ="User document does not exist."
-export const onboardingStatusErrorMessage ="Error fetching onboardingStatus"; 
-export const onboardingStatusError="Unable to fetch onboarding status."
+export const errorFetchingReasonsMessage = "Error fetching reasons:";
+export const emailNotVerifiedMessage =
+  "Your email is not verified. Please verify your email to access your account.";
+export const emailNotExistMessage =
+  "Looks like this email isn't registered with us. Please check and enter the correct one.";
+export const userNotSignedInErrorMessage = "User is not signed in.";
+export const errorSavingUserDetailsMessage =
+  "Error saving user details to Firestore:";
+export const onBoardingFieldNotFoundMessage =
+  "onboardingStatus field is not found.";
+export const userDocDoesNotExistMessage = "User document does not exist.";
+export const onboardingStatusErrorMessage = "Error fetching onboardingStatus";
+export const onboardingStatusError = "Unable to fetch onboarding status.";
 // Unexpected error
 export const unexpectedErrorMessage = "An error occurred. Please try again.";
 // Registration Message
@@ -65,3 +68,25 @@ export const resetPasswordEmailSentMessage =
   "Password reset link sent successfully. Please check your email";
 export const resetPasswordEmailAlreadyRegisteredMessage =
   "Looks like this email isn't registered with us. Please check and enter the correct one.";
+
+// Auth forms error messages
+export const formErrorMessage = {
+  email: {
+    required: "Email address is required.",
+    invalid: "Please enter a valid email address.",
+  },
+  firstName: {
+    required: "First name is required.",
+    tooLong: "First name is too long.",
+  },
+  lastName: {
+    required: "Last name is required.",
+    tooLong: "Last name is too long.",
+  },
+  password: {
+    required: "Password is required.",
+    tooShort: "Minimum 8 characters required.",
+    errorMessage:
+      "Password must contain 8 characters (at least 1 uppercase, 1 lowercase, 1 number, and 1 special character).",
+  },
+};

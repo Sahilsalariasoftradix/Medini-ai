@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -50,4 +52,11 @@ export interface IStepFormContextType {
   goToPreviousStep: () => void;
   updateUserDetails: (updates: Partial<IUserDetails>) => void;
   resetForm: () => void;
+}
+
+export interface IHeaderProps {
+  isMobile: boolean;
+  open: boolean;
+  toggleDrawer: () => void;
+  pageName: string;
 }

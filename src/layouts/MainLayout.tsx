@@ -3,14 +3,12 @@ import { useState } from "react";
 import {
   Box,
   CssBaseline,
-  AppBar,
   Toolbar,
-  Typography,
-  Button,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import Sidebar, { drawerWidth } from "../components/sidebar/Sidebar";
+import Header from "../components/Header/Header";
 
 const MainLayout = () => {
   const location = useLocation(); // This hook provides the current route
@@ -37,24 +35,11 @@ const MainLayout = () => {
       <CssBaseline />
 
       {/* Header */}
-      <AppBar
-        position="fixed"
-        sx={{
-          width: isMobile
-            ? "100%"
-            : `calc(100% - ${open ? drawerWidth : 80}px)`,
-          transition: "0.3s",
-          borderRadius: 0,
-        }}
-      >
-        <Toolbar>
-          <Button onClick={toggleDrawer}>{open ? "opem" : "sasas"}</Button>
-          <Typography variant="h6" noWrap>
-            My Dashboard
-            <Button onClick={toggleDrawer}>{open ? "opem" : "sasas"}</Button>
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <Header
+        isMobile={isMobile}
+        open={open}
+        toggleDrawer={toggleDrawer}
+      />
 
       {/* Sidebar */}
       <Sidebar
@@ -72,6 +57,7 @@ const MainLayout = () => {
         sx={{
           flexGrow: 1,
           p: 3,
+          mt:3,
           width: isMobile
             ? "100%"
             : `calc(100% - ${open ? drawerWidth : 80}px)`,

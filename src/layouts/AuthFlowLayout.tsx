@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { Box, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
 import AuthHeader from "../components/Header/AuthHeader";
 import AuthFooter from "../components/Footer/AuthFooter";
 import { useAuth } from "../store/AuthContext";
@@ -11,7 +11,7 @@ const AuthFlowLayout = () => {
   const { user, loading, userDetails } = useAuth();
 
   // ✅ Show loading state while userDetails are still loading
-  if (loading || !userDetails) {
+  if (loading ) {
     return <PageLoader />;
   }
   // ✅ Redirect logic

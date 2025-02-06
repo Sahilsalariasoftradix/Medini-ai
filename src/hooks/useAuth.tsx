@@ -1,33 +1,63 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { z } from "zod";
-import {
-  firstNameErrorMessage,
-  firstNameTooLongMessage,
-  lastNameErrorMessage,
-  lastNameTooLongMessage,
-} from "../utils/errorHandler";
+import { formErrorMessage } from "../utils/errorHandler";
 // Validation schema
 export const SignUpSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(20),
+  email: z
+    .string()
+    .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
+    .email({ message: formErrorMessage.email.invalid }), // Checks for a valid email format
+  password: z
+    .string()
+    .min(1, { message: formErrorMessage.password.required }) // Empty password
+    .min(8, { message: formErrorMessage.password.tooShort }) // Less than 8 characters
+    .refine(
+      (password) =>
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+          password
+        ),
+      {
+        message:
+          "Password must contain 8 characters (at least 1 uppercase, 1 lowercase, 1 number, and 1 special character).",
+      }
+    ),
   firstName: z
     .string()
-    .min(1, firstNameErrorMessage)
-    .max(50, firstNameTooLongMessage),
+    .min(1, formErrorMessage.firstName.required)
+    .max(50, formErrorMessage.firstName.tooLong),
   lastName: z
     .string()
-    .min(1, lastNameErrorMessage)
-    .max(50, lastNameTooLongMessage),
+    .min(1, formErrorMessage.lastName.required)
+    .max(50, formErrorMessage.lastName.tooLong),
 });
 // Validation schema
 export const SignInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(20),
+  email: z
+    .string()
+    .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
+    .email({ message: formErrorMessage.email.invalid }), // Checks for a valid email format
+  password: z
+    .string()
+    .min(1, { message: formErrorMessage.password.required }) // Empty password
+    .min(8, { message: formErrorMessage.password.tooShort }) // Less than 8 characters
+    .refine(
+      (password) =>
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+          password
+        ),
+      {
+        message:
+          "Password must contain 8 characters (at least 1 uppercase, 1 lowercase, 1 number, and 1 special character).",
+      }
+    ),
 });
 // Validation schema
 export const ResetPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z
+    .string()
+    .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
+    .email({ message: formErrorMessage.email.invalid }), // Checks for a valid email format
 });
 // Type declaration for schema
 export type ResetPasswordSchemaType = z.infer<typeof ResetPasswordSchema>;
@@ -37,7 +67,7 @@ export type SignInSchemaType = z.infer<typeof SignInSchema>;
 export type SignUpSchemaType = z.infer<typeof SignUpSchema>;
 
 export const useAuthHook = () => {
-  const [showPassword, setShowPassword] = useState<Boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);

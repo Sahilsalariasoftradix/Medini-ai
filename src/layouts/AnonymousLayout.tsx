@@ -1,4 +1,4 @@
-import { Box, Link, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import AuthHeader from "../components/Header/AuthHeader";
 import Grid from "@mui/material/Grid2";
@@ -14,12 +14,12 @@ const AnonymousLayout = () => {
   return (
     <Box sx={{ bgcolor: "grey.200", height: "100vh" }}>
       <Grid container spacing={2} sx={{ height: "100vh" }}>
-        <Grid size={6}>
+        <Grid size={{ xs: 12, lg: 6 }} mx={{ xs: 3, lg: 0 }}>
           <AuthHeader />
           <Outlet context={[text]} />
           <AuthFooter />
         </Grid>
-        <Grid size={6} p={3}>
+        <Grid size={{ xs: 12, lg: 6 }} p={3} display={{ xs: "none", lg: "block" }}>
           <Box
             sx={{
               backgroundColor: "primary.main",

@@ -37,7 +37,7 @@ import {
   updateUserErrorPlaceholder,
   userDocDoesNotExistMessage,
 } from "../utils/errorHandler";
-import { IUserDetails } from "../types/api/Interfaces";
+import { IUserDetails } from "../utils/Interfaces";
 import { staticText } from "../utils/staticText";
 import {
   EnFirebaseCollections,
@@ -77,6 +77,13 @@ export const getOnboardingStatus = async (userId: string): Promise<number> => {
   }
 };
 
+//* Get User Details
+export const getUserDetails = async (userId: string) => {
+  const userRef = doc(firebaseFirestore, EnFirebaseCollections.USERS, userId);
+  const userDoc = await getDoc(userRef);
+  return userDoc.data();
+};
+
 //* Function to check if the email exists in the Firestore 'users' collection
 const checkIfEmailExists = async (email: string) => {
   // Get a reference to the Firestore database
@@ -106,7 +113,6 @@ export const getCurrentUserId = (): string | null => {
   // If a user is authenticated, return their UID; otherwise, return null
   return user ? user.uid : null; // user.uid contains the unique identifier for the authenticated user
 };
-
 
 //* Function to update a user's details in the Firestore database
 export const updateUserDetailsInFirestore = async (
@@ -202,7 +208,6 @@ export const signUpWithEmail = async (
     // Step 3: Send an email verification to the user
     await sendEmailVerification(user);
 
-    
     // Step 4: Return a success message
     return `Welcome, ${firstName}${" "}${lastName}! ${
       staticText.firestore.accountSucceededMessage
