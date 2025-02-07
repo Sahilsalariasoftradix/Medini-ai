@@ -40,3 +40,9 @@ export enum EnCallPurpose {
   RESCHEDULE = 2,
   REQUESTINFO = 3,
 }
+export enum EnBookings {
+  Available = 0,
+  Active = 1,
+  Cancelled = 2,
+  Unconfirmed = 3,
+}

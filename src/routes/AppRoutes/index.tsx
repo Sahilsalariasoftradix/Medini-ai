@@ -17,6 +17,7 @@ import ProtectedRoute from "../ProtectedRoute";
 import { Box, CircularProgress } from "@mui/material";
 import Schedule from "../../pages/schedule";
 import CallCenter from "../../pages/call-center/CallCenter";
+import Booking from "../../pages/booking/Booking";
 
 const AppRoutes: React.FC = () => {
   const { loading } = useAuth();
@@ -58,7 +59,11 @@ const AppRoutes: React.FC = () => {
           <Route element={<MainLayout />}>
             <Route path={routes.dashboard.home} element={<Home />} />
             <Route path={routes.sidebar.schedule.link} element={<Schedule />} />
-            <Route path={routes.sidebar.callCenter.link} element={<CallCenter />} />
+            <Route
+              path={routes.sidebar.callCenter.link}
+              element={<CallCenter />}
+            />
+            <Route path={routes.sidebar.bookings.link} element={<Booking />} />
           </Route>
         </Route>
 
