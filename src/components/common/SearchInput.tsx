@@ -47,7 +47,7 @@ export default function SearchInput({
 }: SearchInputProps) {
   return (
     <>
-      <Autocomplete
+      <Autocomplete  
         open={open}
         onOpen={onOpen}
         onClose={onClose}
