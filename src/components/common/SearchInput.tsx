@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Autocomplete,
   CircularProgress,
@@ -26,13 +26,13 @@ interface SearchInputProps {
   helperText?: string;
 }
 
-function sleep(duration: number): Promise<void> {
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, duration);
-  });
-}
+// function sleep(duration: number): Promise<void> {
+//   return new Promise<void>((resolve) => {
+//     setTimeout(() => {
+//       resolve();
+//     }, duration);
+//   });
+// }
 
 export default function SearchInput({
   options,
@@ -81,7 +81,7 @@ export default function SearchInput({
                 },
               }}
             />
-            {error && <FormHelperText>{helperText}</FormHelperText>}
+            {error && <FormHelperText sx={{marginLeft:'14px',marginRight:'14px'}}>{helperText}</FormHelperText>}
           </>
         )}
       />

@@ -32,7 +32,7 @@ const components: Components<Omit<Theme, "components">> = {
           backgroundColor: "#424242", // Darker gray on hover
         },
       },
-   
+
       outlinedPrimary: {
         borderColor: "#E2E8F0",
         color: "#1A202C",
@@ -45,7 +45,6 @@ const components: Components<Omit<Theme, "components">> = {
       disableRipple: true, // Disable ripple effect globally for buttons
     },
   },
-
   MuiTextField: {
     styleOverrides: {
       root: {

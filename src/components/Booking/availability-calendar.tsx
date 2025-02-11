@@ -6,11 +6,8 @@ import {
   Popover,
   Menu,
   MenuItem,
-  Autocomplete,
-  CircularProgress,
-  TextField,
-  InputAdornment,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 import { DayHeader } from "./day-header";
 import { StatusTotals } from "./status-total";
@@ -36,6 +33,16 @@ import DateInput from "../common/DateInput";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {
+  createAppointment,
+  getAppointmentsForDay,
+  updateAppointmentStatus,
+} from "../../firebase/AppointmentService";
+import { getCurrentUserId } from "../../firebase/AuthService";
+import CommonSnackbar from "../common/CommonSnackbar";
+import { AlertProps } from "@mui/material";
+import CommonButton from "../common/CommonButton";
+import addIcon from '../../assets/icons/add-contact.svg'
 
 dayjs.extend(isSameOrBefore);
 interface Film {
@@ -77,8 +84,8 @@ const TimeLabels = () => (
 );
 
 const appointmentSchema = z.object({
-  contact: z.string().min(1, "Contact is required"),
-  date: z.any(), // We'll validate this separately since it's a Dayjs object
+  contact: z.union([z.string(), z.object({ title: z.string() })]),
+  date: z.any(),
   startTime: z.string(),
   length: z.string().min(1, "Appointment length is required"),
   appointmentType: z.enum(["inPerson", "phoneCall"], {
@@ -111,7 +118,12 @@ const TimeSlot = ({
   // Search contact inputs
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options, setOptions] = useState<readonly Film[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState({
+    input: false,
+    data: false,
+    options: false,
+  });
+
   const {
     control,
     handleSubmit,
@@ -128,13 +140,47 @@ const TimeSlot = ({
       reason: "",
     },
   });
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "error" as AlertProps["severity"],
+  });
+
+  useEffect(() => {
+    const fetchAppointmentStatus = async () => {
+      setLoading({ ...loading, data: true });
+      try {
+        const userId = getCurrentUserId();
+        if (!userId) return;
+
+        const appointments = await getAppointmentsForDay(
+          userId,
+          dayjs(date).format("YYYY-MM-DD")
+        );
+
+        const appointment = appointments.find((apt) => apt.startTime === time);
+        if (appointment) {
+          setAppointmentId(appointment.id);
+          const newStatus = Number(appointment.status);
+          setSelectedStatus(newStatus);
+          onChange(newStatus);
+        }
+        setLoading({ ...loading, data: false });
+      } catch (error) {
+        setLoading({ ...loading, data: false });
+        console.error("Error fetching appointment status:", error);
+      }
+    };
+    fetchAppointmentStatus();
+  }, []);
 
   const handleOpen = () => {
     setOpenContactSearch(true);
     (async () => {
-      setLoading(true);
+      setLoading({ ...loading, input: true });
       await sleep(1e3); // For demo purposes.
-      setLoading(false);
+      setLoading({ ...loading, input: false });
 
       setOptions([...topFilms]);
     })();
@@ -153,17 +199,70 @@ const TimeSlot = ({
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (status === EnBookings.Available) {
       setOpenDialog(true);
-    } else {
+    } else if (status !== EnBookings.Available) {
       setAnchorEl(event.currentTarget);
     }
   };
 
-  const onSubmit = (data: AppointmentFormData) => {
-    console.log("Form data:", data);
-    setSelectedStatus(EnBookings.Unconfirmed);
-    onChange(EnBookings.Unconfirmed);
-    setOpenDialog(false);
-    reset();
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const onSubmit = async (data: AppointmentFormData) => {
+    try {
+      const userId = getCurrentUserId();
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      await createAppointment(userId, {
+        contact:
+          typeof data.contact === "string" ? data.contact : data.contact.title,
+        date: dayjs(data.date).format("YYYY-MM-DD"),
+        startTime: data.startTime,
+        length: data.length,
+        appointmentType: data.appointmentType,
+        reason: data.reason,
+        status: EnBookings.Unconfirmed.toString(),
+      });
+
+      setSelectedStatus(EnBookings.Unconfirmed);
+      onChange(EnBookings.Unconfirmed);
+      setOpenDialog(false);
+      reset();
+    } catch (error: any) {
+      console.error("Failed to create appointment:", error);
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: "error",
+      });
+    }
+  };
+  // Update the status of the booking
+  const handleStatusUpdate = async (newStatus: EnBookings) => {
+    try {
+      if (!appointmentId || newStatus == 0) return;
+      setLoading({ ...loading, options: true });
+      setSelectedStatus(newStatus);
+      onChange(newStatus);
+      await updateAppointmentStatus(appointmentId, newStatus.toString());
+
+      setSnackbar({
+        open: true,
+        message: "Status updated successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to update appointment status",
+        severity: "error",
+      });
+    } finally {
+      setLoading({ ...loading, options: false });
+    }
   };
 
   return (
@@ -200,6 +299,7 @@ const TimeSlot = ({
           setOpenDialog(false);
           reset();
         }}
+        confirmButtonType="primary"
         title="New Appointment"
         confirmText="Confirm"
         cancelText="Cancel"
@@ -220,13 +320,16 @@ const TimeSlot = ({
                 onOpen={handleOpen}
                 onClose={handleClose}
                 options={options}
-                loading={loading}
+                loading={loading.input}
                 placeholder="Search contacts..."
                 error={!!errors.contact}
                 helperText={errors.contact?.message}
               />
             )}
-          />
+          />       
+         <Box display={'flex'} justifyContent={'end'}>
+         <CommonButton sx={{width:'50%',float:'right'}} text="Add new contact" startIcon={ <img src={addIcon} alt="" />} />
+         </Box>
           <Typography variant="bodyMediumExtraBold" color="grey.600">
             Date
           </Typography>
@@ -341,27 +444,44 @@ const TimeSlot = ({
         }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        {[
-          EnBookings.Available,
-          EnBookings.Active,
-          EnBookings.Cancelled,
-          EnBookings.Unconfirmed,
-        ].map((option) => (
-          <MenuItem
-            sx={{ justifyContent: "start", gap: 2 }}
-            key={option}
-            onClick={() => {
-              setSelectedStatus(option);
-              setAnchorEl(null);
-            }}
-          >
-            <StatusIcon status={option} />
-            <Typography variant="bodySmallSemiBold" color="grey.500">
-              {EnBookings[option]}
-            </Typography>
+        {loading.options ? (
+          <MenuItem>
+            <CircularProgress />
           </MenuItem>
-        ))}
+        ) : (
+          [
+            EnBookings.Available,
+            EnBookings.Active,
+            EnBookings.Cancelled,
+            EnBookings.Unconfirmed,
+          ].map((option) => (
+            <MenuItem
+              sx={{ justifyContent: "start", gap: 2 }}
+              key={option}
+              onClick={async () => {
+                if (appointmentId) {
+                  await handleStatusUpdate(option);
+                } else {
+                  setSelectedStatus(option);
+                }
+                setAnchorEl(null);
+              }}
+            >
+              <StatusIcon status={option} />
+              <Typography variant="bodySmallSemiBold" color="grey.500">
+                {EnBookings[option]}
+              </Typography>
+            </MenuItem>
+          ))
+        )}
       </Menu>
+
+      <CommonSnackbar
+        open={snackbar.open}
+        onClose={handleSnackbarClose}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
     </>
   );
 };
@@ -568,6 +688,8 @@ export default function AvailabilityCalendar() {
                         {Array.from({ length: 4 }, (_, quarterIndex) => {
                           const slotIndex = hourIndex * 4 + quarterIndex;
                           const slot = day.availability.slots[slotIndex];
+                      
+
                           return (
                             <TimeSlot
                               key={quarterIndex}

@@ -3,6 +3,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Dayjs } from "dayjs";
 import calenderIcon from "../../assets/icons/calender-date.svg";
+import { useState } from "react";
+import { FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 
 interface DateInputProps {
   value: Dayjs;
@@ -10,8 +12,9 @@ interface DateInputProps {
   shouldDisableDate?: (date: Dayjs) => boolean;
   label?: string;
   error?: boolean;
-  helperText?: string;
+  helperText?: string | FieldError | Merge<FieldError, FieldErrorsImpl<any>>;
 }
+
 const CalendarIcon = () => <img src={calenderIcon} alt="calender" />;
 export default function DateInput({
   value,
@@ -21,9 +24,12 @@ export default function DateInput({
   error,
   helperText,
 }: DateInputProps) {
+  const [open, setOpen] = useState(false);
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
+        open={open}
+        onClose={() => setOpen(false)}
         label={label}
         value={value}
         onChange={onChange}
@@ -32,7 +38,12 @@ export default function DateInput({
           openPickerIcon: CalendarIcon,
         }}
         slotProps={{
+          field: {
+            readOnly: true,
+          },
+
           textField: {
+            onClick: () => setOpen(true),
             fullWidth: true,
             error,
             helperText,

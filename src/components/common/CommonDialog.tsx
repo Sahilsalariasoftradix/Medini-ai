@@ -21,6 +21,14 @@ interface CommonDialogProps {
   fullWidth?: boolean;
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
   hideCloseIcon?: boolean;
+  confirmButtonType?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning";
 }
 const DialogStyles = {
   border: "2px solid #E2E8F0",
@@ -38,6 +46,7 @@ const CommonDialog: React.FC<CommonDialogProps> = ({
   fullWidth = true,
   maxWidth = "xs",
   hideCloseIcon = false,
+  confirmButtonType,
 }) => {
   return (
     <Dialog
@@ -73,6 +82,7 @@ const CommonDialog: React.FC<CommonDialogProps> = ({
         />
         {onConfirm && (
           <CommonButton
+            color={confirmButtonType ? confirmButtonType : "inherit"}
             sx={{ width: "50%" }}
             text={confirmText}
             onClick={onConfirm}

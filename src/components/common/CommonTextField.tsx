@@ -28,9 +28,10 @@ const CommonTextField: React.FC<CommonTextFieldProps> = ({
             ) : null,
           },
         }}
+        
       />
       {errorMessage && (
-        <FormHelperText error>
+        <FormHelperText  error>
           {errorMessage}
         </FormHelperText>
       )}

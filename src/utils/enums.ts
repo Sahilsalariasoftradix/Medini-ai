@@ -11,6 +11,7 @@ export enum EnVerifiedStatus {
 export enum EnFirebaseCollections {
   USERS = "users",
   REASONS = "reasons",
+  APPOINTMENTS = "Appointments",
 }
 export enum EnAppointmentOptions {
   APPOINTMENT_1 = "appointment1",
@@ -45,4 +46,14 @@ export enum EnBookings {
   Active = 1,
   Cancelled = 2,
   Unconfirmed = 3,
+}
+export enum EnCancelAppointment {
+  DoctorSick = "Doctor is sick",
+  PatientSick = "Patient is sick",
+  Emergency = "Emergency",
+  PersonalReason = "Personal reasons",
+  DoubleBooked = "Double booked",
+  TravelIssues = "Travel issues",
+  ClinicClosed = "Clinic is closed",
+  NoShow = "Patient did not show up",
 }

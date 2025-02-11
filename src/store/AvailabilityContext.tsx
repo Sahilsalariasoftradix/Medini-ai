@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { DaySchedule } from "../types/calendar";
 import { EnBookings } from "../utils/enums";
 import dayjs from "dayjs";
+import { getCurrentUserId } from "../firebase/AuthService";
+import { getAppointmentsByDateRange } from "../firebase/AppointmentService";
 
 interface AvailabilityContextType {
   days: DaySchedule[];
@@ -90,6 +92,12 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
       return newDays;
     });
   };
+
+  useEffect(() => {
+    if (dateRange[0] && dateRange[1]) {
+      generateDaysFromRange(dateRange[0], dateRange[1]);
+    }
+  }, [dateRange]);
 
   return (
     <AvailabilityContext.Provider
