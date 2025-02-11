@@ -1,18 +1,20 @@
-import { Box, Button, Menu, MenuItem, Typography } from "@mui/material";
+import { Box, Menu, MenuItem, Typography } from "@mui/material";
 import { useState } from "react";
 import MoreVertIcon from "../../assets/icons/dots-vertical.svg";
 import edit from "../../assets/icons/edit-table.svg";
 import deleteIcn from "../../assets/icons/delete-tr.svg";
-
+import { overRideSvgColor } from "../../utils/filters";
 interface DayHeaderProps {
   day: string;
   date: number;
   onEditAvailability: () => void;
   onClearDay: () => void;
+  isAvailable: boolean;
+  isToday: boolean;
 }
 const menuItemHoverStyle = {
   "&:hover": {
-    filter: "sepia(100%) hue-rotate(190deg) saturate(500%)",
+    filter: overRideSvgColor.blue,
   },
   gap: 1,
 };
@@ -21,6 +23,8 @@ export function DayHeader({
   date,
   onEditAvailability,
   onClearDay,
+  isAvailable,
+  isToday,
 }: DayHeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -34,6 +38,7 @@ export function DayHeader({
   };
   const handleMenuItemClick = (action: () => void) => {
     action();
+
     handleClose();
   };
   return (
@@ -42,23 +47,25 @@ export function DayHeader({
       alignItems={"start"}
       justifyContent={"space-between"}
       p={1}
+      sx={{
+        opacity: isAvailable ? 1 : 0.7,
+        backgroundColor: isToday ? "primary.main" : "grey.50",
+      }}
     >
-      <div>
-        <Typography variant="bodyMediumExtraBold" sx={{ color: "grey.600" }}>
+      <Box >
+        <Typography
+          variant="bodyMediumExtraBold"
+          sx={{ color: isToday ? "additional.white" : "grey.600" }}
+        >
           {day}
         </Typography>
-        <Typography variant="bodyMediumExtraBold" color="grey.500">
+        <Typography
+          variant="bodyMediumExtraBold"
+          color={isToday ? "additional.white" : "grey.600"}
+        >
           {date}
         </Typography>
-      </div>
-      {/* <Button
-        id="day-menu-button"
-        aria-controls={open ? "day-menu" : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? "true" : undefined}
-        onClick={handleClick}
-        sx={{ p: 0 }}
-      > */}
+      </Box>
       <Box
         id="day-menu-button"
         aria-controls={open ? "day-menu" : undefined}
@@ -68,16 +75,17 @@ export function DayHeader({
         sx={{
           p: 0,
           cursor: "pointer",
-          filter: open
-            ? "sepia(100%) hue-rotate(190deg) saturate(500%)"
-            : "blue",
+          filter:
+            isToday && !open
+              ? overRideSvgColor.white
+              : open
+              ? overRideSvgColor.blue
+              : "blue",
         }}
         alt="More."
         src={MoreVertIcon}
         onClick={handleClick}
       />
-
-      {/* </Button> */}
       <Menu
         id="day-menu"
         anchorEl={anchorEl}
@@ -96,7 +104,6 @@ export function DayHeader({
         MenuListProps={{
           "aria-labelledby": "day-menu-button",
         }}
-        
       >
         <MenuItem
           onClick={() => handleMenuItemClick(onEditAvailability)}

@@ -108,7 +108,7 @@ const typography: TypographyOptions = {
   },
   h6: {
     fontSize: "1.125rem", // Equivalent to 18px
-    fontWeight: 500,
+    fontWeight: 800,
     lineHeight: 1.5,
     letterSpacing: "0.0075em",
   },

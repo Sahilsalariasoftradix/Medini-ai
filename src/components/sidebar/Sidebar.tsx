@@ -11,6 +11,7 @@ import {
 import { SidebarIcons } from "../../utils/Icons";
 import { Link } from "react-router-dom";
 import { routes } from "../../utils/links";
+import { overRideSvgColor } from "../../utils/filters";
 export const drawerWidth = 240;
 const Sidebar = ({
   open,
@@ -44,9 +45,9 @@ const Sidebar = ({
     },
   };
   const listItemStyles = { alignItems: "center", gap: 2 };
-  const nestedListItemTextStyles = {
-    "&.MuiListItemText-root span": { fontSize: "12px" },
-  };
+  // const nestedListItemTextStyles = {
+  //   "&.MuiListItemText-root span": { fontSize: "12px" },
+  // };
   const listContainerStyles = {
     height: "calc(100vh - 120px)",
     boxShadow: "0px 5px 10px 0px #0000001A",
@@ -70,10 +71,7 @@ const Sidebar = ({
         backgroundColor: link && isActive(link) ? "#358FF7" : "transparent",
         color: link && isActive(link) ? "#fff" : "#718096",
         "& img": {
-          filter:
-            link && isActive(link)
-              ? "brightness(0) saturate(100%) invert(100%) sepia(100%) saturate(0%) hue-rotate(198deg) brightness(104%) contrast(104%)"
-              : "",
+          filter: link && isActive(link) ? overRideSvgColor.white : "",
           transition: "filter 0.3s", // Smooth transition for image color change
         },
       }}
@@ -87,11 +85,11 @@ const Sidebar = ({
     </ListItem>
   );
 
-  const renderNestedListItem = (text: string) => (
-    <ListItem sx={{ pl: 7.1 }} onClick={closeDrawerOnMobile}>
-      {open && <ListItemText sx={nestedListItemTextStyles} primary={text} />}
-    </ListItem>
-  );
+  // const renderNestedListItem = (text: string) => (
+  //   <ListItem sx={{ pl: 7.1 }} onClick={closeDrawerOnMobile}>
+  //     {open && <ListItemText sx={nestedListItemTextStyles} primary={text} />}
+  //   </ListItem>
+  // );
   return (
     <Drawer
       variant={isMobile ? "temporary" : "permanent"}
@@ -101,7 +99,6 @@ const Sidebar = ({
       {/* <Toolbar /> */}
       <List sx={listContainerStyles}>
         <Box
-        
           display={"flex"}
           flexDirection={"column"}
           justifyContent={"space-between"}

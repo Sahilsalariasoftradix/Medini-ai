@@ -30,6 +30,7 @@ import { useMemo, useState } from "react";
 import { RoundCheckbox } from "../../components/common/RoundCheckbox";
 import { Chip, Pagination, Select } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
+import { overRideSvgColor } from "../../utils/filters";
 
 interface Data {
   id: number;
@@ -669,8 +670,11 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
   return (
     <TableHead>
-      <TableRow sx={{borderTop:'1px solid #EDF2F7'}}>
-        <TableCell  sx={{borderBottom:'1px solid #EDF2F7'}} padding="checkbox">
+      <TableRow sx={{ borderTop: "1px solid #EDF2F7" }}>
+        <TableCell
+          sx={{ borderBottom: "1px solid #EDF2F7" }}
+          padding="checkbox"
+        >
           <RoundCheckbox
             label=""
             color="primary"
@@ -684,7 +688,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
         </TableCell>
         {headCells.map((headCell) => (
           <TableCell
-          sx={{borderBottom:'1px solid #EDF2F7'}}
+            sx={{ borderBottom: "1px solid #EDF2F7" }}
             key={headCell.id}
             align={headCell.numeric ? "right" : "left"}
             padding={headCell.disablePadding ? "none" : "normal"}
@@ -837,11 +841,9 @@ const ActionMenu = ({ row }: { row: Data }) => {
         <img
           src={MoreVertIcon}
           style={{
-            filter: open
-              ? "brightness(0) saturate(100%) invert(100%) sepia(100%) saturate(0%) hue-rotate(198deg) brightness(104%) contrast(104%)"
-              : "",
+            filter: open ? overRideSvgColor.white : "",
           }}
-          alt=""
+          alt="more"
         />
       </IconButton>
       <Menu
@@ -1026,7 +1028,10 @@ const CallCenter = () => {
                       tabIndex={-1}
                       key={row.id}
                       selected={isItemSelected}
-                      sx={{ cursor: "pointer" ,"& td": { borderColor: '#EDF2F7' } }}
+                      sx={{
+                        cursor: "pointer",
+                        "& td": { borderColor: "#EDF2F7" },
+                      }}
                     >
                       <TableCell padding="checkbox">
                         <RoundCheckbox

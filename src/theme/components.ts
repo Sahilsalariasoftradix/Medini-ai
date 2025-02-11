@@ -32,6 +32,7 @@ const components: Components<Omit<Theme, "components">> = {
           backgroundColor: "#424242", // Darker gray on hover
         },
       },
+   
       outlinedPrimary: {
         borderColor: "#E2E8F0",
         color: "#1A202C",
@@ -189,7 +190,7 @@ const components: Components<Omit<Theme, "components">> = {
         borderRadius: "8px",
         fontSize: "14px",
         height: "36px",
-        width:'120px',
+        width: "120px",
         padding: "4px 12px",
         cursor: ownerState.onClick ? "pointer" : "default",
         ...(ownerState.color === "success" && {

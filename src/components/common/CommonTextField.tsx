@@ -15,7 +15,7 @@ const CommonTextField: React.FC<CommonTextFieldProps> = ({
   ...props
 }) => {
   return (
-    <div>
+    <React.Fragment>
       <TextField 
         fullWidth 
         {...(register ?? {})} // Safely spread register if it exists
@@ -34,7 +34,7 @@ const CommonTextField: React.FC<CommonTextFieldProps> = ({
           {errorMessage}
         </FormHelperText>
       )}
-    </div>
+    </React.Fragment>
   );
 };
 
