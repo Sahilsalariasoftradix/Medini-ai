@@ -7,9 +7,10 @@ interface AppointmentData {
   contact: string;
   date: string;
   startTime: string;
+  endTime:string;
   length: string;
   appointmentType: string;
-  reason: string;
+  reasonForCall: string;
   status: string;
   createdAt?: any;
 }
@@ -119,9 +120,10 @@ export const getAppointmentsForDay = async (
 };
 
 export const updateAppointmentStatus = async (
-  appointmentId: string,
-  newStatus: string
-): Promise<void> => {
+  appointmentId: string, 
+  status: string, 
+  cancelReason?: string
+) => {
   try {
     const appointmentRef = doc(
       firebaseFirestore, 
@@ -129,12 +131,15 @@ export const updateAppointmentStatus = async (
       appointmentId
     );
     
-    await updateDoc(appointmentRef, {
-      status: newStatus,
-      updatedAt: serverTimestamp(),
-    });
+    const updateData: any = { status };
+    
+    if (cancelReason) {
+      updateData.cancelReason = cancelReason;
+    }
+    
+    await updateDoc(appointmentRef, updateData);
   } catch (error) {
     console.error("Error updating appointment status:", error);
-    throw new Error("Failed to update appointment status");
+    throw error;
   }
 }; 

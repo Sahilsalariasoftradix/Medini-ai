@@ -12,7 +12,7 @@ import {
 import { DayHeader } from "./day-header";
 import { StatusTotals } from "./status-total";
 import Grid from "@mui/material/Grid2";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import calendarIcon from "../../assets/icons/calenderIcon.svg";
@@ -42,7 +42,7 @@ import { getCurrentUserId } from "../../firebase/AuthService";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
 import CommonButton from "../common/CommonButton";
-import addIcon from '../../assets/icons/add-contact.svg'
+import addIcon from "../../assets/icons/add-contact.svg";
 
 dayjs.extend(isSameOrBefore);
 interface Film {
@@ -91,10 +91,24 @@ const appointmentSchema = z.object({
   appointmentType: z.enum(["inPerson", "phoneCall"], {
     errorMap: () => ({ message: "Please select an appointment type" }),
   }),
-  reason: z.string().min(1, "Reason for appointment is required"),
+  reasonForCall: z.string().min(1, "Reason for appointment is required"),
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
+
+const cancelSchema = z.object({
+  reasonForCancelling: z.string().min(1, "Cancellation reason is required"),
+});
+
+const CANCELLATION_REASONS = [
+  "Schedule Conflict",
+  "Personal Emergency",
+  "Rescheduling Needed",
+  "No Longer Required",
+  "Other",
+] as const;
+
+type CancelFormData = z.infer<typeof cancelSchema>;
 
 const TimeSlot = ({
   status,
@@ -137,7 +151,7 @@ const TimeSlot = ({
       startTime: time,
       length: "15",
       appointmentType: "inPerson",
-      reason: "",
+      reasonForCall: "",
     },
   });
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
@@ -147,33 +161,59 @@ const TimeSlot = ({
     severity: "error" as AlertProps["severity"],
   });
 
-  useEffect(() => {
-    const fetchAppointmentStatus = async () => {
-      setLoading({ ...loading, data: true });
-      try {
-        const userId = getCurrentUserId();
-        if (!userId) return;
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [statusToUpdate, setStatusToUpdate] = useState<EnBookings | null>(null);
 
-        const appointments = await getAppointmentsForDay(
-          userId,
-          dayjs(date).format("YYYY-MM-DD")
-        );
+  const {
+    control: cancelControl,
+    handleSubmit: handleCancelSubmit,
+    formState: { errors: cancelErrors },
+    reset: resetCancel,
+  } = useForm<CancelFormData>({
+    resolver: zodResolver(cancelSchema),
+    defaultValues: {
+      reasonForCancelling: "Schedule Conflict",
+    },
+  });
 
-        const appointment = appointments.find((apt) => apt.startTime === time);
-        if (appointment) {
-          setAppointmentId(appointment.id);
+  const fetchAppointmentStatus = useCallback(async () => {
+    setLoading((prev) => ({ ...prev, data: true }));
+
+    try {
+      const userId = getCurrentUserId();
+      if (!userId) return;
+
+      const appointments = await getAppointmentsForDay(
+        userId,
+        dayjs(date).format("YYYY-MM-DD")
+      );
+
+      const appointment = appointments.find((apt) => apt.startTime === time);
+      if (appointment) {
+        setAppointmentId((prevId) => {
+          if (prevId !== appointment.id) return appointment.id;
+          return prevId;
+        });
+
+        setSelectedStatus((prevStatus) => {
           const newStatus = Number(appointment.status);
-          setSelectedStatus(newStatus);
-          onChange(newStatus);
-        }
-        setLoading({ ...loading, data: false });
-      } catch (error) {
-        setLoading({ ...loading, data: false });
-        console.error("Error fetching appointment status:", error);
+          if (prevStatus !== newStatus) {
+            onChange(newStatus);
+            return newStatus;
+          }
+          return prevStatus;
+        });
       }
-    };
+    } catch (error) {
+      console.error("Error fetching appointment status:", error);
+    } finally {
+      setLoading((prev) => ({ ...prev, data: false }));
+    }
+  }, [date, time, onChange]); // Memoizing function to avoid re-creation
+
+  useEffect(() => {
     fetchAppointmentStatus();
-  }, []);
+  }, [fetchAppointmentStatus]); // Runs only when the function reference changes
 
   const handleOpen = () => {
     setOpenContactSearch(true);
@@ -214,15 +254,20 @@ const TimeSlot = ({
       if (!userId) {
         throw new Error("User not authenticated");
       }
+      const startTimeFormatted = dayjs(data.startTime, "HH:mm");
+      const endTimeFormatted = startTimeFormatted
+        .add(Number(data.length), "minute")
+        .format("HH:mm");
 
       await createAppointment(userId, {
         contact:
           typeof data.contact === "string" ? data.contact : data.contact.title,
         date: dayjs(data.date).format("YYYY-MM-DD"),
         startTime: data.startTime,
+        endTime: endTimeFormatted, // Now passing computed endTime
         length: data.length,
         appointmentType: data.appointmentType,
-        reason: data.reason,
+        reasonForCall: data.reasonForCall,
         status: EnBookings.Unconfirmed.toString(),
       });
 
@@ -242,11 +287,18 @@ const TimeSlot = ({
   // Update the status of the booking
   const handleStatusUpdate = async (newStatus: EnBookings) => {
     try {
-      if (!appointmentId || newStatus == 0) return;
+      if (!appointmentId || newStatus === EnBookings.Available) return;
+
+      if (newStatus === EnBookings.Cancelled) {
+        setStatusToUpdate(newStatus);
+        setOpenCancelDialog(true);
+        return;
+      }
+
       setLoading({ ...loading, options: true });
+      await updateAppointmentStatus(appointmentId, newStatus.toString());
       setSelectedStatus(newStatus);
       onChange(newStatus);
-      await updateAppointmentStatus(appointmentId, newStatus.toString());
 
       setSnackbar({
         open: true,
@@ -258,6 +310,39 @@ const TimeSlot = ({
       setSnackbar({
         open: true,
         message: "Failed to update appointment status",
+        severity: "error",
+      });
+    } finally {
+      setLoading({ ...loading, options: false });
+    }
+  };
+
+  const onCancelSubmit = async (data: CancelFormData) => {
+    try {
+      if (!appointmentId || !statusToUpdate) return;
+
+      setLoading({ ...loading, options: true });
+      await updateAppointmentStatus(
+        appointmentId,
+        statusToUpdate.toString(),
+        data.reasonForCancelling
+      );
+
+      setSelectedStatus(statusToUpdate);
+      onChange(statusToUpdate);
+      setOpenCancelDialog(false);
+      resetCancel();
+
+      setSnackbar({
+        open: true,
+        message: "Appointment cancelled successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Failed to cancel appointment:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to cancel appointment",
         severity: "error",
       });
     } finally {
@@ -304,6 +389,10 @@ const TimeSlot = ({
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
+        loading={loading.input}
+        disabled={loading.input}
+        confirmButtonProps={{ loading: loading.input }}
+        cancelButtonProps={{ disabled: loading.input }}
       >
         <Divider sx={{ my: 2 }} />
         <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -326,10 +415,14 @@ const TimeSlot = ({
                 helperText={errors.contact?.message}
               />
             )}
-          />       
-         <Box display={'flex'} justifyContent={'end'}>
-         <CommonButton sx={{width:'50%',float:'right'}} text="Add new contact" startIcon={ <img src={addIcon} alt="" />} />
-         </Box>
+          />
+          <Box display={"flex"} justifyContent={"end"}>
+            <CommonButton
+              sx={{ width: "50%", float: "right" }}
+              text="Add new contact"
+              startIcon={<img src={addIcon} alt="" />}
+            />
+          </Box>
           <Typography variant="bodyMediumExtraBold" color="grey.600">
             Date
           </Typography>
@@ -412,7 +505,7 @@ const TimeSlot = ({
             <img src={questionMark} alt="" />
           </Box>
           <Controller
-            name="reason"
+            name="reasonForCall"
             control={control}
             render={({ field }) => (
               <CommonTextField
@@ -421,9 +514,52 @@ const TimeSlot = ({
                 multiline
                 rows={3}
                 placeholder="Add reason for call"
-                error={!!errors.reason}
-                helperText={errors.reason?.message}
+                error={!!errors.reasonForCall}
+                helperText={errors.reasonForCall?.message}
               />
+            )}
+          />
+        </Box>
+      </CommonDialog>
+
+      <CommonDialog
+        open={openCancelDialog}
+        onClose={() => {
+          setOpenCancelDialog(false);
+          resetCancel();
+        }}
+        confirmButtonType="error"
+        title="Cancel Appointment"
+        confirmText="Confirm"
+        cancelText="Back"
+        onConfirm={handleCancelSubmit(onCancelSubmit)}
+        loading={loading.options}
+        disabled={loading.options}
+        confirmButtonProps={{ loading: loading.options }}
+        cancelButtonProps={{ disabled: loading.options }}
+      >
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+            Reason for Cancellation
+          </Typography>
+          <Controller
+            name="reasonForCancelling"
+            control={cancelControl}
+            render={({ field }) => (
+              <CommonTextField
+                {...field}
+                select
+                fullWidth
+                error={!!cancelErrors.reasonForCancelling}
+                helperText={cancelErrors.reasonForCancelling?.message}
+              >
+                {CANCELLATION_REASONS.map((reason) => (
+                  <MenuItem key={reason} value={reason}>
+                    {reason}
+                  </MenuItem>
+                ))}
+              </CommonTextField>
             )}
           />
         </Box>
@@ -688,7 +824,6 @@ export default function AvailabilityCalendar() {
                         {Array.from({ length: 4 }, (_, quarterIndex) => {
                           const slotIndex = hourIndex * 4 + quarterIndex;
                           const slot = day.availability.slots[slotIndex];
-                      
 
                           return (
                             <TimeSlot

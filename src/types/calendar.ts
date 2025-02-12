@@ -5,12 +5,24 @@ export type TimeSlot = {
   status: EnBookings;
 };
 
-export type DaySchedule = {
-  date: number;
+export interface DaySchedule {
   day: string;
-  slots: TimeSlot[];
-  availability: DayAvailability;
-};
+  date: number;
+  availability: {
+    isAvailable: boolean;
+    slots: {
+      time: string;
+      status: EnBookings;
+    }[];
+  };
+  appointments?: {
+    id: string;
+    startTime: string;
+    endTime: string;
+    length: string;
+    status: string;
+  }[];
+}
 
 export type DayAvailability = {
   isAvailable: boolean;

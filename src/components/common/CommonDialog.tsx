@@ -21,6 +21,8 @@ interface CommonDialogProps {
   fullWidth?: boolean;
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
   hideCloseIcon?: boolean;
+  loading?:boolean;
+  disabled:boolean;
   confirmButtonType?:
     | "inherit"
     | "primary"
@@ -47,6 +49,8 @@ const CommonDialog: React.FC<CommonDialogProps> = ({
   maxWidth = "xs",
   hideCloseIcon = false,
   confirmButtonType,
+  loading,
+  disabled
 }) => {
   return (
     <Dialog
@@ -86,6 +90,8 @@ const CommonDialog: React.FC<CommonDialogProps> = ({
             sx={{ width: "50%" }}
             text={confirmText}
             onClick={onConfirm}
+            loading={loading}
+            disabled={disabled}
           />
         )}
       </DialogActions>
