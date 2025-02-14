@@ -21,15 +21,12 @@ import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
 import { EnBookings } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
-import questionMark from "../../assets/icons/question.svg";
 import CommonTextField from "../common/CommonTextField";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Dayjs } from "dayjs";
 import { topFilms } from "../../utils/staticText";
 import CommonDialog from "../common/CommonDialog";
-import SearchInput from "../common/SearchInput";
-import DateInput from "../common/DateInput";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,14 +38,11 @@ import {
 import { getCurrentUserId } from "../../firebase/AuthService";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
-import CommonButton from "../common/CommonButton";
-import addIcon from "../../assets/icons/add-contact.svg";
+import SlotBookingForm from "./Form/SlotBookingForm";
+import { IFilm } from "../../utils/Interfaces";
 
 dayjs.extend(isSameOrBefore);
-interface Film {
-  title: string;
-  year: number;
-}
+
 
 function sleep(duration: number): Promise<void> {
   return new Promise<void>((resolve) => {
@@ -110,6 +104,24 @@ const CANCELLATION_REASONS = [
 
 type CancelFormData = z.infer<typeof cancelSchema>;
 
+interface Appointment {
+  id: string;
+  startTime: string;
+  status: string;
+  length: string;
+  parentId?: string;
+}
+
+interface Day {
+  day: string;
+  date: number;
+  availability: {
+    isAvailable: boolean;
+    slots: { status: EnBookings; time: string }[];
+  };
+  appointments?: Appointment[];
+}
+
 const TimeSlot = ({
   status,
   onChange,
@@ -131,7 +143,7 @@ const TimeSlot = ({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs(date));
   // Search contact inputs
   const [openContactSearch, setOpenContactSearch] = useState(false);
-  const [options, setOptions] = useState<readonly Film[]>([]);
+  const [options, setOptions] = useState<readonly IFilm[]>([]);
   const [loading, setLoading] = useState({
     input: false,
     data: false,
@@ -176,6 +188,9 @@ const TimeSlot = ({
     },
   });
 
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  // const [isPartOfLongerSlot, setIsPartOfLongerSlot] = useState(false);
+
   const fetchAppointmentStatus = useCallback(async () => {
     setLoading((prev) => ({ ...prev, data: true }));
 
@@ -183,33 +198,57 @@ const TimeSlot = ({
       const userId = getCurrentUserId();
       if (!userId) return;
 
-      const appointments = await getAppointmentsForDay(
+      const appointments = (await getAppointmentsForDay(
         userId,
         dayjs(date).format("YYYY-MM-DD")
+      )) as Appointment[];
+
+      // Find appointment that starts at this time slot
+      const currentAppointment = appointments.find(
+        (apt) => apt.startTime === time
       );
 
-      const appointment = appointments.find((apt) => apt.startTime === time);
-      if (appointment) {
-        setAppointmentId((prevId) => {
-          if (prevId !== appointment.id) return appointment.id;
-          return prevId;
-        });
-
+      if (currentAppointment) {
+        setAppointment(currentAppointment);
+        setAppointmentId(currentAppointment.id);
         setSelectedStatus((prevStatus) => {
-          const newStatus = Number(appointment.status);
+          const newStatus = Number(currentAppointment.status);
           if (prevStatus !== newStatus) {
             onChange(newStatus);
             return newStatus;
           }
           return prevStatus;
         });
+      } else {
+        // Check if this slot is part of a longer appointment
+        const parentAppointment = appointments.find((apt) => {
+          const startMinutes =
+            parseInt(apt.startTime.split(":")[0]) * 60 +
+            parseInt(apt.startTime.split(":")[1]);
+          const currentMinutes =
+            parseInt(time.split(":")[0]) * 60 + parseInt(time.split(":")[1]);
+          const lengthMinutes = parseInt(apt.length);
+
+          return (
+            currentMinutes > startMinutes &&
+            currentMinutes < startMinutes + lengthMinutes
+          );
+        });
+
+        if (parentAppointment) {
+          setAppointment({
+            ...parentAppointment,
+            parentId: parentAppointment.id,
+          });
+          setSelectedStatus(Number(parentAppointment.status));
+        }
       }
     } catch (error) {
       console.error("Error fetching appointment status:", error);
     } finally {
       setLoading((prev) => ({ ...prev, data: false }));
     }
-  }, [date, time, onChange]); // Memoizing function to avoid re-creation
+  }, [date, time, onChange]);
 
   useEffect(() => {
     fetchAppointmentStatus();
@@ -237,9 +276,13 @@ const TimeSlot = ({
   };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    if (status === EnBookings.Available) {
+    if (appointment?.parentId) {
+      return;
+    }
+
+    if (selectedStatus === EnBookings.Available) {
       setOpenDialog(true);
-    } else if (status !== EnBookings.Available) {
+    } else {
       setAnchorEl(event.currentTarget);
     }
   };
@@ -275,6 +318,7 @@ const TimeSlot = ({
       onChange(EnBookings.Unconfirmed);
       setOpenDialog(false);
       reset();
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } catch (error: any) {
       console.error("Failed to create appointment:", error);
       setSnackbar({
@@ -361,10 +405,19 @@ const TimeSlot = ({
           borderRight: "1px solid #EDF2F7",
           backgroundColor: disabled ? "grey.300" : "grey.50",
           opacity: disabled ? 0.5 : 1,
-          cursor: disabled ? "not-allowed" : "pointer",
+          cursor: appointment?.parentId
+            ? "not-allowed"
+            : disabled
+            ? "not-allowed"
+            : "pointer",
           "&:hover": {
-            backgroundColor: disabled ? "grey.100" : "primary.light",
+            backgroundColor: appointment?.parentId
+              ? "grey.50"
+              : disabled
+              ? "grey.100"
+              : "primary.light",
           },
+          position: "relative",
         }}
       >
         <Box
@@ -375,7 +428,13 @@ const TimeSlot = ({
           alignItems={"center"}
           onClick={handleClick}
         >
-          <StatusIcon handleClick={handleClick} status={selectedStatus} />
+          <StatusIcon
+            handleClick={handleClick}
+            status={selectedStatus}
+            sx={{
+              opacity: appointment?.parentId ? 0.5 : 1,
+            }}
+          />
         </Box>
       </Box>
       <CommonDialog
@@ -391,11 +450,20 @@ const TimeSlot = ({
         onConfirm={handleSubmit(onSubmit)}
         loading={loading.input}
         disabled={loading.input}
-        confirmButtonProps={{ loading: loading.input }}
-        cancelButtonProps={{ disabled: loading.input }}
       >
-        <Divider sx={{ my: 2 }} />
-        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+        <SlotBookingForm
+          control={control}
+          errors={errors}
+          openContactSearch={openContactSearch}
+          handleClose={handleClose}
+          handleOpen={handleOpen}
+          options={options}
+          loading={{ input: loading.input }} 
+          shouldDisableDate={shouldDisableDate}
+          selectedDate={selectedDate}
+        />
+        {/* <Divider sx={{ my: 2 }} /> */}
+        {/* <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
           <Typography variant="bodyMediumExtraBold" color="grey.600">
             Contact
           </Typography>
@@ -519,7 +587,7 @@ const TimeSlot = ({
               />
             )}
           />
-        </Box>
+        </Box> */}
       </CommonDialog>
 
       <CommonDialog
@@ -535,8 +603,6 @@ const TimeSlot = ({
         onConfirm={handleCancelSubmit(onCancelSubmit)}
         loading={loading.options}
         disabled={loading.options}
-        confirmButtonProps={{ loading: loading.options }}
-        cancelButtonProps={{ disabled: loading.options }}
       >
         <Divider sx={{ my: 2 }} />
         <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -629,12 +695,38 @@ export default function AvailabilityCalendar() {
     setDateRange,
     updateSlotStatus,
     generateDaysFromRange,
+    setDays,
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-
+console.log(days)
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
+  }, [startDate, endDate]);
+
+  const fetchAppointmentsForDays = async () => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    const updatedDays = await Promise.all(
+      days.map(async (day) => {
+        const dayDate = dayjs(startDate).add(days.indexOf(day), 'day');
+        const appointments = await getAppointmentsForDay(
+          userId,
+          dayDate.format('YYYY-MM-DD')
+        ) as Appointment[];
+        
+        return {
+          ...day,
+          appointments
+        };
+      })
+    );
+    setDays(updatedDays);
+  };
+
+  useEffect(() => {
+    fetchAppointmentsForDays();
   }, [startDate, endDate]);
 
   const handleEditAvailability = (day: string) => {
@@ -873,10 +965,10 @@ export default function AvailabilityCalendar() {
             <Grid size={"grow"} key={day.day}>
               <StatusTotals
                 counts={{
-                  active: 3,
-                  cancelled: 2,
-                  unconfirmed: 1,
-                  available: 12,
+                  active: day.appointments?.filter(apt => Number(apt.status) === EnBookings.Active).length || 0,
+                  cancelled: day.appointments?.filter(apt => Number(apt.status) === EnBookings.Cancelled).length || 0,
+                  unconfirmed: day.appointments?.filter(apt => Number(apt.status) === EnBookings.Unconfirmed).length || 0,
+                  available: day.availability.slots.filter(slot => slot.status === EnBookings.Available).length || 0,
                 }}
               />
             </Grid>

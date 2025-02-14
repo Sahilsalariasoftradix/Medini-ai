@@ -60,3 +60,13 @@ export interface IHeaderProps {
   toggleDrawer: () => void;
   pageName: string;
 }
+export interface INewContactData {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+}
+export interface IFilm {
+  title: string;
+  year: number;
+}

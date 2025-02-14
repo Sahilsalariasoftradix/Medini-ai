@@ -3,12 +3,15 @@ import available from "../../assets/icons/available.svg";
 import cancel from "../../assets/icons/cancelled.svg";
 import active from "../../assets/icons/active.svg";
 import unconfirmed from "../../assets/icons/unconfirmed.svg";
+import { Box, SxProps } from "@mui/material";
 
-export // To get icon according to the status
-const StatusIcon: React.FC<{
+interface StatusIconProps {
   status: EnBookings;
   handleClick?: (event: React.MouseEvent<HTMLElement>) => void;
-}> = ({ status }) => {
+  sx?: SxProps;
+}
+
+export const StatusIcon = ({ status, handleClick, sx }: StatusIconProps) => {
   let icon;
 
   switch (status) {
@@ -28,5 +31,19 @@ const StatusIcon: React.FC<{
       icon = available;
   }
 
-  return <img src={icon} alt={icon} />;
+  return (
+    <Box
+      onClick={handleClick}
+      display={"flex"}
+      justifyContent={"center"}
+      alignItems={"center"}
+      sx={{
+        width: "24px",
+        height: "24px",
+        ...sx,
+      }}
+    >
+      <img src={icon} alt={icon} />
+    </Box>
+  );
 };

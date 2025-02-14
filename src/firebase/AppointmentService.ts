@@ -1,18 +1,28 @@
-import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { firebaseFirestore } from "./BaseConfig";
 import { EnFirebaseCollections } from "../utils/enums";
+import { INewContactData } from "../utils/Interfaces";
 
 interface AppointmentData {
   userId: string;
   contact: string;
   date: string;
   startTime: string;
-  endTime:string;
+  endTime: string;
   length: string;
   appointmentType: string;
   reasonForCall: string;
   status: string;
-  createdAt?: any;
+  createdAt?: Date;
 }
 
 export const checkSlotAvailability = async (
@@ -21,7 +31,10 @@ export const checkSlotAvailability = async (
   startTime: string
 ): Promise<boolean> => {
   try {
-    const appointmentsRef = collection(firebaseFirestore, EnFirebaseCollections.APPOINTMENTS);
+    const appointmentsRef = collection(
+      firebaseFirestore,
+      EnFirebaseCollections.APPOINTMENTS
+    );
     const q = query(
       appointmentsRef,
       where("userId", "==", userId),
@@ -71,13 +84,39 @@ export const createAppointment = async (
   }
 };
 
+export const createNewContact = async (
+  contactData: INewContactData
+): Promise<string> => {
+  try {
+    const createContactRef = collection(
+      firebaseFirestore,
+      EnFirebaseCollections.CONTACTS
+    );
+    
+    // Create a new document in Firestore
+    const docRef = await addDoc(createContactRef, {
+      ...contactData,
+      createdAt: serverTimestamp(),
+    });
+    
+    // Return the newly created document's ID
+    return docRef.id;
+  } catch (error) {
+    console.error("Error creating new contact:", error);
+    throw new Error('Failed to create new contact');  // Throwing a custom error message
+  }
+};
+
 export const getAppointmentsByDateRange = async (
   userId: string,
   startDate: string,
   endDate: string
 ) => {
   try {
-    const appointmentsRef = collection(firebaseFirestore, EnFirebaseCollections.APPOINTMENTS);
+    const appointmentsRef = collection(
+      firebaseFirestore,
+      EnFirebaseCollections.APPOINTMENTS
+    );
     const q = query(
       appointmentsRef,
       where("userId", "==", userId),
@@ -86,9 +125,9 @@ export const getAppointmentsByDateRange = async (
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
   } catch (error) {
     console.error("Error fetching appointments:", error);
@@ -96,12 +135,12 @@ export const getAppointmentsByDateRange = async (
   }
 };
 
-export const getAppointmentsForDay = async (
-  userId: string,
-  date: string
-) => {
+export const getAppointmentsForDay = async (userId: string, date: string) => {
   try {
-    const appointmentsRef = collection(firebaseFirestore, EnFirebaseCollections.APPOINTMENTS);
+    const appointmentsRef = collection(
+      firebaseFirestore,
+      EnFirebaseCollections.APPOINTMENTS
+    );
     const q = query(
       appointmentsRef,
       where("userId", "==", userId),
@@ -109,9 +148,9 @@ export const getAppointmentsForDay = async (
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
   } catch (error) {
     console.error("Error fetching appointments:", error);
@@ -120,26 +159,26 @@ export const getAppointmentsForDay = async (
 };
 
 export const updateAppointmentStatus = async (
-  appointmentId: string, 
-  status: string, 
+  appointmentId: string,
+  status: string,
   cancelReason?: string
 ) => {
   try {
     const appointmentRef = doc(
-      firebaseFirestore, 
-      EnFirebaseCollections.APPOINTMENTS, 
+      firebaseFirestore,
+      EnFirebaseCollections.APPOINTMENTS,
       appointmentId
     );
-    
+
     const updateData: any = { status };
-    
+
     if (cancelReason) {
       updateData.cancelReason = cancelReason;
     }
-    
+
     await updateDoc(appointmentRef, updateData);
   } catch (error) {
     console.error("Error updating appointment status:", error);
     throw error;
   }
-}; 
+};

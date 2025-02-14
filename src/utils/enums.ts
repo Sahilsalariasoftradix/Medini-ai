@@ -11,7 +11,8 @@ export enum EnVerifiedStatus {
 export enum EnFirebaseCollections {
   USERS = "users",
   REASONS = "reasons",
-  APPOINTMENTS = "Appointments",
+  APPOINTMENTS = "appointments",
+  CONTACTS="contacts"
 }
 export enum EnAppointmentOptions {
   APPOINTMENT_1 = "appointment1",
