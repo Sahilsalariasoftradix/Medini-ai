@@ -16,10 +16,46 @@ import { EnOnboardingStatus } from "../../../utils/enums";
 import { routes } from "../../../utils/links";
 import { useAuth } from "../../../store/AuthContext";
 import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Dialog,
+} from "@mui/material";
+import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
 
+const scheduleTypes = ["Phone Availability", "In Person", "Another Type"];
+
+const scheduleData = [
+  ["09:00", "18:00", "", "09:00", "18:00",  "",""],
+  ["09:30", "18:30", "", "09:30", "18:30", "",""],
+  ["09:00", "18:00", "", "09:00", "18:00", "",""],
+  ["09:30", "18:30", "", "09:30", "18:30", "",""],
+  ["12:30", "13:15", "", "12:30", "13:15", "",""],
+  ["13:00", "13:45", "", "13:00", "13:45", "",""],
+  
+  
+];
+
+const headers = ["M", "T", "W", "T", "F", "S", "S"];
 const ProceedAvailability = () => {
   const { navigate, isLoading, setIsLoading } = useAuthHook();
   const { userDetails, setUserDetails } = useAuth();
+  const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const handleTimeClick = (time: string) => {
+    if (time) {
+      setSelectedTime(dayjs());
+      setOpen(true);
+    }
+  };
   const { resetForm } = useStepForm();
   const [newOnboardingStatus, setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
@@ -69,7 +105,7 @@ const ProceedAvailability = () => {
         should be in person or by phone in Availability.
       </Typography>
       <Box display={"flex"} justifyContent={"center"} my={5}>
-        <Box
+        {/* <Box
           component="img"
           sx={{
             width: 280,
@@ -77,7 +113,59 @@ const ProceedAvailability = () => {
           }}
           alt="The house from the offer."
           src={img}
+        /> */}
+   <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box display="flex" alignItems="center">
+        {/* Type Labels */}
+        <Box display="flex" flexDirection="column" mt={5} mr={2}>
+          {scheduleTypes.map((type, index) => (
+            <Box key={index} height={117} sx={{border:'1px sold grey',borderRadius:'50%',background:'grey',marginRight:'-110px'}} display="flex" alignItems="center">
+              <Typography variant="body1" fontWeight="bold">
+                {type}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {/* Table Container */}
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {headers.map((header, index) => (
+                  <TableCell key={index} align="center" sx={{ fontWeight: "bold" }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {scheduleData.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {row.map((time, colIndex) => (
+                    <TableCell
+                      key={colIndex}
+                      align="center"
+                      sx={{ cursor: time ? "pointer" : "default", bgcolor: time ? "#e3f2fd" : "transparent",padding:'5px' }}
+                      onClick={() => handleTimeClick(time)}
+                    >
+                      {time || <span style={{ display: "inline-block", width: "45px", height: "45px", borderRadius: "50%", backgroundColor: "#87CEFA" }}></span>}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DateTimePicker
+          label="Select Time"
+          value={selectedTime}
+          onChange={(newValue) => setSelectedTime(newValue)}
         />
+      </Dialog>
+    </LocalizationProvider>
       </Box>
       <form>
         <Box mt={0}>

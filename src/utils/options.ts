@@ -1,9 +1,9 @@
 import { EnAppointmentOptions, EnCityOptions, EnCountryOptions } from "./enums";
 
 export const APPOINTMENT_OPTIONS = [
-  { value: EnAppointmentOptions.APPOINTMENT_1, label: "Appointment 1" },
-  { value: EnAppointmentOptions.APPOINTMENT_2, label: "Appointment 2" },
-  { value: EnAppointmentOptions.APPOINTMENT_3, label: "Appointment 3" },
+  { value: EnAppointmentOptions.APPOINTMENT_1, label: '15' },
+  { value: EnAppointmentOptions.APPOINTMENT_2, label: '30' },
+  { value: EnAppointmentOptions.APPOINTMENT_3, label: '45' },
 ];
 
 export const COUNTRY_OPTIONS = [

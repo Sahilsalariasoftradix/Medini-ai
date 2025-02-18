@@ -1,4 +1,4 @@
-
+import { Dispatch, SetStateAction } from "react";
 
 export interface LoginRequest {
   email: string;
@@ -32,19 +32,19 @@ export interface IUserDetails {
   reasonForUsingStep: string;
   calendarName: string;
   collaborators: string[]; // For invited collaborators
-  companyDetails: {
-    businessName: string;
-    address: string;
-    apartmentSuite: string;
-    city: string;
-    country: string;
-    appointment: boolean;
-    maxAppointmentTime: string;
-  };
+  companyDetails: ICompanyDetails;
   handleBookings: number | null;
   [key: string]: any; // For dynamic fields if needed
 }
-
+export interface ICompanyDetails {
+  company_name: string;
+  address_line_one: string;
+  address_line_two: string;
+  city: string;
+  country: string;
+  in_person_appointments: boolean;
+  max_appointment_time: number;
+}
 export interface IStepFormContextType {
   currentStep: number;
   userDetails: IUserDetails;
@@ -52,6 +52,10 @@ export interface IStepFormContextType {
   goToPreviousStep: () => void;
   updateUserDetails: (updates: Partial<IUserDetails>) => void;
   resetForm: () => void;
+  setCompanyId: Dispatch<SetStateAction<number | null>>;
+  companyId: number | null;
+  companyNumber:string;
+  setCompanyNumber: Dispatch<SetStateAction<string>>;
 }
 
 export interface IHeaderProps {

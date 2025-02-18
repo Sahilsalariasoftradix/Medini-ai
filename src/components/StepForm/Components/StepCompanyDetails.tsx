@@ -11,9 +11,7 @@ import CommonTextField from "../../common/CommonTextField";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CommonButton from "../../common/CommonButton";
-import {
-  getCurrentUserId,
-} from "../../../firebase/AuthService";
+import { getCurrentUserId } from "../../../firebase/AuthService";
 import CustomSwitch from "../../common/CustomSwitch";
 import {
   errorSavingUserDetailsMessage,
@@ -26,10 +24,10 @@ import {
   COUNTRY_OPTIONS,
 } from "../../../utils/options";
 import { useAuthHook } from "../../../hooks/useAuth";
+import { postCompanyDetails } from "../../../api/userApi";
 
 const CompanyDetails: React.FC = () => {
-  const {  updateUserDetails, goToNextStep } =
-    useStepForm();
+  const { updateUserDetails, goToNextStep,setCompanyId } = useStepForm();
 
   const { isLoading, setIsLoading } = useAuthHook();
   // Validate hook
@@ -41,14 +39,15 @@ const CompanyDetails: React.FC = () => {
   } = useForm<CompanyDetailsSchemaType>({
     resolver: zodResolver(CompanyDetailsSchema),
     defaultValues: {
-      appointment: false,
+      in_person_appointments: false,
       city: "",
       country: "",
-      appointmentTime: "", // Default value prevents uncontrolled-to-controlled issue
+      max_appointment_time: "", // Default value prevents uncontrolled-to-controlled issue
     },
   });
 
   const onSubmit = async (data: CompanyDetailsSchemaType) => {
+    console.log(data)
     setIsLoading(true);
     try {
       // Step 1: Get the current user ID
@@ -58,22 +57,24 @@ const CompanyDetails: React.FC = () => {
       }
 
       // Step 2: Prepare updated details
-      const updatedDetails = {
-        companyDetails: {
-          businessName: data.officeName,
-          address: data.address,
-          apartmentSuite: data.apartment,
-          city: data.city,
-          country: data.country,
-          appointment: data.appointment ?? false,
-          maxAppointmentTime: data.appointmentTime,
-        },
+      const companyData = {
+        company_name: data.company_name,
+        address_line_one: data.address_line_one,
+        address_line_two: data.address_line_two,
+        city: data.city,
+        country: data.country,
+        in_person_appointments: data.in_person_appointments ?? false,
+        max_appointment_time: Number(data.max_appointment_time),
       };
 
+      const updatedDetails = { companyDetails: companyData };
+
+      // Send company details
+      const response = await postCompanyDetails(companyData);
+      setCompanyId(response.id);
       // Step 3: Update context with new user details
       updateUserDetails(updatedDetails);
       goToNextStep();
-     
     } catch (error) {
       setIsLoading(false);
       console.error(errorSavingUserDetailsMessage, error);
@@ -81,7 +82,7 @@ const CompanyDetails: React.FC = () => {
   };
 
   return (
-    <StepFormLayout  >
+    <StepFormLayout>
       <Typography align="center" variant="h3">
         Company Details
       </Typography>
@@ -103,18 +104,23 @@ const CompanyDetails: React.FC = () => {
 
             <CommonTextField
               placeholder="Office Name"
-              register={register("officeName")}
-              errorMessage={errors.officeName?.message}
+              register={register("company_name")}
+              errorMessage={errors.company_name?.message}
             />
           </Grid>
           <Grid size={6}>
-            <Typography mb={1} noWrap variant="bodyLargeExtraBold" color="grey.600">
+            <Typography
+              mb={1}
+              noWrap
+              variant="bodyLargeExtraBold"
+              color="grey.600"
+            >
               Apartment, suite, or etc.
             </Typography>
             <CommonTextField
               placeholder="Line 1"
-              register={register("apartment")}
-              errorMessage={errors.apartment?.message}
+              register={register("address_line_one")}
+              errorMessage={errors.address_line_one?.message}
             />
           </Grid>
           <Grid size={6}>
@@ -123,8 +129,8 @@ const CompanyDetails: React.FC = () => {
             </Typography>
             <CommonTextField
               placeholder="Line 2"
-              register={register("address")}
-              errorMessage={errors.address?.message}
+              register={register("address_line_two")}
+              errorMessage={errors.address_line_two?.message}
             />
           </Grid>
 
@@ -166,7 +172,7 @@ const CompanyDetails: React.FC = () => {
             </Typography>
             {/* Appointment Switch */}
             <CustomSwitch
-              name="appointment"
+              name="in_person_appointments"
               control={control}
               errors={errors}
             />
@@ -179,7 +185,7 @@ const CompanyDetails: React.FC = () => {
           <Grid size={6}>
             {/* Appointment Time */}
             <CustomSelect
-              name="appointmentTime"
+              name="max_appointment_time"
               control={control}
               errors={errors}
               placeholder="Select appointment"

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { IStepFormContextType, IUserDetails } from "../utils/Interfaces";
 import { z } from "zod";
-import { EnOnboardingStatus, EnUserBookingsOptions } from "../utils/enums";
+import { EnOnboardingStatus } from "../utils/enums";
 import { useAuth } from "./AuthContext";
 
 const StepFormContext = createContext<IStepFormContextType | undefined>(
@@ -9,22 +9,22 @@ const StepFormContext = createContext<IStepFormContextType | undefined>(
 );
 // Validation Schema
 export const CompanyDetailsSchema = z.object({
-  officeName: z
+  company_name: z
     .string()
     .min(8, "Office name should be at least 8 characters")
     .max(50, "Office name can be up to 50 characters"),
-  apartment: z
+  address_line_one: z
     .string()
     .min(8, "Apartment name should be at least 8 characters")
     .max(50, "Apartment name can be up to 50 characters"),
-  address: z
+  address_line_two: z
     .string()
     .min(8, "Address should be at least 8 characters")
     .max(50, "Address can be up to 50 characters"),
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
-  appointment: z.boolean().optional(),
-  appointmentTime: z.string().min(1, "Appointment time is required"),
+  in_person_appointments: z.boolean().optional(),
+  max_appointment_time: z.string().min(1, "Appointment time is required"),
 });
 
 // Validation schema
@@ -41,19 +41,21 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyNumber, setCompanyNumber] = useState<string>("");
   const [userFormDetails, setUserFormDetails] = useState<IUserDetails>({
     reasonForUsing: "",
     reasonForUsingStep: "",
     calendarName: "",
     collaborators: [],
     companyDetails: {
-      businessName: "",
-      address: "",
-      apartmentSuite: "",
+      company_name: "",
+      address_line_one: "",
+      address_line_two: "",
       city: "",
       country: "",
-      appointment: false,
-      maxAppointmentTime: "",
+      in_person_appointments: false,
+      max_appointment_time: null!,
     },
     handleBookings: null,
   });
@@ -64,7 +66,6 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       if (userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_1) {
         setCurrentStep(5);
       }
-      
     }
   }, [user, loading, userDetails?.onboardingStatus]);
 
@@ -92,13 +93,13 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       calendarName: "",
       collaborators: [],
       companyDetails: {
-        businessName: "",
-        address: "",
-        apartmentSuite: "",
+        company_name: "",
+        address_line_one: "",
+        address_line_two: "",
         city: "",
         country: "",
-        appointment: false,
-        maxAppointmentTime: "",
+        in_person_appointments: false,
+        max_appointment_time: null!,
       },
       handleBookings: null,
     });
@@ -113,6 +114,10 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
         goToPreviousStep,
         updateUserDetails,
         resetForm,
+        setCompanyId,
+        companyId,
+        companyNumber,
+        setCompanyNumber
       }}
     >
       {children}

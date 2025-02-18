@@ -15,9 +15,9 @@ export enum EnFirebaseCollections {
   CONTACTS="contacts"
 }
 export enum EnAppointmentOptions {
-  APPOINTMENT_1 = "appointment1",
-  APPOINTMENT_2 = "appointment2",
-  APPOINTMENT_3 = "appointment3",
+  APPOINTMENT_1 = "15",
+  APPOINTMENT_2 = "30",
+  APPOINTMENT_3 = "45",
 }
 export enum EnCountryOptions {
   COUNTRY_1 = "country1",

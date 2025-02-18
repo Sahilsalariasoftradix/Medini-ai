@@ -1,15 +1,29 @@
-import React from "react";
+import React, { useEffect } from "react";
 import StepFormLayout from "../StepFormLayout";
 import { Box, Typography } from "@mui/material";
-import { RoundCheckbox } from "../../common/RoundCheckbox";
 import CommonButton from "../../common/CommonButton";
 import { useStepForm } from "../../../store/StepFormContext";
+import { getCompanyUniqueNumber } from "../../../api/userApi";
+import { useAuth } from "../../../store/AuthContext";
 
 const YourNewPhone = () => {
-  const {
+  const { goToNextStep, setCompanyNumber, companyNumber } = useStepForm();
+  const { userDetails } = useAuth();
 
-    goToNextStep,
-  } = useStepForm();
+  useEffect(() => {
+    const fetchCompanyNumber = async () => {
+      try {
+        const resp = await getCompanyUniqueNumber(userDetails.company_id);
+        setCompanyNumber(resp.phoneNumber);
+      } catch (error) {
+        console.error("Error fetching company number:", error);
+      }
+    };
+
+    fetchCompanyNumber();
+  }, [userDetails.company_id]);
+
+
   return (
     <StepFormLayout>
       <Typography align="center" variant="h3">
@@ -24,7 +38,7 @@ const YourNewPhone = () => {
         This is your new phone number for patient bookings.
       </Typography>
       <Typography align="center" variant="h3">
-        1-653-299-1452
+        {companyNumber}
       </Typography>
       <Typography
         align="center"
@@ -32,9 +46,8 @@ const YourNewPhone = () => {
         sx={{ my: 1 }}
         color="grey.600"
       >
-             Share this with your patients to start receiving calls.
+        Share this with your patients to start receiving calls.
       </Typography>
-
 
       <form>
         <Box mt={0}>

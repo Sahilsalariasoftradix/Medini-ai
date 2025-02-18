@@ -19,7 +19,7 @@ import {
 } from "../../../utils/errorHandler";
 
 const HandleBookings = () => {
-  const { userDetails, updateUserDetails, goToNextStep } = useStepForm();
+  const { userDetails, updateUserDetails, goToNextStep,companyId } = useStepForm();
   const { isLoading, setIsLoading } = useAuthHook();
   const [bookingType, setBookingType] = useState(EnUserBookingsOptions.MANUAL);
   const handleChangeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +39,7 @@ const HandleBookings = () => {
       if (!userId) {
         throw new Error(userNotSignedInErrorMessage);
       }
-      await updateUserDetailsInFirestore(userId, userDetails);
+      await updateUserDetailsInFirestore(userId, userDetails,companyId!);
       console.log("User details saved successfully!");
       setTimeout(() => {
         goToNextStep();

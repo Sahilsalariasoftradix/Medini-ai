@@ -117,17 +117,23 @@ export const getCurrentUserId = (): string | null => {
 //* Function to update a user's details in the Firestore database
 export const updateUserDetailsInFirestore = async (
   userId: string, // User ID to identify the document to update
-  userDetails: Partial<IUserDetails> // Using Partial to allow updating only some of the user's details
+  userDetails: Partial<IUserDetails> ,// Using Partial to allow updating only some of the user's details
+  companyId?: number // Added companyId as a parameter
 ): Promise<void> => {
   try {
     // Create an update object by spreading the provided userDetails
     // Add the updated timestamp and set the onboardingStatus to a default value
-    const userDocUpdate = {
+    const userDocUpdate:any = {
       ...userDetails, // Merge the provided user details with other fields
+      // company_id: companyId, // Add companyId to the update
       updatedAt: serverTimestamp(), // Add a server-generated timestamp for the update time
+      
       // onboardingStatus: EnOnboardingStatus.STATUS_1, // Set onboarding status to a default value (STATUS_1)
     };
-
+    // Add company_id to the update only if it is provided
+    if (companyId !== undefined) {
+      userDocUpdate.company_id = companyId;
+    }
     // Reference to the specific user's document in Firestore using the userId
     const userRef = doc(firebaseFirestore, EnFirebaseCollections.USERS, userId);
 
