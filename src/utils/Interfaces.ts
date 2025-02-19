@@ -54,7 +54,7 @@ export interface IStepFormContextType {
   resetForm: () => void;
   setCompanyId: Dispatch<SetStateAction<number | null>>;
   companyId: number | null;
-  companyNumber:string;
+  companyNumber: string;
   setCompanyNumber: Dispatch<SetStateAction<string>>;
 }
 
@@ -73,4 +73,19 @@ export interface INewContactData {
 export interface IFilm {
   title: string;
   year: number;
+}
+
+export interface IAvailability {
+  day_of_week: string;
+  phone_start_time: string;
+  phone_end_time: string;
+  in_person_start_time: string;
+  in_person_end_time: string;
+  break_start_time: string;
+  break_end_time: string;
+}
+
+export interface IAvailabilityRequest {
+  user_id: number;
+  availabilities: IAvailability[];
 }
