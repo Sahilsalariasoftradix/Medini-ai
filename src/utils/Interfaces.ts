@@ -89,3 +89,22 @@ export interface IAvailabilityRequest {
   user_id: number;
   availabilities: IAvailability[];
 }
+
+export interface ISchedule {
+  day_of_week: string;
+  phone_start_time: string;
+  phone_end_time: string;
+  in_person_start_time: string;
+  in_person_end_time: string;
+  break_start_time: string;
+  break_end_time: string;
+}
+export interface ISelectedCell {
+  dayIndex: number;
+  type: "phone" | "in_person" | "break";
+  isStart: boolean;
+}
+export interface IScheduleType {
+  icon: string;
+  bgColor: string;
+}

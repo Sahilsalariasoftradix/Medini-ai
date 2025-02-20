@@ -1,22 +1,27 @@
 import React, { useEffect } from "react";
 import StepFormLayout from "../StepFormLayout";
-import { Box, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import CommonButton from "../../common/CommonButton";
 import { useStepForm } from "../../../store/StepFormContext";
 import { getCompanyUniqueNumber } from "../../../api/userApi";
 import { useAuth } from "../../../store/AuthContext";
+import useLoading from "../../../hooks/useLoading";
 
 const YourNewPhone = () => {
   const { goToNextStep, setCompanyNumber, companyNumber } = useStepForm();
+  const { loading, startLoading, stopLoading } = useLoading(); 
   const { userDetails } = useAuth();
 
   useEffect(() => {
     const fetchCompanyNumber = async () => {
+      startLoading(); 
       try {
         const resp = await getCompanyUniqueNumber(userDetails.company_id);
         setCompanyNumber(resp.phoneNumber);
       } catch (error) {
         console.error("Error fetching company number:", error);
+      }finally{
+        stopLoading();
       }
     };
 
@@ -38,7 +43,7 @@ const YourNewPhone = () => {
         This is your new phone number for patient bookings.
       </Typography>
       <Typography align="center" variant="h3">
-        {companyNumber}
+        {loading ? <Skeleton variant="text" sx={{ fontSize: '2rem' }} />: companyNumber }
       </Typography>
       <Typography
         align="center"

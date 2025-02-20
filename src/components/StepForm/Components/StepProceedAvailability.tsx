@@ -3,12 +3,7 @@ import StepFormLayout from "../StepFormLayout";
 import CommonButton from "../../common/CommonButton";
 import { useStepForm } from "../../../store/StepFormContext";
 import { useAuthHook } from "../../../hooks/useAuth";
-import img from "../../../assets/images/auth/availablity.png";
-import callBooking from "../../../assets/icons/call-booking.svg";
-import dinner from "../../../assets/icons/dinner.svg";
-import office from "../../../assets/icons/office-booking.svg";
 import { TimePicker } from "@mui/x-date-pickers";
-
 import {
   getCurrentUserId,
   updateUserDetailsInFirestore,
@@ -34,67 +29,148 @@ import {
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import { postAvailabilityGeneral } from "../../../api/userApi";
+import { ISchedule, ISelectedCell } from "../../../utils/Interfaces";
+import { TScheduleKey, TScheduleTypes } from "../../../utils/types";
+import {
+  daysOfWeek,
+  headers,
+  typeMappings,
+} from "../../../utils/constants/stepAvailability";
+import CommonSnackbar from "../../common/CommonSnackbar";
 
-const scheduleTypes: Array<"phone" | "person" | "break"> = [
-  "phone",
-  "person",
-  "break",
-];
-
-// Define Type for Mappings
-interface ScheduleType {
-  icon: string;
-  bgColor: string;
-}
-
-// Mapping for Icons and Background Colors
-const typeMappings: Record<"phone" | "person" | "break", ScheduleType> = {
-  phone: { icon: callBooking, bgColor: "#edf2f7" }, // Light blue
-  person: { icon: office, bgColor: "#e8f5ff" }, // Light green
-  break: { icon: dinner, bgColor: "#dff1e6" }, // Light red/pink
-};
-
-
-
-const headers = ["M", "T", "W", "T", "F", "S", "S"];
 const ProceedAvailability = () => {
+  // Hooks
   const { navigate, isLoading, setIsLoading } = useAuthHook();
+  const [selectedCell, setSelectedCell] = useState<ISelectedCell | null>(null);
   const { userDetails, setUserDetails } = useAuth();
   const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
   const [open, setOpen] = useState(false);
-  const [schedule, setSchedule] = useState(
-    Array(6)
-      .fill(null)
-      .map(() => Array(7).fill("")) // Initialize all slots as empty
-  );
-  const [selectedRow, setSelectedRow] = useState<number | null>(null);
-  console.log(selectedRow)
-  const [selectedCol, setSelectedCol] = useState<number | null>(null);
-  console.log(selectedCol)
+  const { resetForm } = useStepForm();
 
-  const handleTimeClick = (rowIndex: number, colIndex: number) => {
-    setSelectedRow(rowIndex);
-    setSelectedCol(colIndex);
+  const [newOnboardingStatus, setNewOnboardingStatus] = useState(
+    userDetails?.onboardingStatus
+  );
+  // Error UI management
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "error",
+  });
+
+  // Storing selected schedule
+  const [schedule, setSchedule] = useState<ISchedule[]>(
+    daysOfWeek.map((day) => ({
+      day_of_week: day,
+      phone_start_time: "",
+      phone_end_time: "",
+      in_person_start_time: "",
+      in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
+    }))
+  );
+
+  // Manage time selection opening
+  const handleTimeClick = (
+    dayIndex: number,
+    type: "phone" | "in_person" | "break",
+    isStart: boolean
+  ) => {
+    setSelectedCell({ dayIndex, type, isStart });
     setSelectedTime(dayjs());
     setOpen(true);
   };
 
+  // Handle time selecting and changing and time slot selecting checks
   const handleTimeChange = (newValue: Dayjs | null) => {
-    if (selectedRow !== null && selectedCol !== null && newValue) {
-      const updatedSchedule = [...schedule];
-      updatedSchedule[selectedRow][selectedCol] = newValue.format("HH:mm");
-      setSchedule(updatedSchedule);
+    if (selectedCell && newValue) {
+      setSchedule((prev) => {
+        const updatedSchedule = [...prev];
+        const key: TScheduleKey = `${selectedCell.type}_${
+          selectedCell.isStart ? "start" : "end"
+        }_time`;
+        if (!selectedCell.isStart) {
+          const startKey: TScheduleKey = `${selectedCell.type}_start_time`;
+          const startTime = updatedSchedule[selectedCell.dayIndex][startKey];
+
+          if (!startTime) {
+            setSnackbar({
+              open: true,
+              message: "Please select a start time first.",
+              severity: "error",
+            });
+            return prev;
+          }
+          if (
+            dayjs(newValue.format("HH:mm:ss"), "HH:mm:ss").isBefore(
+              dayjs(startTime, "HH:mm:ss")
+            )
+          ) {
+            setSnackbar({
+              open: true,
+              message: "End time cannot be earlier than start time.",
+              severity: "error",
+            });
+            return prev;
+          }
+        }
+        updatedSchedule[selectedCell.dayIndex][key] =
+          newValue.format("HH:mm:ss");
+        return updatedSchedule;
+      });
     }
     setOpen(false);
   };
-  const { resetForm } = useStepForm();
-  const [newOnboardingStatus, setNewOnboardingStatus] = useState(
-    userDetails?.onboardingStatus
-  );
+  // Closing snackbar
+  const handleSnackbarClose = () => {
+    setSnackbar((prevSnackbar) => ({
+      ...prevSnackbar,
+      open: false,
+    }));
+  };
 
+  // Final data submission and status changing function
   const handleContinue = async () => {
     setIsLoading(true);
     try {
+      // Check if at least one time slot is selected
+      const hasSelectedSlot = schedule.some((day) =>
+        TScheduleTypes.some(
+          (type) => day[`${type}_start_time`] || day[`${type}_end_time`]
+        )
+      );
+
+      if (!hasSelectedSlot) {
+        setSnackbar({
+          open: true,
+          message: "Please select at least one availability slot.",
+          severity: "error",
+        });
+        setIsLoading(false);
+        return;
+      }
+      // Check if all selected start times have corresponding end times
+      const hasIncompleteEntries = schedule.some((day) =>
+        TScheduleTypes.some(
+          (type) => day[`${type}_start_time`] && !day[`${type}_end_time`]
+        )
+      );
+
+      if (hasIncompleteEntries) {
+        setSnackbar({
+          open: true,
+          message: "Please select an end time for all start times.",
+          severity: "error",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Step 1: Get the current user ID
       const userId = getCurrentUserId();
       if (!userId) {
@@ -110,6 +186,11 @@ const ProceedAvailability = () => {
         onboardingStatus: updatedStatus, // Use updatedStatus directly
       });
       setUserDetails({ ...userDetails, onboardingStatus: updatedStatus });
+
+      // Sending data to the API
+      const payload = { user_id: 1, availabilities: schedule };
+      await postAvailabilityGeneral(payload);
+      // Resetting form after successful submission
       resetForm();
       setTimeout(() => {
         navigate(routes.dashboard.home);
@@ -121,6 +202,7 @@ const ProceedAvailability = () => {
     }
   };
 
+  
   return (
     <StepFormLayout>
       <Typography align="center" variant="h3">
@@ -136,17 +218,16 @@ const ProceedAvailability = () => {
         should be in person or by phone in Availability.
       </Typography>
       <Box display={"flex"} justifyContent={"center"} my={5}>
-
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Box display="flex" alignItems="center">
             {/* Type Labels */}
-            <Box display="flex" flexDirection="column" gap="3px" mt={7} mr={2}>
-              {scheduleTypes.map((type, index) => {
+            <Box display="flex" flexDirection="column" gap="3px" mt={5} mr={2}>
+              {TScheduleTypes.map((type, index) => {
                 const { icon, bgColor } = typeMappings[type];
                 return (
                   <Box
                     key={index}
-                    height={117}
+                    height={127}
                     width={117}
                     sx={{
                       border: "1px solid #e2e8f0",
@@ -196,43 +277,60 @@ const ProceedAvailability = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {schedule.map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      {row.map((time, colIndex) => (
-                        <TableCell
-                          key={colIndex}
-                          align="center"
-                          sx={{
-                            cursor: "pointer",
-                            borderRight:
-                              colIndex === row.length - 1
-                                ? "none"
-                                : "1px solid #e0e0e0",
-                            borderBottom:
-                              rowIndex === schedule.length - 1
-                                ? "none"
-                                : "1px solid #e0e0e0",
-                            padding: "5px",
-                            width: "60px",
-                            // backgroundColor: time ? "#e3f2fd" : "transparent",
-                          }}
-                          onClick={() => handleTimeClick(rowIndex, colIndex)}
-                        >
-                          {time || (
-                            <span
-                              style={{
-                                display: "inline-block",
-                                width: "50px",
-                                height: "50px",
-                                borderRadius: "50%",
-                                backgroundColor: "#e8f5ff",
+                  {TScheduleTypes.flatMap((type) =>
+                    ["start", "end"].map((timeType, rowIndex) => (
+                      <TableRow key={`${type}-${timeType}`}>
+                        {daysOfWeek.map((_, colIndex) => {
+                          // To display time in HH:MM format in the frontend
+                          const key =
+                            `${type}_${timeType}_time` as keyof ISchedule;
+                          return (
+                            <TableCell
+                              key={colIndex}
+                              align="center"
+                              sx={{
+                                cursor: "pointer",
+                                borderRight:
+                                  colIndex === daysOfWeek.length - 1
+                                    ? "none"
+                                    : "1px solid #e0e0e0",
+                                borderBottom:
+                                  rowIndex === schedule.length - 1
+                                    ? "none"
+                                    : "1px solid #e0e0e0",
+                                padding: "5px",
+                                width: "60px",
                               }}
-                            ></span>
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
+                              onClick={() =>
+                                handleTimeClick(
+                                  colIndex,
+                                  type,
+                                  timeType === "start"
+                                )
+                              }
+                            >
+                              {/* Display time otherwise lightblue circle */}
+                              {(schedule[colIndex][key] &&
+                                dayjs(
+                                  schedule[colIndex][key],
+                                  "HH:mm:ss"
+                                ).format("HH:mm")) || (
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    width: "50px",
+                                    height: "50px",
+                                    borderRadius: "50%",
+                                    backgroundColor: "#e8f5ff",
+                                  }}
+                                ></span>
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -260,6 +358,13 @@ const ProceedAvailability = () => {
           />
         </Box>
       </form>
+      {/* Snackbar */}
+      <CommonSnackbar
+        open={snackbar.open}
+        onClose={handleSnackbarClose}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
     </StepFormLayout>
   );
 };

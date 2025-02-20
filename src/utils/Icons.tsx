@@ -12,7 +12,9 @@ import history from "../assets/icons/History.svg";
 import messages from "../assets/icons/Message.svg";
 import settings from "../assets/icons/settings.svg";
 import help from "../assets/icons/help.svg";
-
+import callBooking from "../assets/icons/call-booking.svg";
+import dinner from "../assets/icons/dinner.svg";
+import office from "../assets/icons/office-booking.svg";
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
 } = {
@@ -34,6 +36,10 @@ export const SidebarIcons = {
   settings: settings,
   help: help,  // 'help' icon for Option 4
   // Add more icons as needed
-
-
 };
+// Set availability option
+export const availabilityIcons={
+  phone:callBooking,
+  in_person:office,
+  break:dinner
+}
