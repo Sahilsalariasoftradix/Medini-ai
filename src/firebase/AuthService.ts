@@ -15,6 +15,7 @@ import {
   getDocs,
   getFirestore,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -114,6 +115,7 @@ export const getCurrentUserId = (): string | null => {
   return user ? user.uid : null; // user.uid contains the unique identifier for the authenticated user
 };
 
+
 //* Function to update a user's details in the Firestore database
 export const updateUserDetailsInFirestore = async (
   userId: string, // User ID to identify the document to update
@@ -175,55 +177,108 @@ export const getReasons = async () => {
 };
 
 // Function to sign up a user with email and password, create their Firestore document, and send verification email
+// export const signUpWithEmail = async (
+//   email: string, // User's email address
+//   password: string, // User's password
+//   firstName: string, // User's first name
+//   lastName: string // User's last name
+// ): Promise<string | void> => {
+//   try {
+//     // Step 1: Create the user in Firebase Authentication using email and password
+//     const userCredential = await createUserWithEmailAndPassword(
+//       firebaseAuth, // Firebase Auth instance
+//       email, // User's email
+//       password // User's password
+//     );
+//     // Get the user object from the created userCredential
+//     const user = userCredential.user;
+//     // Optionally, sign out the user immediately after account creation if you don't want them signed in
+//     await signOut(firebaseAuth);
+
+//     // Step 2: Save the user's details in Firestore
+//     const userData = {
+//       id: user.uid, // Firebase user ID
+//       email: user.email, // User's email
+//       firstName, // User's first name
+//       lastName, // User's last name
+//       createdAt: Timestamp.now().seconds, // UNIX timestamp for account creation
+//       updatedAt: null, // Initially null
+//       deletedAt: null, // Initially null
+//       status: EnVerifiedStatus.UNVERIFIED, // 1 for verified 0 for unverified
+//       onboardingStatus: EnOnboardingStatus.STATUS_0, //0 for unverified 1 for verified 2 for second verified
+//     };
+//     // Set the user data in the Firestore 'users' collection using the user's UID
+//     await setDoc(
+//       doc(firebaseFirestore, EnFirebaseCollections.USERS, user.uid),
+//       userData
+//     );
+
+//     // Step 3: Send an email verification to the user
+//     await sendEmailVerification(user);
+
+//     // Step 4: Return a success message
+//     return `Welcome, ${firstName}${" "}${lastName}! ${
+//       staticText.firestore.accountSucceededMessage
+//     }`;
+//   } catch (error: any) {
+//     // Step 5: Handle errors by throwing a custom error message
+//     throw new Error(getAuthErrorMessage(error.code)); // Map Firebase error code to a custom message
+//   }
+// };
 export const signUpWithEmail = async (
-  email: string, // User's email address
-  password: string, // User's password
-  firstName: string, // User's first name
-  lastName: string // User's last name
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
 ): Promise<string | void> => {
   try {
-    // Step 1: Create the user in Firebase Authentication using email and password
-    const userCredential = await createUserWithEmailAndPassword(
-      firebaseAuth, // Firebase Auth instance
-      email, // User's email
-      password // User's password
-    );
-    // Get the user object from the created userCredential
+    // Step 1: Create user in Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
     const user = userCredential.user;
-    // Optionally, sign out the user immediately after account creation if you don't want them signed in
-    await signOut(firebaseAuth);
+    await signOut(firebaseAuth); // Sign out the user immediately after creation (optional)
 
-    // Step 2: Save the user's details in Firestore
+    // Step 2: Generate auto-incrementing `prop` ID using a Firestore transaction
+    const counterRef = doc(firebaseFirestore, "counters", "users");
+
+    const newPropId = await runTransaction(firebaseFirestore, async (transaction) => {
+      const counterDoc = await transaction.get(counterRef);
+      let propId = 1; // Default value
+
+      if (counterDoc.exists()) {
+        propId = counterDoc.data().lastId + 1;
+      }
+
+      // Update the counter
+      transaction.set(counterRef, { lastId: propId });
+
+      return propId;
+    });
+
+    // Step 3: Save user details in Firestore
     const userData = {
-      id: user.uid, // Firebase user ID
-      email: user.email, // User's email
-      firstName, // User's first name
-      lastName, // User's last name
-      createdAt: Timestamp.now().seconds, // UNIX timestamp for account creation
-      updatedAt: null, // Initially null
-      deletedAt: null, // Initially null
-      status: EnVerifiedStatus.UNVERIFIED, // 1 for verified 0 for unverified
-      onboardingStatus: EnOnboardingStatus.STATUS_0, //0 for unverified 1 for verified 2 for second verified
+      id: user.uid,
+      uuid: newPropId, // Auto-incremented ID
+      email: user.email,
+      firstName,
+      lastName,
+      createdAt: Timestamp.now().seconds,
+      updatedAt: null,
+      deletedAt: null,
+      status: EnVerifiedStatus.UNVERIFIED,
+      onboardingStatus: EnOnboardingStatus.STATUS_0,
     };
-    // Set the user data in the Firestore 'users' collection using the user's UID
-    await setDoc(
-      doc(firebaseFirestore, EnFirebaseCollections.USERS, user.uid),
-      userData
-    );
 
-    // Step 3: Send an email verification to the user
+    await setDoc(doc(firebaseFirestore, EnFirebaseCollections.USERS, user.uid), userData);
+
+    // Step 4: Send email verification
     await sendEmailVerification(user);
 
-    // Step 4: Return a success message
-    return `Welcome, ${firstName}${" "}${lastName}! ${
-      staticText.firestore.accountSucceededMessage
-    }`;
+    // Step 5: Return success message
+    return `Welcome, ${firstName} ${lastName}! ${staticText.firestore.accountSucceededMessage}`;
   } catch (error: any) {
-    // Step 5: Handle errors by throwing a custom error message
-    throw new Error(getAuthErrorMessage(error.code)); // Map Firebase error code to a custom message
+    throw new Error(getAuthErrorMessage(error.code));
   }
 };
-
 //* Function to sign in a user with email and password, verify email, and update Firestore status
 export const signInWithEmail = async (
   email: string, // User's email address

@@ -11,7 +11,10 @@ import CommonTextField from "../../common/CommonTextField";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CommonButton from "../../common/CommonButton";
-import { getCurrentUserId } from "../../../firebase/AuthService";
+import {
+  getCurrentUserId,
+  getUserDetails,
+} from "../../../firebase/AuthService";
 import CustomSwitch from "../../common/CustomSwitch";
 import {
   errorSavingUserDetailsMessage,
@@ -24,10 +27,9 @@ import {
   COUNTRY_OPTIONS,
 } from "../../../utils/options";
 import { useAuthHook } from "../../../hooks/useAuth";
-import { postCompanyDetails } from "../../../api/userApi";
 
 const CompanyDetails: React.FC = () => {
-  const { updateUserDetails, goToNextStep,setCompanyId } = useStepForm();
+  const { updateUserDetails, goToNextStep, setCompanyId } = useStepForm();
 
   const { isLoading, setIsLoading } = useAuthHook();
   // Validate hook
@@ -47,7 +49,7 @@ const CompanyDetails: React.FC = () => {
   });
 
   const onSubmit = async (data: CompanyDetailsSchemaType) => {
-    console.log(data)
+    console.log(data);
     setIsLoading(true);
     try {
       // Step 1: Get the current user ID
@@ -68,10 +70,11 @@ const CompanyDetails: React.FC = () => {
       };
 
       const updatedDetails = { companyDetails: companyData };
+      const det = await getUserDetails(userId);
 
       // Send company details
-      const response = await postCompanyDetails(companyData);
-      setCompanyId(response.id);
+      // const response = await postCompanyDetails(companyData);
+      setCompanyId(det?.uuid);
       // Step 3: Update context with new user details
       updateUserDetails(updatedDetails);
       goToNextStep();

@@ -40,7 +40,7 @@ const HandleBookings = () => {
         throw new Error(userNotSignedInErrorMessage);
       }
       await updateUserDetailsInFirestore(userId, userDetails,companyId!);
-      console.log("User details saved successfully!");
+      // console.log("User details saved successfully!");
       setTimeout(() => {
         goToNextStep();
       }, 1000);

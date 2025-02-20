@@ -16,7 +16,7 @@ const YourNewPhone = () => {
     const fetchCompanyNumber = async () => {
       startLoading(); 
       try {
-        const resp = await getCompanyUniqueNumber(userDetails.company_id);
+        const resp = await getCompanyUniqueNumber(userDetails.uuid);
         setCompanyNumber(resp.phoneNumber);
       } catch (error) {
         console.error("Error fetching company number:", error);

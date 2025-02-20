@@ -82,13 +82,28 @@ const ProceedAvailability = () => {
     isStart: boolean
   ) => {
     setSelectedCell({ dayIndex, type, isStart });
-    setSelectedTime(dayjs());
+    setSelectedTime(null);
     setOpen(true);
   };
 
   // Handle time selecting and changing and time slot selecting checks
   const handleTimeChange = (newValue: Dayjs | null) => {
+    if (newValue) {
+      // Ensure that minutes are selected
+      if (newValue.minute() === 0) {
+        setSnackbar({
+          open: true,
+          message: "Please select both hours and minutes.",
+          severity: "error",
+        });
+        return; // Don't close the dialog if minutes are not selected
+      }
+
+      setSelectedTime(newValue);
+      setOpen(false); // Close the dialog if the time is valid
+    }
     if (selectedCell && newValue) {
+      
       setSchedule((prev) => {
         const updatedSchedule = [...prev];
         const key: TScheduleKey = `${selectedCell.type}_${
@@ -347,15 +362,17 @@ const ProceedAvailability = () => {
       </Box>
       <form>
         <Box mt={0}>
-          <Box justifyContent={"center"} display={"flex"} mt={4}></Box>
+          <Box justifyContent={"center"} display={"flex"} >
+
           <CommonButton
-            sx={{ p: 1.5, mt: 2 }}
+            sx={{ p: 1.5, mt: 2,width:'60%' }}
             text={"Continue"}
             loading={isLoading}
             onClick={handleContinue}
             fullWidth
             type="button"
           />
+          </Box>
         </Box>
       </form>
       {/* Snackbar */}
