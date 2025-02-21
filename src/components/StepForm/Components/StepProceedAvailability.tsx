@@ -47,6 +47,7 @@ const ProceedAvailability = () => {
   const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
   const [open, setOpen] = useState(false);
   const { resetForm } = useStepForm();
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 //@ts-ignore
   const [newOnboardingStatus, setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
@@ -96,6 +97,7 @@ const ProceedAvailability = () => {
           message: "Please select both hours and minutes.",
           severity: "error",
         });
+        setIsPickerOpen(false);
         return; // Don't close the dialog if minutes are not selected
       }
 
@@ -351,11 +353,21 @@ const ProceedAvailability = () => {
             </TableContainer>
           </Box>
           <Dialog open={open} onClose={() => setOpen(false)}>
+            
             <TimePicker
+            
+            open={isPickerOpen}
+            onClose={() => setIsPickerOpen(false)}
               label="Select Time"
               value={selectedTime}
               onChange={handleTimeChange}
               ampm={false} // Use 24-hour format (optional)
+              slotProps={{
+                textField: {
+                 onClick: () => setIsPickerOpen(true),             
+                },
+              }}
+              
             />
           </Dialog>
         </LocalizationProvider>

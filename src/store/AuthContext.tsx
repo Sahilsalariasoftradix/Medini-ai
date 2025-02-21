@@ -21,22 +21,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true); // Set loading true at start
+  
     const unsubscribe = onAuthStateChanged(
       firebaseAuth,
       async (currentUser) => {
-        setUser(currentUser);
-        if (currentUser) {
-          // Fetch user details from Firestore
-          const userDoc = await getDoc(
-            doc(firebaseFirestore, EnFirebaseCollections.USERS, currentUser.uid)
-          );
-          if (userDoc.exists()) {
-            setUserDetails(userDoc.data());
+        try {
+          setUser(currentUser);
+          if (currentUser) {
+            // Fetch user details from Firestore
+            const userDoc = await getDoc(
+              doc(firebaseFirestore, EnFirebaseCollections.USERS, currentUser.uid)
+            );
+            if (userDoc.exists()) {
+              setUserDetails(userDoc.data());
+            }
+          } else {
+            setUserDetails(null);
           }
-        } else {
-          setUserDetails(null);
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
