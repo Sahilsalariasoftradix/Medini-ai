@@ -65,7 +65,7 @@ interface CustomSwitchProps {
   errors: FieldErrors<any>; // Hook Form errors
 }
 
-const CustomSwitch: React.FC<CustomSwitchProps> = ({ name, control, errors }) => {
+const CustomSwitch: React.FC<CustomSwitchProps> = ({ name, control }) => {
   return (
     <Controller
       name={name}

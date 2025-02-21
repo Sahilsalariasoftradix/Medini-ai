@@ -22,7 +22,7 @@ interface CommonDialogProps {
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
   hideCloseIcon?: boolean;
   loading?:boolean;
-  disabled:boolean;
+  disabled?:boolean;
   confirmButtonType?:
     | "inherit"
     | "primary"

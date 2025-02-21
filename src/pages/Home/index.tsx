@@ -1,13 +1,11 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import CommonButton from "../../components/common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
 import { routes } from "../../utils/links";
 
 const Home = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); // Get user and logout function
-  const path = location.pathname;
+  const {  logout } = useAuth(); // Get user and logout function
   const handleLogout = async () => {
     try {
       await logout();

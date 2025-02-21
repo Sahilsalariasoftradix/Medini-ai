@@ -48,7 +48,7 @@ const ProceedAvailability = () => {
   const [open, setOpen] = useState(false);
   const { resetForm } = useStepForm();
 
-  const [newOnboardingStatus, setNewOnboardingStatus] = useState(
+  const [ setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
   );
   // Error UI management

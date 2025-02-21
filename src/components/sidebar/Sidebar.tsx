@@ -85,11 +85,6 @@ const Sidebar = ({
     </ListItem>
   );
 
-  // const renderNestedListItem = (text: string) => (
-  //   <ListItem sx={{ pl: 7.1 }} onClick={closeDrawerOnMobile}>
-  //     {open && <ListItemText sx={nestedListItemTextStyles} primary={text} />}
-  //   </ListItem>
-  // );
   return (
     <Drawer
       variant={isMobile ? "temporary" : "permanent"}

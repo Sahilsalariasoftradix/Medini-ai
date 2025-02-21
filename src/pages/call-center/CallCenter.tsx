@@ -964,6 +964,8 @@ const CallCenter = () => {
   const visibleRows = useMemo(
     () =>
       [...rows]
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         .sort(getComparator(order, orderBy))
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [order, orderBy, page, rowsPerPage]

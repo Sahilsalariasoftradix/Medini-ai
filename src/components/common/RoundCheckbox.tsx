@@ -7,7 +7,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 const BpIcon = styled("span")<{
   size: number;
   color: string;
-}>(({ theme, size, color }) => ({
+}>(({ theme, size }) => ({
   borderRadius: 50,
   width: size,
   height: size,

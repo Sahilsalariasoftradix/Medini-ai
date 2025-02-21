@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Box, Chip, Typography } from "@mui/material";
 import { useStepForm } from "../../../store/StepFormContext";
 import { staticText } from "../../../utils/staticText";

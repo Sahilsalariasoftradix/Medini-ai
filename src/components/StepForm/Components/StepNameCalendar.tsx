@@ -9,7 +9,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import StepFormLayout from "../StepFormLayout";
 
 const NameYourCalendar: React.FC = () => {
-  const { userDetails, updateUserDetails, goToNextStep, goToPreviousStep } =
+  const {  updateUserDetails, goToNextStep } =
     useStepForm();
   // Validate hook
   const {
