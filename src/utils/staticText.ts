@@ -25,7 +25,7 @@ export const staticText = {
     resetPasswordDescription:
       "Enter the email address associated with your account and we will send you a link to reset your password.",
     resetPasswordButton: "Send Link",
-    forgotEmailText: "Forgot your Email?",
+    forgotEmailText: "Back to Login",
     nameYourCalenderText: "Name your calendar",
     nameYourCalenderDescription: "eg. Dr. Zee Cal",
     stepContinueText: "Continue",

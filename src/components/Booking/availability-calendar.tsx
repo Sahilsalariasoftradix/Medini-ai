@@ -273,6 +273,7 @@ const TimeSlot = ({
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
+    setLoading({ ...loading, data: true });
     try {
       const userId = getCurrentUserId();
       if (!userId) {
@@ -317,6 +318,8 @@ const TimeSlot = ({
         message: error.message,
         severity: "error",
       });
+    }finally{
+      setLoading({ ...loading, data: false });
     }
   };
   // Update the status of the booking
@@ -442,8 +445,8 @@ const TimeSlot = ({
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
-        loading={loading.input}
-        disabled={loading.input}
+        loading={loading.data}
+        disabled={loading.data}
       >
         <SlotBookingForm
           control={control}
@@ -699,7 +702,7 @@ export default function AvailabilityCalendar() {
         <Box>
           <Box
             display="flex"
-            sx={{ height: "calc(100vh - 350px)", overflowY: "auto" }}
+            sx={{ height: "calc(100vh - 305px)", overflowY: "auto" }}
           >
             <Box sx={{ minWidth: "80px" }}>
               <Box sx={{ height: "83px" }} />

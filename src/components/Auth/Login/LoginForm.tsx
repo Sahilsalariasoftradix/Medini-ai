@@ -98,10 +98,10 @@ const LoginForm = () => {
       display={"flex"}
       justifyContent={"center"}
       alignItems={"center"}
-      minHeight={"calc(100vh - 134px)"}
+      minHeight={"calc(100vh - 174px)"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="form">
-        <Box sx={{ p: "40px", m: "auto" }} className="auth-form">
+        <Box sx={{ p: "40px", m: "auto", overflow: "auto" ,maxHeight:'560px',mb: 4}} className="auth-form">
           <Typography align="center" variant="h3">
             {text.title}
           </Typography>

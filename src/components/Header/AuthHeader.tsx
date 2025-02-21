@@ -46,7 +46,7 @@ const AuthHeader = () => {
             onClick={handleLogout} // Logout action
           />
         ) : (
-          !(path === routes.auth.signIn || path === routes.auth.signUp) && (
+          !(path === routes.auth.signIn || path === routes.auth.signUp || path === routes.auth.forgotPassword) && (
             <CommonButton
               variant="contained"
               color="primary"
