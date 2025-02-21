@@ -816,6 +816,7 @@ export default function AvailabilityCalendar() {
                                 .toDate()}
                               availableDates={days
                                 .filter((d) => d.availability.isAvailable)
+                                //@ts-ignore
                                 .map((d, i) =>
                                   dayjs(startDate).add(i, "day").toDate()
                                 )}

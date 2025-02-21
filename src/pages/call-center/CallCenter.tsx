@@ -906,6 +906,7 @@ const CallCenter = () => {
   const totalPages = Math.ceil(rows.length / rowsPerPage);
 
   const handleRequestSort = (
+    //@ts-ignore
     event: React.MouseEvent<unknown>,
     property: keyof Data
   ) => {
@@ -922,6 +923,7 @@ const CallCenter = () => {
     }
     setSelected([]);
   };
+  //@ts-ignore
 
   const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
     const selectedIndex = selected.indexOf(id);

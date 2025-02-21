@@ -97,7 +97,7 @@ const ReasonForUsing: React.FC = () => {
           
           {loading ? (
             <>
-              {[...Array(4)].map((e, i) => (
+              {[...Array(4)].map(( i) => (
                 <Skeleton
                   key={i}
                   variant="rectangular"

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import  { useEffect } from "react";
 import StepFormLayout from "../StepFormLayout";
 import { Box, Skeleton, Typography } from "@mui/material";
 import CommonButton from "../../common/CommonButton";
