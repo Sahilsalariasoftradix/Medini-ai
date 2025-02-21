@@ -97,7 +97,6 @@ const ProceedAvailability = () => {
           message: "Please select both hours and minutes.",
           severity: "error",
         });
-        setIsPickerOpen(false);
         return; // Don't close the dialog if minutes are not selected
       }
 
