@@ -11,6 +11,7 @@ export const routes = {
     home: "/",
     profile: "/dashboard/profile",
     settings: "/dashboard/settings",
+    
   },
   sidebar: {
     schedule: { name: "Schedule", link: "/schedule" },

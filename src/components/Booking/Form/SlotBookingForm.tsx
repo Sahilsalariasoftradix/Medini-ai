@@ -8,19 +8,11 @@ import CommonButton from "../../common/CommonButton";
 import DateInput from "../../common/DateInput";
 import CommonTextField from "../../common/CommonTextField";
 import dayjs, { Dayjs } from "dayjs";
-import { IFilm } from "../../../utils/Interfaces";
-import { useState } from "react";
+import { IFilm, IGetContacts } from "../../../utils/Interfaces";
+import { useEffect, useState } from "react";
 
 import AddContact from "./AddContact";
-
-// type SlotBookingFormValues = {
-//   contact: string;
-//   date: string;
-//   startTime: string;
-//   length: string;
-//   appointmentType: string;
-//   reasonForCall: string;
-// };
+import { getContacts } from "../../../firebase/AuthService";
 
 interface SlotBookingFormProps {
   control: any;
@@ -40,12 +32,30 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
   openContactSearch,
   handleOpen,
   handleClose,
-  options,
   loading,
   shouldDisableDate,
   selectedDate,
 }) => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [contacts, setContacts] = useState<IGetContacts>([]);
+
+  const fetchContacts = async () => {
+    const contactList = await getContacts();
+    setContacts(contactList);
+  };
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const contactOptions = contacts.map((contact) => ({
+    title: `${contact.firstName} ${contact.lastName}`,
+    key: `${contact.firstName}-${contact.lastName}-${contact.email}`, // Unique key
+    firstName: contact.firstName,
+    lastName: contact.lastName,
+    email: contact.email,
+    phone: contact.phone,
+  }));
+  
 
   return (
     <>
@@ -63,7 +73,7 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
               open={openContactSearch}
               onOpen={handleOpen}
               onClose={handleClose}
-              options={options}
+              options={contactOptions}
               loading={loading.input}
               placeholder="Search contacts..."
               error={!!errors.contact}
@@ -176,59 +186,12 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
           )}
         />
       </Box>
-      <AddContact openDialog={openDialog} setOpenDialog={setOpenDialog} />
-      
       {/* Add contact */}
-      {/* <CommonDialog
-        open={openDialog}
-        onClose={() => {
-          setOpenDialog(false);
-          reset();
-        }}
-        confirmButtonType="primary"
-        title="New Contact"
-        confirmText="Confirm"
-        cancelText="Cancel"
-        onConfirm={handleSubmit(onSubmit)}
-        loading={isSubmitting}
-        disabled={isSubmitting}
-      >
-        <Typography variant="bodyMediumExtraBold" color="grey.600">
-          First Name
-        </Typography>
-        <Controller
-          name="firstName"
-          control={control}
-          render={({ field }) => <CommonTextField {...field} fullWidth />}
-        />
-
-        <Typography variant="bodyMediumExtraBold" color="grey.600">
-          Last Name
-        </Typography>
-        <Controller
-          name="lastName"
-          control={control}
-          render={({ field }) => <CommonTextField {...field} fullWidth />}
-        />
-
-        <Typography variant="bodyMediumExtraBold" color="grey.600">
-          Email
-        </Typography>
-        <Controller
-          name="email"
-          control={control}
-          render={({ field }) => <CommonTextField {...field} fullWidth />}
-        />
-
-        <Typography variant="bodyMediumExtraBold" color="grey.600">
-          Phone
-        </Typography>
-        <Controller
-          name="phone"
-          control={control}
-          render={({ field }) => <CommonTextField {...field} fullWidth />}
-        />
-      </CommonDialog> */}
+      <AddContact
+        fetchContacts={fetchContacts}
+        openDialog={openDialog}
+        setOpenDialog={setOpenDialog}
+      />
     </>
   );
 };

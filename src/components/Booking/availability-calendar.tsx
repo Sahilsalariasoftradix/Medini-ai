@@ -19,7 +19,7 @@ import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
-import { EnBookings } from "../../utils/enums";
+import { EnBookings, EStaticID } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonTextField from "../common/CommonTextField";
 import DatePicker from "react-datepicker";
@@ -33,22 +33,22 @@ import { z } from "zod";
 import {
   createAppointment,
   getAppointmentsForDay,
-  updateAppointmentStatus,
 } from "../../firebase/AppointmentService";
-import { getCurrentUserId } from "../../firebase/AuthService";
+import {  getCurrentUserId } from "../../firebase/AuthService";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
 import SlotBookingForm from "./Form/SlotBookingForm";
 import { IFilm } from "../../utils/Interfaces";
+import { cancelBooking, createBooking } from "../../api/userApi";
+import { getBookings } from "../../api/userApi";
 
 dayjs.extend(isSameOrBefore);
-
 
 function sleep(duration: number): Promise<void> {
   return new Promise<void>((resolve) => {
     setTimeout(() => {
       resolve();
-    }, 1000);
+    }, duration);
   });
 }
 
@@ -78,7 +78,13 @@ const TimeLabels = () => (
 );
 
 const appointmentSchema = z.object({
-  contact: z.union([z.string(), z.object({ title: z.string() })]),
+  contact: z.object({
+    title: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    phone: z.string(),
+  }),
   date: z.any(),
   startTime: z.string(),
   length: z.string().min(1, "Appointment length is required"),
@@ -112,14 +118,18 @@ interface Appointment {
   parentId?: string;
 }
 
-interface Day {
-  day: string;
-  date: number;
-  availability: {
-    isAvailable: boolean;
-    slots: { status: EnBookings; time: string }[];
-  };
-  appointments?: Appointment[];
+interface BookingResponse {
+  booking_id: number;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  details: string;
+  user_id: number;
+  status: string;
 }
 
 const TimeSlot = ({
@@ -129,6 +139,7 @@ const TimeSlot = ({
   time,
   date,
   availableDates,
+  bookings,
 }: {
   status: EnBookings;
   onChange: (newStatus: EnBookings) => void;
@@ -136,11 +147,12 @@ const TimeSlot = ({
   time: string;
   date: Date;
   availableDates: Date[];
+  bookings: BookingResponse[];
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<EnBookings>(status);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs(date));
+  const [selectedDate] = useState<Dayjs>(dayjs(date));
   // Search contact inputs
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options, setOptions] = useState<readonly IFilm[]>([]);
@@ -158,7 +170,7 @@ const TimeSlot = ({
   } = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      contact: "",
+      contact: {},
       date: selectedDate,
       startTime: time,
       length: "15",
@@ -191,74 +203,43 @@ const TimeSlot = ({
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   // const [isPartOfLongerSlot, setIsPartOfLongerSlot] = useState(false);
 
-  const fetchAppointmentStatus = useCallback(async () => {
-    setLoading((prev) => ({ ...prev, data: true }));
+  const updateAppointmentStatus = useCallback(() => {
+    const currentBooking = bookings.find(
+      (booking) => 
+        booking.start_time.substring(0, 5) === time && 
+        dayjs(booking.date).format('YYYY-MM-DD') === dayjs(date).format('YYYY-MM-DD')
+    );
 
-    try {
-      const userId = getCurrentUserId();
-      if (!userId) return;
-
-      const appointments = (await getAppointmentsForDay(
-        userId,
-        dayjs(date).format("YYYY-MM-DD")
-      )) as Appointment[];
-
-      // Find appointment that starts at this time slot
-      const currentAppointment = appointments.find(
-        (apt) => apt.startTime === time
-      );
-
-      if (currentAppointment) {
-        setAppointment(currentAppointment);
-        setAppointmentId(currentAppointment.id);
-        setSelectedStatus((prevStatus) => {
-          const newStatus = Number(currentAppointment.status);
-          if (prevStatus !== newStatus) {
-            onChange(newStatus);
-            return newStatus;
-          }
-          return prevStatus;
-        });
-      } else {
-        // Check if this slot is part of a longer appointment
-        const parentAppointment = appointments.find((apt) => {
-          const startMinutes =
-            parseInt(apt.startTime.split(":")[0]) * 60 +
-            parseInt(apt.startTime.split(":")[1]);
-          const currentMinutes =
-            parseInt(time.split(":")[0]) * 60 + parseInt(time.split(":")[1]);
-          const lengthMinutes = parseInt(apt.length);
-
-          return (
-            currentMinutes > startMinutes &&
-            currentMinutes < startMinutes + lengthMinutes
-          );
-        });
-
-        if (parentAppointment) {
-          setAppointment({
-            ...parentAppointment,
-            parentId: parentAppointment.id,
-          });
-          setSelectedStatus(Number(parentAppointment.status));
+    if (currentBooking) {
+      setAppointment({
+        id: currentBooking.booking_id.toString(),
+        startTime: currentBooking.start_time.substring(0, 5),
+        status: currentBooking.status.toUpperCase(),
+        length: dayjs(currentBooking.end_time, "HH:mm:ss")
+          .diff(dayjs(currentBooking.start_time, "HH:mm:ss"), "minute")
+          .toString()
+      });
+      setAppointmentId(currentBooking.booking_id.toString());
+      setSelectedStatus((prevStatus) => {
+        const newStatus = mapApiStatusToEnum(currentBooking.status);
+        if (prevStatus !== newStatus) {
+          onChange(newStatus);
+          return newStatus;
         }
-      }
-    } catch (error) {
-      console.error("Error fetching appointment status:", error);
-    } finally {
-      setLoading((prev) => ({ ...prev, data: false }));
+        return prevStatus;
+      });
     }
-  }, [date, time, onChange]);
+  }, [bookings, time, date, onChange]);
 
   useEffect(() => {
-    fetchAppointmentStatus();
-  }, [fetchAppointmentStatus]); // Runs only when the function reference changes
+    updateAppointmentStatus();
+  }, [updateAppointmentStatus]);
 
   const handleOpen = () => {
     setOpenContactSearch(true);
     (async () => {
       setLoading({ ...loading, input: true });
-      await sleep(1e3); // For demo purposes.
+      await sleep(1000); // For demo purposes.
       setLoading({ ...loading, input: false });
 
       setOptions([...topFilms]);
@@ -313,12 +294,22 @@ const TimeSlot = ({
         reasonForCall: data.reasonForCall,
         status: EnBookings.Unconfirmed.toString(),
       });
+      await createBooking({
+        user_id: EStaticID.ID,
+        date: dayjs(data.date).format("YYYY-MM-DD"),
+        start_time: data.startTime,
+        end_time: endTimeFormatted,
+        details: data.reasonForCall,
+        first_name: data.contact.firstName,
+        last_name: data.contact.lastName,
+        email: data.contact.email,
+        phone: data.contact.phone,
+      });
 
       setSelectedStatus(EnBookings.Unconfirmed);
       onChange(EnBookings.Unconfirmed);
       setOpenDialog(false);
       reset();
-      /* eslint-disable @typescript-eslint/no-explicit-any */
     } catch (error: any) {
       console.error("Failed to create appointment:", error);
       setSnackbar({
@@ -340,7 +331,7 @@ const TimeSlot = ({
       }
 
       setLoading({ ...loading, options: true });
-      await updateAppointmentStatus(appointmentId, newStatus.toString());
+      await updateAppointmentStatus();
       setSelectedStatus(newStatus);
       onChange(newStatus);
 
@@ -361,16 +352,19 @@ const TimeSlot = ({
     }
   };
 
-  const onCancelSubmit = async (data: CancelFormData) => {
+  const onCancelSubmit = async () => {
     try {
       if (!appointmentId || !statusToUpdate) return;
 
       setLoading({ ...loading, options: true });
-      await updateAppointmentStatus(
-        appointmentId,
-        statusToUpdate.toString(),
-        data.reasonForCancelling
+      await updateAppointmentStatus();
+      // Send cancel status to the API with dynamic booking ID
+      const currentBooking = bookings.find(
+        booking => booking.booking_id.toString() === appointmentId
       );
+      if (currentBooking) {
+        await cancelBooking(currentBooking.booking_id);
+      }
 
       setSelectedStatus(statusToUpdate);
       onChange(statusToUpdate);
@@ -458,136 +452,10 @@ const TimeSlot = ({
           handleClose={handleClose}
           handleOpen={handleOpen}
           options={options}
-          loading={{ input: loading.input }} 
+          loading={{ input: loading.input }}
           shouldDisableDate={shouldDisableDate}
           selectedDate={selectedDate}
         />
-        {/* <Divider sx={{ my: 2 }} /> */}
-        {/* <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="bodyMediumExtraBold" color="grey.600">
-            Contact
-          </Typography>
-          <Controller
-            name="contact"
-            control={control}
-            render={({ field }) => (
-              <SearchInput
-                {...field}
-                open={openContactSearch}
-                onOpen={handleOpen}
-                onClose={handleClose}
-                options={options}
-                loading={loading.input}
-                placeholder="Search contacts..."
-                error={!!errors.contact}
-                helperText={errors.contact?.message}
-              />
-            )}
-          />
-          <Box display={"flex"} justifyContent={"end"}>
-            <CommonButton
-              sx={{ width: "50%", float: "right" }}
-              text="Add new contact"
-              startIcon={<img src={addIcon} alt="" />}
-            />
-          </Box>
-          <Typography variant="bodyMediumExtraBold" color="grey.600">
-            Date
-          </Typography>
-          <Controller
-            name="date"
-            control={control}
-            render={({ field }) => (
-              <DateInput
-                {...field}
-                label=""
-                shouldDisableDate={shouldDisableDate}
-                error={!!errors.date || shouldDisableDate(selectedDate)}
-                helperText={
-                  errors.date?.message ||
-                  (shouldDisableDate(selectedDate) ? "Date not available" : "")
-                }
-              />
-            )}
-          />
-          <Typography variant="bodyMediumExtraBold" color="grey.600">
-            Start Time
-          </Typography>
-          <Controller
-            name="startTime"
-            control={control}
-            render={({ field }) => (
-              <CommonTextField {...field} fullWidth disabled />
-            )}
-          />
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <Typography variant="bodyMediumExtraBold" color="grey.600">
-              Length
-            </Typography>
-            <img src={questionMark} alt="" />
-          </Box>
-          <Controller
-            name="length"
-            control={control}
-            render={({ field }) => (
-              <CommonTextField
-                {...field}
-                select
-                fullWidth
-                error={!!errors.length}
-                helperText={errors.length?.message}
-              >
-                <MenuItem value="15">15 minutes</MenuItem>
-                <MenuItem value="30">30 minutes</MenuItem>
-                <MenuItem value="45">45 minutes</MenuItem>
-                <MenuItem value="60">60 minutes</MenuItem>
-              </CommonTextField>
-            )}
-          />
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <Typography variant="bodyMediumExtraBold" color="grey.600">
-              Appointment Type
-            </Typography>
-            <img src={questionMark} alt="" />
-          </Box>
-          <Controller
-            name="appointmentType"
-            control={control}
-            render={({ field }) => (
-              <CommonTextField
-                {...field}
-                select
-                fullWidth
-                error={!!errors.appointmentType}
-                helperText={errors.appointmentType?.message}
-              >
-                <MenuItem value="inPerson">In Person</MenuItem>
-                <MenuItem value="phoneCall">Phone Call</MenuItem>
-              </CommonTextField>
-            )}
-          />
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <Typography variant="bodyMediumExtraBold" color="grey.600">
-              Reason for Call
-            </Typography>
-            <img src={questionMark} alt="" />
-          </Box>
-          <Controller
-            name="reasonForCall"
-            control={control}
-            render={({ field }) => (
-              <CommonTextField
-                {...field}
-                fullWidth
-                multiline
-                rows={3}
-                placeholder="Add reason for call"
-                error={!!errors.reasonForCall}
-                helperText={errors.reasonForCall?.message}
-              />
-            )}
-          />
-        </Box> */}
       </CommonDialog>
 
       <CommonDialog
@@ -699,10 +567,27 @@ export default function AvailabilityCalendar() {
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-console.log(days)
+  const [bookings, setBookings] = useState<BookingResponse[]>([]);
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
   }, [startDate, endDate]);
+
+  const fetchBookings = useCallback(async () => {
+    try {
+      const response = await getBookings({
+        user_id: EStaticID.ID,
+        date: dayjs(startDate).format("YYYY-MM-DD"),
+        range: "week"
+      });
+      setBookings(response.bookings);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  }, [startDate]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   const fetchAppointmentsForDays = async () => {
     const userId = getCurrentUserId();
@@ -710,15 +595,15 @@ console.log(days)
 
     const updatedDays = await Promise.all(
       days.map(async (day) => {
-        const dayDate = dayjs(startDate).add(days.indexOf(day), 'day');
-        const appointments = await getAppointmentsForDay(
+        const dayDate = dayjs(startDate).add(days.indexOf(day), "day");
+        const appointments = (await getAppointmentsForDay(
           userId,
-          dayDate.format('YYYY-MM-DD')
-        ) as Appointment[];
-        
+          dayDate.format("YYYY-MM-DD")
+        )) as Appointment[];
+
         return {
           ...day,
-          appointments
+          appointments,
         };
       })
     );
@@ -934,6 +819,7 @@ console.log(days)
                                 .map((d, i) =>
                                   dayjs(startDate).add(i, "day").toDate()
                                 )}
+                              bookings={bookings}
                             />
                           );
                         })}
@@ -965,10 +851,22 @@ console.log(days)
             <Grid size={"grow"} key={day.day}>
               <StatusTotals
                 counts={{
-                  active: day.appointments?.filter(apt => Number(apt.status) === EnBookings.Active).length || 0,
-                  cancelled: day.appointments?.filter(apt => Number(apt.status) === EnBookings.Cancelled).length || 0,
-                  unconfirmed: day.appointments?.filter(apt => Number(apt.status) === EnBookings.Unconfirmed).length || 0,
-                  available: day.availability.slots.filter(slot => slot.status === EnBookings.Available).length || 0,
+                  active:
+                    day.appointments?.filter(
+                      (apt) => Number(apt.status) === EnBookings.Active
+                    ).length || 0,
+                  cancelled:
+                    day.appointments?.filter(
+                      (apt) => Number(apt.status) === EnBookings.Cancelled
+                    ).length || 0,
+                  unconfirmed:
+                    day.appointments?.filter(
+                      (apt) => Number(apt.status) === EnBookings.Unconfirmed
+                    ).length || 0,
+                  available:
+                    day.availability.slots.filter(
+                      (slot) => slot.status === EnBookings.Available
+                    ).length || 0,
                 }}
               />
             </Grid>
@@ -978,3 +876,16 @@ console.log(days)
     </Box>
   );
 }
+
+const mapApiStatusToEnum = (status: string): EnBookings => {
+  switch (status.toLowerCase()) {
+    case 'active':
+      return EnBookings.Active;
+    case 'cancelled':
+      return EnBookings.Cancelled;
+    case 'unconfirmed':
+      return EnBookings.Unconfirmed;
+    default:
+      return EnBookings.Available;
+  }
+};

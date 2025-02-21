@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 interface AvailabilityContextType {
   days: DaySchedule[];
   dateRange: [Date | null, Date | null];
+  setDays:any
   setDateRange: (range: [Date | null, Date | null]) => void;
   updateSlotStatus: (
     dayIndex: number,
@@ -42,6 +43,7 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
     dayjs().add(6, "day").toDate(),
   ]);
   const [days, setDays] = useState<DaySchedule[]>([]);
+  
 
   const generateDaysFromRange = (
     startDate: Date | null,
@@ -107,6 +109,7 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
         updateSlotStatus,
         toggleDayAvailability,
         generateDaysFromRange,
+        setDays
       }}
     >
       {children}

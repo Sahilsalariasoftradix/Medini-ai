@@ -1,12 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../store/AuthContext";
 import { routes } from "../utils/links";
+import PageLoader from "../components/Loading/PageLoader";
 
 const GuestRoute = () => {
-  const { user } = useAuth();
+  const { user ,loading} = useAuth();
 
-  //
-  return user ? <Navigate to={routes.dashboard.home} replace /> : <Outlet />;
+  if (loading) {
+    return <PageLoader />;
+  }
+  return user ? <Navigate to={routes.sidebar.bookings.link} replace /> : <Outlet />;
   // return <Outlet />;
 };
 

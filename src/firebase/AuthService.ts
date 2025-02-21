@@ -38,7 +38,7 @@ import {
   updateUserErrorPlaceholder,
   userDocDoesNotExistMessage,
 } from "../utils/errorHandler";
-import { IUserDetails } from "../utils/Interfaces";
+import { IContact, IUserDetails } from "../utils/Interfaces";
 import { staticText } from "../utils/staticText";
 import {
   EnFirebaseCollections,
@@ -175,6 +175,30 @@ export const getReasons = async () => {
     throw new Error(errorFetchingReasonsMessageText); // Custom error message for failed fetching operation
   }
 };
+//* Function to fetch all reasons from the Firestore 'reasons' collection
+export const getContacts = async (): Promise<IContact[]> => {
+  // Get a reference to the Firestore database
+  const db = getFirestore();
+  // Reference to the 'reasons' collection in Firestore
+  const contactsCollection = collection(db, EnFirebaseCollections.CONTACTS);
+
+  try {
+    // Fetch all documents from the 'reasons' collection
+    const snapshot = await getDocs(contactsCollection);
+    // Map through the documents in the snapshot and create an array of reason objects
+    const contactsList = snapshot.docs.map((doc) => ({
+      ...doc.data(), // Include the rest of the document's data
+    }));
+    // Return the list of reasons
+    return contactsList as any;
+  } catch (error) {
+    // Log an error message if something goes wrong during the fetch
+    console.error('error fetching contacts:', error);
+    // Rethrow the error with a custom error message
+    throw new Error('could not fetch contacts'); // Custom error message for failed fetching operation
+  }
+};
+
 
 // Function to sign up a user with email and password, create their Firestore document, and send verification email
 // export const signUpWithEmail = async (

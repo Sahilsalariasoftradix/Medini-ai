@@ -11,7 +11,7 @@ const AuthFlowLayout = () => {
   const { user, loading, userDetails } = useAuth();
 
   // ✅ Show loading state while userDetails are still loading
-  if (loading ) {
+  if (loading) {
     return <PageLoader />;
   }
   // ✅ Redirect logic
@@ -20,7 +20,7 @@ const AuthFlowLayout = () => {
   }
  
   if (userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_2) {
-    return <Navigate to={routes.dashboard.home} replace />;
+    return <Navigate to={routes.sidebar.bookings.link} replace />;
   }
 
   return (

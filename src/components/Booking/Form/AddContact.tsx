@@ -29,9 +29,11 @@ export type ContactData = z.infer<typeof contactSchema>;
 const AddContact = ({
   openDialog,
   setOpenDialog,
+  fetchContacts,  // Add this as a prop to call fetchContacts
 }: {
   openDialog: boolean;
   setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  fetchContacts: () => void;  // This will be the fetchContacts function passed from parent
 }) => {
   const {
     setSnackbarOpen,
@@ -68,6 +70,7 @@ const AddContact = ({
       setOpenDialog(false);
       reset();
       setIsLoading(false);
+      fetchContacts();  
     } catch (error: any) {
       setSnackbarMessage(error);
       setSnackbarOpen(true);

@@ -108,3 +108,33 @@ export interface IScheduleType {
   icon: string;
   bgColor: string;
 }
+
+export interface IGetAvailability {
+  user_id: number;
+  date: string;
+  range: "week" | "month";
+}
+// Interface for GetAvailability extends from IGetRangeData
+export type TGetBooking = IGetAvailability;
+export interface IContact {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  user_id?:string
+}
+
+export interface IBooking {
+  user_id?:number
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  start_time:string;
+  end_time:string;
+  details:string;
+  date:string;
+}
+
+
+export type IGetContacts = IContact[];

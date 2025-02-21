@@ -59,6 +59,7 @@ const ResetPasswordForm = () => {
       setSnackbarMessage(resetPasswordEmailAlreadyRegisteredMessage);
       setIsLoading(false);
       setSnackbarOpen(true);
+      throw error
     }
   };
   return (

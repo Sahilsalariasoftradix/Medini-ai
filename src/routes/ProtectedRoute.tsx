@@ -7,6 +7,7 @@ import { EnOnboardingStatus } from "../utils/enums";
 const ProtectedRoute = () => {
   const { user, loading, userDetails } = useAuth();
 
+  // Wait until everything is ready
   if (loading) {
     return <PageLoader />;
   }
@@ -18,9 +19,11 @@ const ProtectedRoute = () => {
   ) {
     return <Navigate to={routes.auth.stepForm} replace />;
   }
+
+    return <Outlet />;
+ 
   //   if (!user.emailVerified) return <Navigate to="/verify-email" replace />;
 
-  return <Outlet />;
 };
 
 export default ProtectedRoute;

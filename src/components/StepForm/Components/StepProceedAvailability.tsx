@@ -208,7 +208,7 @@ const ProceedAvailability = () => {
       // Resetting form after successful submission
       resetForm();
       setTimeout(() => {
-        navigate(routes.dashboard.home);
+        navigate(routes.sidebar.bookings.link);
       }, 2000);
     } catch (error) {
       console.error(errorSavingUserDetailsMessage, error);

@@ -12,7 +12,7 @@ export enum EnFirebaseCollections {
   USERS = "users",
   REASONS = "reasons",
   APPOINTMENTS = "appointments",
-  CONTACTS="contacts"
+  CONTACTS = "contacts",
 }
 export enum EnAppointmentOptions {
   APPOINTMENT_1 = "15",
@@ -47,6 +47,9 @@ export enum EnBookings {
   Active = 1,
   Cancelled = 2,
   Unconfirmed = 3,
+}
+export enum EStaticID {
+  ID = 1,
 }
 export enum EnCancelAppointment {
   DoctorSick = "Doctor is sick",

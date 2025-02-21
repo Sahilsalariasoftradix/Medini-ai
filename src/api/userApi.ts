@@ -1,4 +1,10 @@
-import { IAvailabilityRequest, ICompanyDetails } from "../utils/Interfaces";
+import {
+  IAvailabilityRequest,
+  IBooking,
+  ICompanyDetails,
+  IGetAvailability,
+  TGetBooking,
+} from "../utils/Interfaces";
 import apiClient from "./apiClient";
 
 export const postCompanyDetails = async (companyData: ICompanyDetails) => {
@@ -31,6 +37,53 @@ export const getCompanyUniqueNumber = async (uid: number) => {
     return response.data;
   } catch (error) {
     console.error("Error getting company details:", error);
+    throw error;
+  }
+};
+
+export const getAvailability = async (data: IGetAvailability) => {
+  try {
+    const resp = await apiClient.get(
+      `availability?user_id=${data.user_id}&date=${data.date}&range=${data.range}`
+    );
+    return resp.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const getBookings = async (bookings: TGetBooking) => {
+  try {
+    const resp = await apiClient.get(
+      `bookings?user_id=${bookings.user_id}&date=${bookings.date}&range=${bookings.range}`
+    );
+    return resp.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const createBooking = async (booking: IBooking) => {
+  try {
+    const resp = await apiClient.post(`booking`, booking);
+    return resp.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const cancelBooking = async (bookingID: number) => {
+  try {
+    const bookingId={
+      booking_id:bookingID
+    }
+    const resp = await apiClient.post("bookings/cancel", bookingId);
+    return resp.data;
+  } catch (error) {
+    console.error(error);
     throw error;
   }
 };
