@@ -47,8 +47,8 @@ const ProceedAvailability = () => {
   const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
   const [open, setOpen] = useState(false);
   const { resetForm } = useStepForm();
-
-  const [ setNewOnboardingStatus] = useState(
+//@ts-ignore
+  const [newOnboardingStatus, setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
   );
   // Error UI management
