@@ -98,7 +98,7 @@ const ResetPasswordForm = () => {
           />
           <Box sx={{ textAlign: "center" }} mt={3}>
             <CommonLink
-              to={routes.auth.signIn}
+              to={routes.auth.verifyEmail}
               sx={{ color: "secondary.main" }}
               variant="bodyLargeExtraBold"
             >

@@ -923,8 +923,7 @@ const CallCenter = () => {
     }
     setSelected([]);
   };
-  //@ts-ignore
-
+//@ts-ignore
   const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
     const selectedIndex = selected.indexOf(id);
     let newSelected: readonly number[] = [];

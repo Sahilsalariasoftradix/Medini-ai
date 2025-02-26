@@ -24,30 +24,28 @@ import {
   SignInSchemaType,
   useAuthHook,
 } from "../../../hooks/useAuth";
-import {
-  signInWithEmail,
-} from "../../../firebase/AuthService";
+import { signInWithEmail } from "../../../firebase/AuthService";
 import { RoundCheckbox } from "../../common/RoundCheckbox";
 import CommonButton from "../../common/CommonButton";
 import CommonLink from "../../common/CommonLink";
 import { routes } from "../../../utils/links";
 import CommonSnackbar from "../../common/CommonSnackbar";
 import {
-  credentialsRequiredMessage,
   unexpectedErrorMessage,
 } from "../../../utils/errorHandler";
+import { useState } from "react";
+import { getMaxHeight } from "../../../utils/common";
 // Static Icons
 const GoogleIcon = <img alt="edit" src={googleIcon} />;
 const AppleIcon = <img alt="edit" src={appleIcon} />;
 const VisibilityOff = <img alt="edit" src={hidden} />;
 const Visibility = <img alt="edit" src={visibile} />;
 const LoginForm = () => {
-  // Validate hook
+  const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
   } = useForm<SignInSchemaType>({ resolver: zodResolver(SignInSchema) });
   const {
     showPassword,
@@ -64,44 +62,38 @@ const LoginForm = () => {
     setSnackbarSeverity,
     handleChangeCheckbox,
     text,
-    isLoading,
-    setIsLoading,
+
+    navigate,
   } = useAuthHook();
 
   const onSubmit: SubmitHandler<SignInSchemaType> = async (data) => {
-    setIsLoading(true);
-
-    //* Check if email and password are not empty
-    if (data.email === "" || data.password === "") {
-      setSnackbarSeverity("error");
-      setSnackbarMessage(credentialsRequiredMessage);
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const message = await signInWithEmail(data.email, data.password);
-      setSnackbarSeverity("success");
-      setSnackbarMessage(message);
-      setSnackbarOpen(true);
-      reset();
+      setLoading(true);
+      await signInWithEmail(data.email, data.password);
+      navigate("/");
+
+      // Don't set loading false here - let the redirect handle it
     } catch (error: any) {
+      setLoading(false);
+      // Show error message
       setSnackbarSeverity("error");
       setSnackbarMessage(error.message || unexpectedErrorMessage);
       setSnackbarOpen(true);
-      setIsLoading(false);
     }
   };
 
   return (
-    <Box
-      display={"flex"}
-      justifyContent={"center"}
-      alignItems={"center"}
-      minHeight={"calc(100vh - 174px)"}
-    >
+    <Box display={"flex"} justifyContent={"center"} alignItems={"center"}       minHeight={"calc(100vh - 134px)"}>
       <form onSubmit={handleSubmit(onSubmit)} className="form">
-        <Box sx={{ p: "40px", m: "auto", overflow: "auto" ,maxHeight:'560px',mb: 4}} className="auth-form">
+        <Box
+          sx={{
+            p: "40px",
+            m: "auto",
+            ...getMaxHeight(), 
+            overflowY: "auto",
+          }}
+          className="auth-form"
+        >
           <Typography align="center" variant="h3">
             {text.title}
           </Typography>
@@ -113,7 +105,12 @@ const LoginForm = () => {
           >
             {text.subtitle}
           </Typography>
-          <Box sx={{ display: "flex" }} flexDirection={{xs: "column", md: "row"}} gap={2} my={3}>
+          <Box
+            sx={{ display: "flex" }}
+            flexDirection={{ xs: "column", md: "row" }}
+            gap={2}
+            my={3}
+          >
             <Button variant="outlined" startIcon={GoogleIcon} sx={{ py: 1.5 }}>
               <Typography variant="bodyLargeMedium">
                 {text.googleSignInButton}
@@ -188,7 +185,7 @@ const LoginForm = () => {
           </Box>
           <Box mt={3}>
             <CommonButton
-              loading={isLoading}
+              loading={loading}
               text={text.signInButton}
               type="submit"
               fullWidth

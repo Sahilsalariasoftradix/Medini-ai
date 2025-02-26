@@ -11,7 +11,7 @@ const AuthFlowLayout = () => {
   const { user, loading, userDetails } = useAuth();
 
   // ✅ Show loading state while userDetails are still loading
-  if (loading) {
+  if (loading || userDetails == undefined) {
     return <PageLoader />;
   }
   // ✅ Redirect logic

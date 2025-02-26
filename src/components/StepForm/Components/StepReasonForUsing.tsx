@@ -3,9 +3,7 @@ import { Box, Typography, Skeleton } from "@mui/material";
 import { useStepForm } from "../../../store/StepFormContext";
 import { Icons } from "../../../utils/Icons";
 import { getReasons } from "../../../firebase/AuthService";
-import {
-  errorFetchingReasonsMessageText,
-} from "../../../utils/errorHandler";
+import { errorFetchingReasonsMessageText } from "../../../utils/errorHandler";
 import { useAuthHook } from "../../../hooks/useAuth";
 import CommonSnackbar from "../../common/CommonSnackbar";
 
@@ -94,21 +92,22 @@ const ReasonForUsing: React.FC = () => {
           gap={2}
           flexWrap={"wrap"}
         >
-          
           {loading ? (
             <>
-              {[...Array(4)].map(( i) => (
-                <Skeleton
-                  key={i}
-                  variant="rectangular"
-             
-                  sx={{
-                    borderRadius: "40px",
-                    width: { xs: "180px", md: "200px" },
-                    height: { xs: "180px", md: "200px" },
-                  }}
-                />
-              ))}
+              {
+                //@ts-ignore
+                [...Array(4)].map((e, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rectangular"
+                    sx={{
+                      borderRadius: "40px",
+                      width: { xs: "180px", md: "200px" },
+                      height: { xs: "180px", md: "200px" },
+                    }}
+                  />
+                ))
+              }
             </>
           ) : (
             <>

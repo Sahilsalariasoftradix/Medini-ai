@@ -9,25 +9,24 @@ import useLoading from "../../../hooks/useLoading";
 
 const YourNewPhone = () => {
   const { goToNextStep, setCompanyNumber, companyNumber } = useStepForm();
-  const { loading, startLoading, stopLoading } = useLoading(); 
+  const { loading, startLoading, stopLoading } = useLoading();
   const { userDetails } = useAuth();
 
   useEffect(() => {
     const fetchCompanyNumber = async () => {
-      startLoading(); 
+      startLoading();
       try {
         const resp = await getCompanyUniqueNumber(userDetails.uuid);
         setCompanyNumber(resp.phoneNumber);
       } catch (error) {
         console.error("Error fetching company number:", error);
-      }finally{
+      } finally {
         stopLoading();
       }
     };
 
     fetchCompanyNumber();
   }, [userDetails.company_id]);
-
 
   return (
     <StepFormLayout>
@@ -42,9 +41,15 @@ const YourNewPhone = () => {
       >
         This is your new phone number for patient bookings.
       </Typography>
-      <Typography align="center" variant="h3">
-        {loading ? <Skeleton variant="text" sx={{ fontSize: '2rem' }} />: companyNumber }
-      </Typography>
+      {loading ? (
+        <Box display={'flex'} justifyContent={'center'} alignItems={'center'}>
+          <Skeleton variant="text" sx={{ fontSize: "2rem" }} width={'50%'} />
+        </Box>
+      ) : (
+        <Typography align="center" variant="h3">
+          {companyNumber}
+        </Typography>
+      )}
       <Typography
         align="center"
         variant="bodyLargeRegular"
