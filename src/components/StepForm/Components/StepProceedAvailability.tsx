@@ -15,7 +15,7 @@ import {
 import { EnOnboardingStatus } from "../../../utils/enums";
 import { routes } from "../../../utils/links";
 import { useAuth } from "../../../store/AuthContext";
-import { useState } from "react";
+import {  useState } from "react";
 import {
   Table,
   TableBody,
@@ -47,11 +47,11 @@ const ProceedAvailability = () => {
   const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
   const [open, setOpen] = useState(false);
   const { resetForm } = useStepForm();
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
-//@ts-ignore
-  const [newOnboardingStatus, setNewOnboardingStatus] = useState(
+
+  const [onboardingStatus, setNewOnboardingStatus] = useState(
     userDetails?.onboardingStatus
   );
+  console.log(onboardingStatus)
   // Error UI management
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -90,21 +90,9 @@ const ProceedAvailability = () => {
   // Handle time selecting and changing and time slot selecting checks
   const handleTimeChange = (newValue: Dayjs | null) => {
     if (newValue) {
-      // Ensure that minutes are selected
-      if (newValue.minute() === 0) {
-        setSnackbar({
-          open: true,
-          message: "Please select both hours and minutes.",
-          severity: "error",
-        });
-        return; // Don't close the dialog if minutes are not selected
-      }
-
       setSelectedTime(newValue);
-      setOpen(false); // Close the dialog if the time is valid
     }
     if (selectedCell && newValue) {
-      
       setSchedule((prev) => {
         const updatedSchedule = [...prev];
         const key: TScheduleKey = `${selectedCell.type}_${
@@ -140,8 +128,13 @@ const ProceedAvailability = () => {
         return updatedSchedule;
       });
     }
-    setOpen(false);
   };
+
+  // // Add a new handler for OK button click
+  // const handleTimeAccept = () => {
+  //   setOpen(false);
+  // };
+
   // Closing snackbar
   const handleSnackbarClose = () => {
     setSnackbar((prevSnackbar) => ({
@@ -351,20 +344,27 @@ const ProceedAvailability = () => {
               </Table>
             </TableContainer>
           </Box>
-          <Dialog open={open} onClose={() => setOpen(false)}>
-            
+          <Dialog 
+            open={open} 
+            onClose={() => setOpen(false)}
+          
+          >
             <TimePicker
-            
-            open={isPickerOpen}
-            onClose={() => setIsPickerOpen(false)}
               label="Select Time"
               value={selectedTime}
               onChange={handleTimeChange}
-              ampm={false} // Use 24-hour format (optional)
+              ampm={false}
+              closeOnSelect={false}
               slotProps={{
-                textField: {
-                 onClick: () => setIsPickerOpen(true),             
+                actionBar: {
+                  actions: ['accept'],
+                  onAccept: () => setOpen(false)  // Directly close the dialog here
                 },
+                textField: {
+                  fullWidth: true,
+                  inputProps: { readOnly: true }, // Prevent manual entry
+                  onClick: () => setOpen(true), // Open time picker on click
+                }
               }}
               
             />

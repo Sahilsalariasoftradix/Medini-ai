@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, BoxProps } from "@mui/material";
+import { getMaxHeight } from "../../utils/common";
 
 interface StepFormLayoutProps extends BoxProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ const StepFormLayout: React.FC<StepFormLayoutProps> = ({
       minHeight="calc(100vh - 134px)"
       {...boxProps}
     >
-      <Box sx={{ p: { xs: "20px", md: "40px" }, m: { xs: 1, md: "auto" },maxHeight: { xs: "560px", xl: "100%" },overflow: "auto" }} className={`auth-form ${className}`}>
+      <Box sx={{ p: { xs: "20px", md: "40px" }, m: { xs: 1, md: "auto" },...getMaxHeight(),overflow: "auto" }} className={`auth-form ${className}`}>
         {children}
       </Box>
     </Box>

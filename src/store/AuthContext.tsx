@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { firebaseAuth, firebaseFirestore } from "../firebase/BaseConfig";
-import { doc, getDoc } from "firebase/firestore";
-import { EnFirebaseCollections } from "../utils/enums";
+import { firebaseAuth } from "../firebase/BaseConfig";
+
+import { getUserDetails } from "../firebase/AuthService";
 
 interface IAuthContextType {
   user: User | null;
@@ -17,38 +17,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userDetails, setUserDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [userDetails, setUserDetails] = useState<any>(undefined);
 
   useEffect(() => {
-    setLoading(true); // Set loading true at start
-  
-    const unsubscribe = onAuthStateChanged(
-      firebaseAuth,
-      async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+      setUser(user);
+      if (user) {
         try {
-          setUser(currentUser);
-          if (currentUser) {
-            // Fetch user details from Firestore
-            const userDoc = await getDoc(
-              doc(firebaseFirestore, EnFirebaseCollections.USERS, currentUser.uid)
-            );
-            if (userDoc.exists()) {
-              setUserDetails(userDoc.data());
-            }
-          } else {
-            setUserDetails(null);
-          }
+          const details = await getUserDetails(user.uid);
+          setUserDetails(details);
         } catch (error) {
           console.error("Error fetching user details:", error);
-        } finally {
-          setLoading(false);
         }
+      } else {
+        setUserDetails(null);
       }
-    );
+      setLoading(false);
+    });
 
     return () => unsubscribe();
   }, []);
+
+  // const signIn = async (email: string, password: string) => {
+  //   setLoading(true);
+  //   try {
+  //     await signInWithEmail(email, password);
+  //   } catch (error) {
+  //     setLoading(false);
+  //     throw error;
+  //   }
+  // };
+
   const logout = async () => {
     await signOut(firebaseAuth);
   };

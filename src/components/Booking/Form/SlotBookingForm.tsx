@@ -136,9 +136,9 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
               helperText={errors.length?.message}
             >
               <MenuItem value="15">15 minutes</MenuItem>
-              {/* <MenuItem value="30">30 minutes</MenuItem>
+              <MenuItem value="30">30 minutes</MenuItem>
               <MenuItem value="45">45 minutes</MenuItem>
-              <MenuItem value="60">60 minutes</MenuItem> */}
+              <MenuItem value="60">60 minutes</MenuItem>
             </CommonTextField>
           )}
         />

@@ -22,7 +22,13 @@ const AuthHeader = () => {
   return (
     <Box>
       <Box
-        sx={{ px: { xs: 1, md: 6 }, py: 3, display: "flex", justifyContent: "space-between",alignItems: "center" }}
+        sx={{
+          px: { xs: 1, md: 6 },
+          py: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
       >
         <Box
           component="img"
@@ -35,26 +41,30 @@ const AuthHeader = () => {
           alt="logo"
           src={mainLogo}
         />
-
-        {user && !(path === routes.auth.signIn || path === routes.auth.signUp) ? (
-          <CommonButton
-            variant="contained"
-            color="secondary"
-            sx={{ height: "56px", width: "150px" }}
-            text={"Logout"}
-            type="button"
-            onClick={handleLogout} // Logout action
-          />
-        ) : (
-          !(path === routes.auth.signIn || path === routes.auth.signUp || path === routes.auth.forgotPassword) && (
-            <CommonButton
-              variant="contained"
-              color="primary"
-              sx={{ height: "56px", width: "150px" }}
-              text={"Sign up"}
-              type="submit"
-            />
-          )
+        {user && path != routes.auth.stepForm && (
+          <>
+            {user &&
+            !(path === routes.auth.signIn || path === routes.auth.signUp) ? (
+              <CommonButton
+                variant="contained"
+                color="secondary"
+                sx={{ height: "56px", width: "150px" }}
+                text={"Logout"}
+                type="button"
+                onClick={handleLogout} // Logout action
+              />
+            ) : (
+              !(path === routes.auth.signIn || path === routes.auth.signUp) && (
+                <CommonButton
+                  variant="contained"
+                  color="primary"
+                  sx={{ height: "56px", width: "150px" }}
+                  text={"Sign up"}
+                  type="submit"
+                />
+              )
+            )}
+          </>
         )}
       </Box>
     </Box>

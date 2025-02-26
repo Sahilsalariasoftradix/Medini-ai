@@ -39,6 +39,7 @@ import {
   unexpectedErrorMessage,
 } from "../../../utils/errorHandler";
 import Grid from "@mui/material/Grid2";
+import { getMaxHeight } from "../../../utils/common";
 // Static Icons
 const GoogleIcon = <img alt="edit" src={googleIcon} />;
 const AppleIcon = <img alt="edit" src={appleIcon} />;
@@ -104,7 +105,7 @@ const SignUpForm = () => {
       minHeight={"calc(100vh - 134px)"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="form">
-        <Box sx={{ p: {xs: 3, md: "40px"}, m: "auto",maxHeight: {xs: "560px", xl: "100%"},overflowY: "auto" }} className="auth-form">
+        <Box sx={{ p: {xs: 3, md: "40px"}, m: "auto",...getMaxHeight(),overflowY: "auto" }} className="auth-form">
           <Typography align="center" variant="h3">
             {text.signupPageText}
           </Typography>
