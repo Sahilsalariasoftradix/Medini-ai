@@ -362,7 +362,7 @@ const ProceedAvailability = () => {
                 },
                 textField: {
                   fullWidth: true,
-                  inputProps: { readOnly: true }, // Prevent manual entry
+                  // inputProps: { readOnly: true }, // Prevent manual entry
                   onClick: () => setOpen(true), // Open time picker on click
                 }
               }}

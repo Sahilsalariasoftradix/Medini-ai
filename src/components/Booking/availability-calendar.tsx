@@ -703,7 +703,7 @@ export default function AvailabilityCalendar() {
         <Box>
           <Box
             display="flex"
-            sx={{ height: "calc(100vh - 350px)", overflowY: "auto" }}
+            sx={{ height: "calc(100vh - 305px)", overflowY: "auto" }}
           >
             <Box sx={{ minWidth: "80px" }}>
               <Box sx={{ height: "83px" }} />
