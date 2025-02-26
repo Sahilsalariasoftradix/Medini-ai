@@ -49,7 +49,7 @@ const Sidebar = ({
   //   "&.MuiListItemText-root span": { fontSize: "12px" },
   // };
   const listContainerStyles = {
-    height: "calc(100vh - 120px)",
+    height: "calc(100vh - 69px)",
     boxShadow: "0px 5px 10px 0px #0000001A",
     position: "absolute",
     background: "#fff",
