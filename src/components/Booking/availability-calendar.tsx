@@ -34,7 +34,7 @@ import {
   createAppointment,
   getAppointmentsForDay,
 } from "../../firebase/AppointmentService";
-import {  getCurrentUserId } from "../../firebase/AuthService";
+import { getCurrentUserId } from "../../firebase/AuthService";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
 import SlotBookingForm from "./Form/SlotBookingForm";
@@ -205,9 +205,10 @@ const TimeSlot = ({
 
   const updateAppointmentStatus = useCallback(() => {
     const currentBooking = bookings.find(
-      (booking) => 
-        booking.start_time.substring(0, 5) === time && 
-        dayjs(booking.date).format('YYYY-MM-DD') === dayjs(date).format('YYYY-MM-DD')
+      (booking) =>
+        booking.start_time.substring(0, 5) === time &&
+        dayjs(booking.date).format("YYYY-MM-DD") ===
+          dayjs(date).format("YYYY-MM-DD")
     );
 
     if (currentBooking) {
@@ -217,7 +218,7 @@ const TimeSlot = ({
         status: currentBooking.status.toUpperCase(),
         length: dayjs(currentBooking.end_time, "HH:mm:ss")
           .diff(dayjs(currentBooking.start_time, "HH:mm:ss"), "minute")
-          .toString()
+          .toString(),
       });
       setAppointmentId(currentBooking.booking_id.toString());
       setSelectedStatus((prevStatus) => {
@@ -273,6 +274,7 @@ const TimeSlot = ({
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
+    setLoading({ ...loading, data: true });
     try {
       const userId = getCurrentUserId();
       if (!userId) {
@@ -317,6 +319,8 @@ const TimeSlot = ({
         message: error.message,
         severity: "error",
       });
+    } finally {
+      setLoading({ ...loading, data: false });
     }
   };
   // Update the status of the booking
@@ -360,7 +364,7 @@ const TimeSlot = ({
       await updateAppointmentStatus();
       // Send cancel status to the API with dynamic booking ID
       const currentBooking = bookings.find(
-        booking => booking.booking_id.toString() === appointmentId
+        (booking) => booking.booking_id.toString() === appointmentId
       );
       if (currentBooking) {
         await cancelBooking(currentBooking.booking_id);
@@ -442,8 +446,8 @@ const TimeSlot = ({
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
-        loading={loading.input}
-        disabled={loading.input}
+        loading={loading.data}
+        disabled={loading.data}
       >
         <SlotBookingForm
           control={control}
@@ -577,7 +581,7 @@ export default function AvailabilityCalendar() {
       const response = await getBookings({
         user_id: EStaticID.ID,
         date: dayjs(startDate).format("YYYY-MM-DD"),
-        range: "week"
+        range: "week",
       });
       setBookings(response.bookings);
     } catch (error) {
@@ -880,11 +884,11 @@ export default function AvailabilityCalendar() {
 
 const mapApiStatusToEnum = (status: string): EnBookings => {
   switch (status.toLowerCase()) {
-    case 'active':
+    case "active":
       return EnBookings.Active;
-    case 'cancelled':
+    case "cancelled":
       return EnBookings.Cancelled;
-    case 'unconfirmed':
+    case "unconfirmed":
       return EnBookings.Unconfirmed;
     default:
       return EnBookings.Available;
