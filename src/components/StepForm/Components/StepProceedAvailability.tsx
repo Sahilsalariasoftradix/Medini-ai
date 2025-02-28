@@ -130,11 +130,6 @@ const ProceedAvailability = () => {
     }
   };
 
-  // // Add a new handler for OK button click
-  // const handleTimeAccept = () => {
-  //   setOpen(false);
-  // };
-
   // Closing snackbar
   const handleSnackbarClose = () => {
     setSnackbar((prevSnackbar) => ({
@@ -362,7 +357,7 @@ const ProceedAvailability = () => {
                 },
                 textField: {
                   fullWidth: true,
-                  // inputProps: { readOnly: true }, // Prevent manual entry
+                  inputProps: { readOnly: true }, // Prevent manual entry
                   onClick: () => setOpen(true), // Open time picker on click
                 }
               }}

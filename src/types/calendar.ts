@@ -8,11 +8,13 @@ export type TimeSlot = {
 export interface DaySchedule {
   day: string;
   date: number;
+  fullDate: string;
   availability: {
     isAvailable: boolean;
     slots: {
       time: string;
       status: EnBookings;
+      isDisabled?: boolean;
     }[];
   };
   appointments?: {

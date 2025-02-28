@@ -19,6 +19,10 @@ export enum EnAppointmentOptions {
   APPOINTMENT_2 = "30",
   APPOINTMENT_3 = "45",
 }
+export enum EnTimeRangeOptions {
+  RANGE_WEEK = "week",
+  RANGE_MONTH = "month",
+}
 export enum EnCountryOptions {
   COUNTRY_1 = "country1",
   COUNTRY_2 = "country2",
@@ -60,4 +64,8 @@ export enum EnCancelAppointment {
   TravelIssues = "Travel issues",
   ClinicClosed = "Clinic is closed",
   NoShow = "Patient did not show up",
+}
+export enum  EnAvailability{
+  WEEK= 'week',
+  MONTH='month'
 }

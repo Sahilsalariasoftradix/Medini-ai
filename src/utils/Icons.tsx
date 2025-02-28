@@ -15,6 +15,7 @@ import help from "../assets/icons/help.svg";
 import callBooking from "../assets/icons/call-booking.svg";
 import dinner from "../assets/icons/dinner.svg";
 import office from "../assets/icons/office-booking.svg";
+import clock from "../assets/icons/time.svg";
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
 } = {
@@ -42,4 +43,7 @@ export const availabilityIcons={
   phone:callBooking,
   in_person:office,
   break:dinner
+}
+export const editAvailabilityIcons={
+  clock:clock
 }
