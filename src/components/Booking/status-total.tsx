@@ -53,7 +53,6 @@ function StatusItem({
 }
 
 export function StatusTotals({ counts }: StatusTotalsProps) {
-  console.log(counts)
   return (
     <Paper sx={{ boxShadow: "none" }} elevation={0} className="p-4 mt-4">
       <Grid container spacing={2}>

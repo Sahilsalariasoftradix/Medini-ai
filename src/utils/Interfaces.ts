@@ -89,6 +89,24 @@ export interface IAvailabilityRequest {
   user_id: number;
   availabilities: IAvailability[];
 }
+export interface IAvailabilitySpecific {
+  user_id: number;
+  date: string,
+  phone_start_time: string,
+  phone_end_time: string,
+  in_person_start_time: string,
+  in_person_end_time: string
+}
+export interface IAvailabilityPayload {
+  user_id: number;
+  date: string;
+  phone_start_time: string;
+  phone_end_time: string;
+  in_person_start_time: string;
+  in_person_end_time: string;
+  break_start_time:string;
+  break_end_time:string;
+}
 
 export interface ISchedule {
   day_of_week: string;
@@ -134,6 +152,26 @@ export interface IBooking {
   end_time:string;
   details:string;
   date:string;
+}
+export interface IBookingResponse {
+  booking_id: number;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  details: string;
+  user_id: number;
+  status: string;
+}
+export interface IAppointment {
+  id: string;
+  startTime: string;
+  status: string;
+  length: string;
+  parentId?: string;
 }
 
 

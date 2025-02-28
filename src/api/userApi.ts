@@ -1,5 +1,6 @@
 import {
   IAvailabilityRequest,
+  IAvailabilitySpecific,
   IBooking,
   ICompanyDetails,
   IGetAvailability,
@@ -30,6 +31,20 @@ export const postAvailabilityGeneral = async (
     throw error;
   }
 };
+export const postAvailabilitySpecific = async (
+  availabilityData: IAvailabilitySpecific
+): Promise<any> => {
+  try {
+    const response = await apiClient.post(
+      "availability/specific",
+      availabilityData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting specific availability data:", error);
+    throw error;
+  }
+};
 
 export const getCompanyUniqueNumber = async (uid: number) => {
   try {
@@ -44,7 +59,7 @@ export const getCompanyUniqueNumber = async (uid: number) => {
 export const getAvailability = async (data: IGetAvailability) => {
   try {
     const resp = await apiClient.get(
-      `availability?user_id=${data.user_id}&date=${data.date}&range=${data.range}`
+      `availability?user_id=${data.user_id}&date=${data.date}&view=${data.range}`
     );
     return resp.data;
   } catch (error) {
@@ -77,9 +92,9 @@ export const createBooking = async (booking: IBooking) => {
 
 export const cancelBooking = async (bookingID: number) => {
   try {
-    const bookingId={
-      booking_id:bookingID
-    }
+    const bookingId = {
+      booking_id: bookingID,
+    };
     const resp = await apiClient.post("bookings/cancel", bookingId);
     return resp.data;
   } catch (error) {

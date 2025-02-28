@@ -19,7 +19,7 @@ import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
-import { EnBookings, EStaticID } from "../../utils/enums";
+import { EnAvailability, EnBookings, EStaticID } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonTextField from "../common/CommonTextField";
 import DatePicker from "react-datepicker";
@@ -38,9 +38,13 @@ import { getCurrentUserId } from "../../firebase/AuthService";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
 import SlotBookingForm from "./Form/SlotBookingForm";
-import { IFilm } from "../../utils/Interfaces";
-import { cancelBooking, createBooking } from "../../api/userApi";
+import { IAppointment, IBookingResponse, IFilm } from "../../utils/Interfaces";
+import {
+  cancelBooking,
+  createBooking,
+} from "../../api/userApi";
 import { getBookings } from "../../api/userApi";
+import { DaySchedule } from "../../types/calendar";
 
 dayjs.extend(isSameOrBefore);
 
@@ -110,27 +114,31 @@ const CANCELLATION_REASONS = [
 
 type CancelFormData = z.infer<typeof cancelSchema>;
 
-interface Appointment {
-  id: string;
-  startTime: string;
-  status: string;
-  length: string;
-  parentId?: string;
-}
+const getAvailableHourRange = (days: DaySchedule[]) => {
+  let earliestHour = 21;
+  let latestHour = 7;
 
-interface BookingResponse {
-  booking_id: number;
-  first_name: string;
-  last_name: string;
-  phone: string;
-  email: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  details: string;
-  user_id: number;
-  status: string;
-}
+  days.forEach(day => {
+    if (day.availability.slots.length > 0) {
+      const availableSlots = day.availability.slots.filter(slot => !slot.isDisabled);
+      if (availableSlots.length > 0) {
+        const firstSlot = availableSlots[0].time;
+        const lastSlot = availableSlots[availableSlots.length - 1].time;
+        
+        const firstHour = parseInt(firstSlot.split(':')[0]);
+        const lastHour = parseInt(lastSlot.split(':')[0]);
+        
+        earliestHour = Math.min(earliestHour, firstHour);
+        latestHour = Math.max(latestHour, lastHour);
+      }
+    }
+  });
+
+  return {
+    start: earliestHour,
+    end: latestHour + 1 // Add 1 to include the last hour
+  };
+};
 
 const TimeSlot = ({
   status,
@@ -147,7 +155,7 @@ const TimeSlot = ({
   time: string;
   date: Date;
   availableDates: Date[];
-  bookings: BookingResponse[];
+  bookings: IBookingResponse[];
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<EnBookings>(status);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -200,7 +208,7 @@ const TimeSlot = ({
     },
   });
 
-  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [appointment, setAppointment] = useState<IAppointment | null>(null);
   // const [isPartOfLongerSlot, setIsPartOfLongerSlot] = useState(false);
 
   const updateAppointmentStatus = useCallback(() => {
@@ -571,7 +579,9 @@ export default function AvailabilityCalendar() {
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const [bookings, setBookings] = useState<BookingResponse[]>([]);
+  const [bookings, setBookings] = useState<IBookingResponse[]>([]);
+console.log(days,'days')
+  
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
   }, [startDate, endDate]);
@@ -581,13 +591,15 @@ export default function AvailabilityCalendar() {
       const response = await getBookings({
         user_id: EStaticID.ID,
         date: dayjs(startDate).format("YYYY-MM-DD"),
-        range: "week",
+        range: EnAvailability.WEEK,
       });
       setBookings(response.bookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     }
   }, [startDate]);
+
+
 
   useEffect(() => {
     fetchBookings();
@@ -603,7 +615,7 @@ export default function AvailabilityCalendar() {
         const appointments = (await getAppointmentsForDay(
           userId,
           dayDate.format("YYYY-MM-DD")
-        )) as Appointment[];
+        )) as IAppointment[];
 
         return {
           ...day,
@@ -708,23 +720,29 @@ export default function AvailabilityCalendar() {
             <Box sx={{ minWidth: "80px" }}>
               <Box sx={{ height: "83px" }} />
               <Box>
-                {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => (
-                  <Box
-                    key={hour}
-                    sx={{
-                      height: "60px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderBottom: "1px solid #EDF2F7",
-                      p: 1,
-                    }}
-                  >
-                    <Typography variant="caption" color="grey.500">
-                      {`${hour.toString().padStart(2, "0")}:00`}
-                    </Typography>
-                  </Box>
-                ))}
+                {(() => {
+                  const hourRange = getAvailableHourRange(days);
+                  return Array.from(
+                    { length: hourRange.end - hourRange.start },
+                    (_, i) => i + hourRange.start
+                  ).map((hour) => (
+                    <Box
+                      key={hour}
+                      sx={{
+                        height: "60px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderBottom: "1px solid #EDF2F7",
+                        p: 1,
+                      }}
+                    >
+                      <Typography variant="caption" color="grey.500">
+                        {`${hour.toString().padStart(2, "0")}:00`}
+                      </Typography>
+                    </Box>
+                  ));
+                })()}
               </Box>
             </Box>
 
@@ -785,51 +803,51 @@ export default function AvailabilityCalendar() {
                           backgroundColor: "grey.300",
                           opacity: 0.7,
                           zIndex: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
                         }}
-                      ></Box>
+                      />
                     )}
                     <TimeLabels />
-                    {Array.from({ length: 15 }, (_, hourIndex) => (
-                      <Box
-                        key={hourIndex}
-                        sx={{
-                          height: "60px",
-                          borderBottom: "1px solid #EDF2F7",
-                          display: "grid",
-                          gridTemplateColumns: "repeat(4, 1fr)",
-                        }}
-                      >
-                        {Array.from({ length: 4 }, (_, quarterIndex) => {
-                          const slotIndex = hourIndex * 4 + quarterIndex;
-                          const slot = day.availability.slots[slotIndex];
+                    {(() => {
+                      const hourRange = getAvailableHourRange(days);
+                      return Array.from(
+                        { length: hourRange.end - hourRange.start },
+                        (_, hourIndex) => (
+                          <Box
+                            key={hourIndex}
+                            sx={{
+                              height: "60px",
+                              borderBottom: "1px solid #EDF2F7",
+                              display: "grid",
+                              gridTemplateColumns: "repeat(4, 1fr)",
+                            }}
+                          >
+                            {Array.from({ length: 4 }, (_, quarterIndex) => {
+                              const hour = hourRange.start + hourIndex;
+                              const slotIndex = (hour - 7) * 4 + quarterIndex;
+                              const slot = day.availability.slots[slotIndex];
 
-                          return (
-                            <TimeSlot
-                              key={quarterIndex}
-                              onChange={(newStatus) =>
-                                updateSlotStatus(dayIndex, slotIndex, newStatus)
-                              }
-                              status={slot.status}
-                              disabled={!day.availability.isAvailable}
-                              time={slot.time}
-                              date={dayjs(startDate)
-                                .add(dayIndex, "day")
-                                .toDate()}
-                              availableDates={days
-                                .filter((d) => d.availability.isAvailable)
-                                //@ts-ignore
-                                .map((d, i) =>
-                                  dayjs(startDate).add(i, "day").toDate()
-                                )}
-                              bookings={bookings}
-                            />
-                          );
-                        })}
-                      </Box>
-                    ))}
+                              return (
+                                <TimeSlot
+                                  key={quarterIndex}
+                                  onChange={(newStatus) =>
+                                    updateSlotStatus(dayIndex, slotIndex, newStatus)
+                                  }
+                                  status={slot.status}
+                                  disabled={!day.availability.isAvailable || slot.isDisabled}
+                                  time={slot.time}
+                                  date={dayjs(startDate).add(dayIndex, "day").toDate()}
+                                  availableDates={days
+                                    .filter((d) => d.availability.isAvailable)
+                                    .map((d) => dayjs(startDate).add(days.indexOf(d), "day").toDate())
+                                  }
+                                  bookings={bookings}
+                                />
+                              );
+                            })}
+                          </Box>
+                        )
+                      );
+                    })()}
                   </Box>
                 </Grid>
               ))}
