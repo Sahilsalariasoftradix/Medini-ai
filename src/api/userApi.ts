@@ -45,6 +45,20 @@ export const postAvailabilitySpecific = async (
     throw error;
   }
 };
+export const postUnAvailabilitySpecific = async (
+  availabilityData: IAvailabilitySpecific
+): Promise<any> => {
+  try {
+    const response = await apiClient.post(
+      "unavailability/specific",
+      availabilityData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting unavailability data:", error);
+    throw error;
+  }
+};
 
 export const getCompanyUniqueNumber = async (uid: number) => {
   try {
