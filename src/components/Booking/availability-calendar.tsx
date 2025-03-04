@@ -222,11 +222,12 @@ const TimeSlot = ({
   // const [isPartOfLongerSlot, setIsPartOfLongerSlot] = useState(false);
 
   const updateAppointmentStatus = useCallback(() => {
+    if (!bookings) return; // Guard against undefined bookings
+
     const currentBooking = bookings.find(
       (booking) =>
         booking.start_time.substring(0, 5) === time &&
-        dayjs(booking.date).format("YYYY-MM-DD") ===
-          dayjs(date).format("YYYY-MM-DD")
+        dayjs(booking.date).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
     );
 
     if (currentBooking) {
@@ -240,25 +241,33 @@ const TimeSlot = ({
       });
       setAppointmentId(currentBooking.booking_id.toString());
       const newStatus = mapApiStatusToEnum(currentBooking.status);
-      setSelectedStatus(newStatus);
-      // Only call onChange if the status actually changed
-      if (status !== newStatus) {
+      if (selectedStatus !== newStatus) {
+        setSelectedStatus(newStatus);
         onChange(newStatus);
       }
     } else {
       setAppointment(null);
       setAppointmentId(null);
-      setSelectedStatus(EnBookings.Available);
-      // Only call onChange if we're not already Available
-      if (status !== EnBookings.Available) {
+      if (selectedStatus !== EnBookings.Available) {
+        setSelectedStatus(EnBookings.Available);
         onChange(EnBookings.Available);
       }
     }
-  }, [bookings, time, date, status]);
+  }, [bookings, time, date, selectedStatus, onChange]);
 
+  // Update effect to run when date or bookings change
   useEffect(() => {
     updateAppointmentStatus();
-  }, [updateAppointmentStatus]);
+  }, [updateAppointmentStatus, date, bookings]);
+
+  // Add this useEffect to reset form with new time and date
+  useEffect(() => {
+    reset({
+      ...control._defaultValues,
+      date: dayjs(date),
+      startTime: time,
+    });
+  }, [time, date, reset]);
 
   const handleOpen = () => {
     setOpenContactSearch(true);
@@ -307,15 +316,17 @@ const TimeSlot = ({
       if (!userId) {
         throw new Error("User not authenticated");
       }
-      const startTimeFormatted = dayjs(data.startTime, "HH:mm");
+      
+      // Ensure we're using the current time and date
+      const startTimeFormatted = dayjs(time, "HH:mm");
       const endTimeFormatted = startTimeFormatted
         .add(Number(data.length), "minute")
         .format("HH:mm");
 
       await createBooking({
         user_id: EStaticID.ID,
-        date: dayjs(data.date).format("YYYY-MM-DD"),
-        start_time: data.startTime,
+        date: dayjs(date).format("YYYY-MM-DD"), // Use the passed date prop
+        start_time: time, // Use the passed time prop
         end_time: endTimeFormatted,
         details: data.reasonForCall,
         first_name: data.contact.firstName,
@@ -323,15 +334,16 @@ const TimeSlot = ({
         email: data.contact.email,
         phone: data.contact.phone,
       });
-      // Fetch bookings after creating the appointment
-      await fetchBookings();
 
-      // // Display availability active as of now
-      // setSelectedStatus(EnBookings.Active);
-      // onChange(EnBookings.Active);
+      await fetchBookings();
       setOpenDialog(false);
-      
       reset();
+
+      setSnackbar({
+        open: true,
+        message: "Appointment created successfully",
+        severity: "success",
+      });
     } catch (error: any) {
       console.error("Failed to create appointment:", error);
       setSnackbar({
@@ -347,40 +359,46 @@ const TimeSlot = ({
   // Update the status of the booking
   const handleStatusUpdate = async (newStatus: EnBookings) => {
     try {
-        // Prevent changing from Active to Available or Unconfirmed
-        if (
-            !appointmentId ||
-            (selectedStatus === EnBookings.Active && 
-            (newStatus === EnBookings.Available || newStatus === EnBookings.Unconfirmed))
-        ) {
-            return; // Do nothing if trying to revert to Available or Unconfirmed
-        }
+      if (!appointmentId && newStatus !== EnBookings.Available) {
+        return;
+      }
 
-        if (newStatus === EnBookings.Cancelled) {
-            setStatusToUpdate(newStatus);
-            setOpenCancelDialog(true);
-            return;
-        }
+      // Prevent changing from Active to Available or Unconfirmed
+      if (
+        selectedStatus === EnBookings.Active &&
+        (newStatus === EnBookings.Available || newStatus === EnBookings.Unconfirmed)
+      ) {
+        return;
+      }
 
-        setLoading({ ...loading, options: true });
-        await updateAppointmentStatus();
+      if (newStatus === EnBookings.Cancelled) {
+        setStatusToUpdate(newStatus);
+        setOpenCancelDialog(true);
+        return;
+      }
+
+      setLoading((prev) => ({ ...prev, options: true }));
+      
+      // Only update if the status is actually changing
+      if (selectedStatus !== newStatus) {
         setSelectedStatus(newStatus);
         onChange(newStatus);
+      }
 
-        setSnackbar({
-            open: true,
-            message: "Status updated successfully",
-            severity: "success",
-        });
+      setSnackbar({
+        open: true,
+        message: "Status updated successfully",
+        severity: "success",
+      });
     } catch (error) {
-        console.error("Failed to update status:", error);
-        setSnackbar({
-            open: true,
-            message: "Failed to update appointment status",
-            severity: "error",
-        });
+      console.error("Failed to update status:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to update appointment status",
+        severity: "error",
+      });
     } finally {
-        setLoading({ ...loading, options: false });
+      setLoading((prev) => ({ ...prev, options: false }));
     }
   };
 
