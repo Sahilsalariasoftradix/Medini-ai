@@ -67,6 +67,5 @@ export enum EnCancelAppointment {
 }
 export enum  EnAvailability{
   WEEK= 'week',
-  MONTH='month',
-  DAY='day'
+  MONTH='month'
 }

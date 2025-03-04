@@ -98,7 +98,6 @@ const ProceedAvailability = () => {
         const key: TScheduleKey = `${selectedCell.type}_${
           selectedCell.isStart ? "start" : "end"
         }_time`;
-
         if (!selectedCell.isStart) {
           const startKey: TScheduleKey = `${selectedCell.type}_start_time`;
           const startTime = updatedSchedule[selectedCell.dayIndex][startKey];
@@ -343,6 +342,7 @@ const ProceedAvailability = () => {
           <Dialog 
             open={open} 
             onClose={() => setOpen(false)}
+          
           >
             <TimePicker
               label="Select Time"
@@ -353,25 +353,7 @@ const ProceedAvailability = () => {
               slotProps={{
                 actionBar: {
                   actions: ['accept'],
-                  onAccept: () => {
-                    // Check for overlapping times here
-                    if (selectedCell) {
-                      const conflictingType = selectedCell.type === "phone" ? "in_person" : "phone";
-                      const conflictingStartTime = schedule[selectedCell.dayIndex][`${conflictingType}_start_time`];
-
-                      if (conflictingStartTime && dayjs(selectedTime?.format("HH:mm:ss"), "HH:mm:ss").isBefore(dayjs(conflictingStartTime, "HH:mm:ss").add(1, 'minute'))) {
-                        setSnackbar({
-                          open: true,
-                          message: `The ${conflictingType} start time cannot overlap with the phone start time.`,
-                          severity: "error",
-                        });
-                        return;
-                      }
-                    }
-                    // If no overlap, update the schedule
-                    handleTimeChange(selectedTime);
-                    setOpen(false);
-                  }
+                  onAccept: () => setOpen(false)  // Directly close the dialog here
                 },
                 textField: {
                   fullWidth: true,
@@ -379,6 +361,7 @@ const ProceedAvailability = () => {
                   onClick: () => setOpen(true), // Open time picker on click
                 }
               }}
+              
             />
           </Dialog>
         </LocalizationProvider>

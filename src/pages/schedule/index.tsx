@@ -1,7 +1,8 @@
-import AvailabilityCalendar from "../../components/Schedule/availability-calendar";
 
 const Schedule = () => {
-  return <div><AvailabilityCalendar /></div>;
-};
+  return (
+    <div>indeasdsadsax</div>
+  )
+}
 
-export default Schedule;
+export default Schedule

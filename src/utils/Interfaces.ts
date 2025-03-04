@@ -107,13 +107,7 @@ export interface IAvailabilityPayload {
   break_start_time:string;
   break_end_time:string;
 }
-export interface IDayAvailability {
-  date: string;
-  phone_start_time: string | null;
-  phone_end_time: string | null;
-  in_person_start_time: string | null;
-  in_person_end_time: string | null;
-}
+
 export interface ISchedule {
   day_of_week: string;
   phone_start_time: string;
@@ -136,7 +130,7 @@ export interface IScheduleType {
 export interface IGetAvailability {
   user_id: number;
   date: string;
-  range: "week" | "month" | "day";
+  range: "week" | "month";
 }
 // Interface for GetAvailability extends from IGetRangeData
 export type TGetBooking = IGetAvailability;
