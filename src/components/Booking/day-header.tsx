@@ -91,29 +91,36 @@ export function DayHeader({
       (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
     );
 
-    // Set default values based on selectedAvailability
-    availabilityForm.reset({
-      isAvailable: true,
-      phone: {
-        from: selectedAvailability?.phone_start_time 
-          ? selectedAvailability.phone_start_time.split(":").slice(0, 2).join(":")
-          : "",
-        to: selectedAvailability?.phone_end_time
-          ? selectedAvailability.phone_end_time.split(":").slice(0, 2).join(":")
-          : "",
-      },
-      in_person: {
-        from: selectedAvailability?.in_person_start_time
-          ? selectedAvailability.in_person_start_time.split(":").slice(0, 2).join(":")
-          : "",
-        to: selectedAvailability?.in_person_end_time
-          ? selectedAvailability.in_person_end_time.split(":").slice(0, 2).join(":")
-          : "",
-      },
-      break: { from: "", to: "" },
-    });
-    
+    console.log('Selected Availability:', selectedAvailability); // Debug log
+
+    // First set the modal to open
     setIsAvailabilityModalOpen(true);
+
+    // Then reset the form with a slight delay to ensure the modal is rendered
+    setTimeout(() => {
+      availabilityForm.reset({
+        isAvailable: true,
+        in_person: {
+          from: selectedAvailability?.in_person_start_time
+            ? selectedAvailability.in_person_start_time.split(":").slice(0, 2).join(":")
+            : "",
+          to: selectedAvailability?.in_person_end_time
+            ? selectedAvailability.in_person_end_time.split(":").slice(0, 2).join(":")
+            : "",
+        },
+        phone: {
+          from: selectedAvailability?.phone_start_time
+            ? selectedAvailability.phone_start_time.split(":").slice(0, 2).join(":")
+            : "",
+          to: selectedAvailability?.phone_end_time
+            ? selectedAvailability.phone_end_time.split(":").slice(0, 2).join(":")
+            : "",
+        },
+        break: { from: "", to: "" },
+      });
+
+      console.log('Form Values After Reset:', availabilityForm.getValues()); // Debug log
+    }, 0);
   };
   const handleClearAvailability = async () => {
     setLoading(true);

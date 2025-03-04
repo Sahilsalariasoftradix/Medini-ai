@@ -103,19 +103,37 @@ const ProceedAvailability = () => {
         const startTime = daySchedule[`${slotType}_start_time`];
         const endTime = daySchedule[`${slotType}_end_time`];
         
+        // If either start or end time is missing, no overlap
         if (!startTime || !endTime) return false;
         
         const proposedTimeObj = dayjs(proposedTime, "HH:mm:ss");
         const slotStartTime = dayjs(startTime, "HH:mm:ss");
         const slotEndTime = dayjs(endTime, "HH:mm:ss");
+
+        // For start time selection
+        if (selectedCell.isStart) {
+          // Allow same start time, but prevent if proposed time is between another slot's range
+          return proposedTimeObj.isAfter(slotStartTime) && proposedTimeObj.isBefore(slotEndTime);
+        }
         
-        return proposedTimeObj.isBetween(slotStartTime, slotEndTime, 'minute', '[]');
+        // For end time selection
+        // Check if proposed end time overlaps with another slot's range
+        const currentStartTime = daySchedule[`${selectedCell.type}_start_time`];
+        if (currentStartTime) {
+          const currentStartTimeObj = dayjs(currentStartTime, "HH:mm:ss");
+          return (
+            (proposedTimeObj.isAfter(slotStartTime) && proposedTimeObj.isBefore(slotEndTime)) ||
+            (currentStartTimeObj.isBefore(slotEndTime) && proposedTimeObj.isAfter(slotStartTime))
+          );
+        }
+        
+        return false;
       });
-  
+
       if (hasOverlap) {
         setSnackbar({
           open: true,
-          message: "This time overlaps with another slot. Please select a different time.",
+          message: "Time ranges cannot overlap. Please select a different time.",
           severity: "error",
         });
         return;

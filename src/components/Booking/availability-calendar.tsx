@@ -140,10 +140,10 @@ const getAvailableHourRange = (days: DaySchedule[]) => {
     };
   }
 
-  // Ensure we include the full range
+  // Return exact start hour and include one hour after the latest slot
   return {
-    start: Math.max(0, earliestHour - 1), // Show one hour before the earliest slot
-    end: Math.min(24, latestHour + 2), // Show one hour after the latest slot
+    start: earliestHour, // Removed the Math.max(0, earliestHour - 1)
+    end: Math.min(24, latestHour + 1), // Keep one hour buffer at the end
   };
 };
 
@@ -169,7 +169,8 @@ const TimeSlot = ({
   const [selectedStatus, setSelectedStatus] = useState<EnBookings>(status);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedDate] = useState<Dayjs>(dayjs(date));
+  // const [selectedDate] = useState<Dayjs>(dayjs(date));
+ 
   // Search contact inputs
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options, setOptions] = useState<readonly IFilm[]>([]);
@@ -188,7 +189,7 @@ const TimeSlot = ({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       contact: {},
-      date: selectedDate,
+      date: dayjs(date),
       startTime: time,
       length: "15",
       appointmentType: "inPerson",
@@ -472,6 +473,7 @@ const TimeSlot = ({
         loading={loading.data}
         disabled={loading.data}
       >
+
         <SlotBookingForm
           control={control}
           errors={errors}
@@ -481,8 +483,9 @@ const TimeSlot = ({
           options={options}
           loading={{ input: loading.input }}
           shouldDisableDate={shouldDisableDate}
-          selectedDate={selectedDate}
+          selectedDate={dayjs(date)}
         />
+
       </CommonDialog>
 
       <CommonDialog
@@ -824,73 +827,53 @@ export default function AvailabilityCalendar() {
                             >
                               {Array.from({ length: 4 }, (_, quarterIndex) => {
                                 const currentHour = hourRange.start + hourIndex;
-                                // Find the slot with matching time
-                                const slot = day.availability.slots.find((s) =>
-                                  s.time.startsWith(
-                                    `${currentHour
-                                      .toString()
-                                      .padStart(2, "0")}:${(quarterIndex * 15)
-                                      .toString()
-                                      .padStart(2, "0")}`
-                                  )
-                                );
+                                const currentTime = `${currentHour.toString().padStart(2, "0")}:${(
+                                  quarterIndex * 15
+                                )
+                                  .toString()
+                                  .padStart(2, "0")}`;
 
-                                if (!slot) {
-                                  // Return disabled slot if no matching slot found
+                                // Check if this slot should be disabled based on end time
+                                const isAfterEndTime = (time: string, endTime: string) => {
+                                  const [timeHour, timeMinute] = time.split(":").map(Number);
+                                  const [endHour, endMinute] = endTime.split(":").map(Number);
+                                  
                                   return (
-                                    <TimeSlot
-                                      key={quarterIndex}
-                                      onChange={() => {}}
-                                      status={EnBookings.Available}
-                                      disabled={true}
-                                      time={`${currentHour
-                                        .toString()
-                                        .padStart(2, "0")}:${(quarterIndex * 15)
-                                        .toString()
-                                        .padStart(2, "0")}`}
-                                      date={dayjs(startDate)
-                                        .add(dayIndex, "day")
-                                        .toDate()}
-                                      availableDates={days
-                                        .filter(
-                                          (d) => d.availability.isAvailable
-                                        )
-                                        .map((d) =>
-                                          dayjs(startDate)
-                                            .add(days.indexOf(d), "day")
-                                            .toDate()
-                                        )}
-                                      bookings={bookings}
-                                      fetchBookings={fetchBookings}
-                                    />
+                                    timeHour > endHour || 
+                                    (timeHour === endHour && timeMinute >= endMinute)
                                   );
-                                }
+                                };
+
+                                // Find the slot with matching time
+                                const slot = day.availability.slots.find((s) => s.time === currentTime);
+
+                                // Check if this time is at or after the end time for this day
+                                const endTime = day.availability.slots.length > 0 
+                                  ? day.availability.slots[day.availability.slots.length - 1].time 
+                                  : "00:00";
+
+                                const shouldDisable = !slot || isAfterEndTime(currentTime, endTime);
 
                                 return (
                                   <TimeSlot
                                     key={quarterIndex}
                                     onChange={(newStatus) =>
-                                      updateSlotStatus(
-                                        dayIndex,
-                                        day.availability.slots.indexOf(slot),
-                                        newStatus
-                                      )
+                                      slot
+                                        ? updateSlotStatus(
+                                            dayIndex,
+                                            day.availability.slots.indexOf(slot),
+                                            newStatus
+                                          )
+                                        : undefined
                                     }
-                                    status={slot.status}
-                                    disabled={
-                                      !day.availability.isAvailable ||
-                                      slot.isDisabled
-                                    }
-                                    time={slot.time}
-                                    date={dayjs(startDate)
-                                      .add(dayIndex, "day")
-                                      .toDate()}
+                                    status={slot?.status || EnBookings.Available}
+                                    disabled={!day.availability.isAvailable || shouldDisable}
+                                    time={currentTime}
+                                    date={dayjs(startDate).add(dayIndex, "day").toDate()}
                                     availableDates={days
                                       .filter((d) => d.availability.isAvailable)
                                       .map((d) =>
-                                        dayjs(startDate)
-                                          .add(days.indexOf(d), "day")
-                                          .toDate()
+                                        dayjs(startDate).add(days.indexOf(d), "day").toDate()
                                       )}
                                     bookings={bookings}
                                     fetchBookings={fetchBookings}
