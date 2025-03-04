@@ -3,6 +3,7 @@ import { DaySchedule } from "../types/calendar";
 import { EnAvailability, EnBookings, EStaticID } from "../utils/enums";
 import dayjs from "dayjs";
 import { getAvailability } from "../api/userApi";
+import { IDayAvailability } from "../utils/Interfaces";
 
 
 interface AvailabilityContextType {
@@ -19,6 +20,10 @@ interface AvailabilityContextType {
   generateDaysFromRange: (startDate: Date | null, endDate: Date | null) => void;
   handleNextWeek: () => void;
   handlePreviousWeek: () => void;
+  refreshAvailability: () => Promise<void>;
+  availabilities:any
+  // appointmentId:string | null;
+  // setAppointmentId:Dispatch<SetStateAction<string | null>>;
 }
 
 const AvailabilityContext = createContext<AvailabilityContextType | undefined>(
@@ -26,15 +31,8 @@ const AvailabilityContext = createContext<AvailabilityContextType | undefined>(
 );
 
 // Add interface for API response
-interface DayAvailability {
-  date: string;
-  phone_start_time: string | null;
-  phone_end_time: string | null;
-  in_person_start_time: string | null;
-  in_person_end_time: string | null;
-}
 
-const generateTimeSlots = (dayAvailability?: DayAvailability) => {
+const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
   const slots = [];
   
   const timeToMinutes = (time: string): number => {
@@ -42,17 +40,17 @@ const generateTimeSlots = (dayAvailability?: DayAvailability) => {
     return hours * 60 + minutes;
   };
 
-  // Helper function to convert minutes back to time string
   const minutesToTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
+  // If no availability data or both types are not available
   if (!dayAvailability || 
       (!dayAvailability.phone_start_time && !dayAvailability.in_person_start_time)) {
-    // Generate disabled slots for the entire day
-    for (let hour = 7; hour <= 21; hour++) {
+    // Generate slots for 24 hours as disabled
+    for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         slots.push({
           time: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
@@ -64,42 +62,55 @@ const generateTimeSlots = (dayAvailability?: DayAvailability) => {
     return slots;
   }
 
-  // Get earliest start time and latest end time
-  const startTimes = [
-    dayAvailability.phone_start_time,
-    dayAvailability.in_person_start_time
-  ].filter(time => time !== null) as string[];
-  
-  const endTimes = [
-    dayAvailability.phone_end_time,
-    dayAvailability.in_person_end_time
-  ].filter(time => time !== null) as string[];
+  // Get valid time ranges
+  const phoneRange = dayAvailability.phone_start_time !== "00:00:00" ? {
+    start: timeToMinutes(dayAvailability.phone_start_time!),
+    end: timeToMinutes(dayAvailability.phone_end_time!)
+  } : null;
 
-  if (startTimes.length === 0 || endTimes.length === 0) {
-    return generateTimeSlots(); // Return all slots as unavailable
+  const inPersonRange = dayAvailability.in_person_start_time !== "00:00:00" ? {
+    start: timeToMinutes(dayAvailability.in_person_start_time!),
+    end: timeToMinutes(dayAvailability.in_person_end_time!)
+  } : null;
+
+  // If no valid ranges, return all slots as unavailable
+  if (!phoneRange && !inPersonRange) {
+    return generateTimeSlots();
   }
 
-  // Convert times to minutes for comparison
-  const startMinutes = startTimes.map(time => timeToMinutes(time.slice(0, 5)));
-  const endMinutes = endTimes.map(time => timeToMinutes(time.slice(0, 5)));
+  // Get earliest start and latest end times
+  const earliestStart = Math.min(
+    ...[phoneRange?.start, inPersonRange?.start].filter(time => time !== undefined) as number[]
+  );
+  const latestEnd = Math.max(
+    ...[phoneRange?.end, inPersonRange?.end].filter(time => time !== undefined) as number[]
+  );
 
-  // Get earliest start and latest end
-  const earliestStartMinutes = Math.min(...startMinutes);
-  const latestEndMinutes = Math.max(...endMinutes);
+  // Calculate start and end hours
+  const startHour = Math.floor(earliestStart / 60);
+  const endHour = Math.ceil(latestEnd / 60);
 
-  // Generate slots for the entire day
-  for (let hour = 7; hour <= 21; hour++) {
+  // Generate slots only for the available time range
+  for (let hour = startHour; hour <= endHour; hour++) {
     for (let minute = 0; minute < 60; minute += 15) {
       const currentTimeMinutes = hour * 60 + minute;
+      
+      // Skip if we're past the end time
+      if (currentTimeMinutes > latestEnd) continue;
+      
       const currentTime = minutesToTime(currentTimeMinutes);
       
-      const isWithinAvailability = 
-        currentTimeMinutes >= earliestStartMinutes && 
-        currentTimeMinutes <= latestEndMinutes;
+      // Check if this slot is within any available time range
+      const isWithinPhoneAvailability = phoneRange ? 
+        currentTimeMinutes >= phoneRange.start && currentTimeMinutes <= phoneRange.end : false;
+
+      const isWithinInPersonAvailability = inPersonRange ? 
+        currentTimeMinutes >= inPersonRange.start && currentTimeMinutes <= inPersonRange.end : false;
+
+      const isWithinAvailability = isWithinPhoneAvailability || isWithinInPersonAvailability;
 
       // For the last slot, check if there's enough time until the end
-      const hasEnoughTimeUntilEnd = 
-        currentTimeMinutes + 15 <= latestEndMinutes;
+      const hasEnoughTimeUntilEnd = currentTimeMinutes + 15 <= latestEnd;
 
       slots.push({
         time: currentTime,
@@ -115,79 +126,30 @@ const generateTimeSlots = (dayAvailability?: DayAvailability) => {
 export function AvailabilityProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [days, setDays] = useState<DaySchedule[]>([]);
-  console.log(days,'days')
-  const [availabilities, setAvailabilities] = useState<DayAvailability[]>([]);
+
+  const [availabilities, setAvailabilities] = useState<IDayAvailability[]>([]);
   const [isInitialFetch, setIsInitialFetch] = useState(true);
+  // const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
-  const fetchInitialAvailability = useCallback(async () => {
+  const fetchAvailabilityData = useCallback(async (date: Date) => {
     try {
       const response = await getAvailability({
         user_id: EStaticID.ID,
-        date: dayjs().format("YYYY-MM-DD"),
-        range: EnAvailability.WEEK,
-      });
-      
-      const availability = response.availability;
-      setAvailabilities(availability);
-
-      if (availability.length > 0) {
-        const firstDate = dayjs(availability[0].date).toDate();
-        const lastDate = dayjs(availability[availability.length - 1].date).toDate();
-        setDateRange([firstDate, lastDate]);
-      }
-    } catch (error) {
-      console.error("Error fetching initial availability:", error);
-    }
-    setIsInitialFetch(false);
-  }, []);
-
-  const fetchAvailability = useCallback(async () => {
-    if (isInitialFetch || !dateRange[0]) return;
-    
-    try {
-      const response = await getAvailability({
-        user_id: EStaticID.ID,
-        date: dayjs(dateRange[0]).format("YYYY-MM-DD"),
+        date: dayjs(date).format("YYYY-MM-DD"),
         range: EnAvailability.WEEK,
       });
       setAvailabilities(response.availability);
-      generateDaysFromRange(dateRange[0], dateRange[1]);
+      return response.availability;
     } catch (error) {
-      console.error("Error fetching bookings:", error);
+      console.error("Error fetching availability:", error);
+      return [];
     }
-  }, [dateRange, isInitialFetch]);
+  }, []);
 
-  useEffect(() => {
-    fetchInitialAvailability();
-  }, [fetchInitialAvailability]);
-
-  useEffect(() => {
-    if (!isInitialFetch && dateRange[0] && dateRange[1]) {
-      fetchAvailability();
-    }
-  }, [dateRange, fetchAvailability, isInitialFetch]);
-
-  const handlePreviousWeek = useCallback(() => {
-    if (!dateRange[0] || !dateRange[1]) return;
-    
-    setDateRange([
-      dayjs(dateRange[0]).subtract(7, "day").toDate(),
-      dayjs(dateRange[1]).subtract(7, "day").toDate(),
-    ]);
-  }, [dateRange]);
-
-  const handleNextWeek = useCallback(() => {
-    if (!dateRange[0] || !dateRange[1]) return;
-    
-    setDateRange([
-      dayjs(dateRange[0]).add(7, "day").toDate(),
-      dayjs(dateRange[1]).add(7, "day").toDate(),
-    ]);
-  }, [dateRange]);
-
-  const generateDaysFromRange = (
+  const generateDaysFromRange = useCallback((
     startDate: Date | null,
-    endDate: Date | null
+    endDate: Date | null,
+    availabilityData: IDayAvailability[]
   ) => {
     if (!startDate || !endDate) return;
 
@@ -196,18 +158,15 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
     const end = dayjs(endDate);
 
     // First, get all dates from the API data
-    const apiDates = availabilities.map(a => a.date);
+    const apiDates = availabilityData.map(a => a.date);
 
     while (currentDate.isSameOrBefore(end)) {
       const formattedDate = currentDate.format("YYYY-MM-DD");
-      const dayAvailability = availabilities.find(
+      const dayAvailability = availabilityData.find(
         (a) => a.date === formattedDate
       );
 
-      // Check if this date exists in API data
       const isApiDate = apiDates.includes(formattedDate);
-
-      // Only consider it available if the date is in API data and has availability
       const hasAvailability = isApiDate && dayAvailability && (
         dayAvailability.phone_start_time !== null ||
         dayAvailability.in_person_start_time !== null
@@ -216,23 +175,79 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
       newDays.push({
         day: currentDate.format("ddd"),
         date: currentDate.date(),
-        fullDate: formattedDate, // Add full date for comparison
+        fullDate: formattedDate,
         availability: {
-          isAvailable: Boolean(hasAvailability), // Fix the boolean type issue
+          isAvailable: Boolean(hasAvailability),
           slots: generateTimeSlots(dayAvailability),
         },
       });
       currentDate = currentDate.add(1, "day");
     }
 
-    // Sort days according to API data order if needed
     const sortedDays = newDays.sort((a, b) => {
       const aIndex = apiDates.indexOf(a.fullDate);
       const bIndex = apiDates.indexOf(b.fullDate);
       return aIndex - bIndex;
     });
-
+    
     setDays(sortedDays);
+  }, []);
+
+  const fetchInitialAvailability = useCallback(async () => {
+    try {
+      const availability = await fetchAvailabilityData(new Date());
+      
+      if (availability.length > 0) {
+        const firstDate = dayjs(availability[0].date).toDate();
+        const lastDate = dayjs(availability[availability.length - 1].date).toDate();
+        setDateRange([firstDate, lastDate]);
+        generateDaysFromRange(firstDate, lastDate, availability);
+      }
+    } catch (error) {
+      console.error("Error fetching initial availability:", error);
+    }
+    setIsInitialFetch(false);
+  }, [fetchAvailabilityData, generateDaysFromRange]);
+
+  const refreshAvailability = useCallback(async () => {
+    if (!dateRange[0]) return;
+    
+    try {
+      const availability = await fetchAvailabilityData(dateRange[0]);
+      if (dateRange[0] && dateRange[1]) {
+        generateDaysFromRange(dateRange[0], dateRange[1], availability);
+      }
+    } catch (error) {
+      console.error("Error refreshing availability:", error);
+    }
+  }, [dateRange, fetchAvailabilityData, generateDaysFromRange]);
+
+  useEffect(() => {
+    fetchInitialAvailability();
+  }, [fetchInitialAvailability]);
+
+  useEffect(() => {
+    if (!isInitialFetch && dateRange[0] && dateRange[1]) {
+      refreshAvailability();
+    }
+  }, [dateRange, refreshAvailability, isInitialFetch]);
+
+  const handlePreviousWeek = () => {
+    if (!dateRange[0] || !dateRange[1]) return;
+    
+    setDateRange([
+      dayjs(dateRange[0]).subtract(7, "day").toDate(),
+      dayjs(dateRange[1]).subtract(7, "day").toDate(),
+    ]);
+  };
+
+  const handleNextWeek = () => {
+    if (!dateRange[0] || !dateRange[1]) return;
+    
+    setDateRange([
+      dayjs(dateRange[0]).add(7, "day").toDate(),
+      dayjs(dateRange[1]).add(7, "day").toDate(),
+    ]);
   };
 
   const updateSlotStatus = (
@@ -264,10 +279,14 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
         setDateRange,
         updateSlotStatus,
         toggleDayAvailability,
-        generateDaysFromRange,
+        generateDaysFromRange: (start, end) => generateDaysFromRange(start, end, availabilities),
         setDays,
         handleNextWeek,
-        handlePreviousWeek
+        handlePreviousWeek,
+        refreshAvailability,
+        availabilities
+        // setAppointmentId,
+        // appointmentId
       }}
     >
       {children}
