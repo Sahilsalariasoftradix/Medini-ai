@@ -4,7 +4,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  Collapse,
   Icon,
   Badge,
 } from "@mui/material";
@@ -15,9 +14,7 @@ import { overRideSvgColor } from "../../utils/filters";
 export const drawerWidth = 240;
 const Sidebar = ({
   open,
-  nestedOpen,
   isMobile,
-  handleNestedMenuToggle,
   isActive,
   closeDrawerOnMobile,
 }: {
@@ -136,7 +133,7 @@ const Sidebar = ({
               routes.sidebar.callCenter.link
             )}
             {/* Nested Menu */}
-            <ListItem
+            {/* <ListItem
               sx={{ ...listItemStyles, pl: 1 }}
               onClick={handleNestedMenuToggle}
             >
@@ -149,9 +146,9 @@ const Sidebar = ({
                   className={nestedOpen ? "rotate" : ""}
                 />
               )}
-            </ListItem>
+            </ListItem> */}
 
-            <Collapse in={nestedOpen} timeout="auto" unmountOnExit>
+            {/* <Collapse in={nestedOpen} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 {renderListItem(
                   undefined,
@@ -166,7 +163,7 @@ const Sidebar = ({
                   routes.sidebar.activity2.link
                 )}
               </List>
-            </Collapse>
+            </Collapse> */}
 
             {renderListItem(
               SidebarIcons.billing,
@@ -174,12 +171,12 @@ const Sidebar = ({
               undefined,
               routes.sidebar.billing.link
             )}
-            {renderListItem(
+            {/* {renderListItem(
               SidebarIcons.patients,
               "Patients",
               undefined,
               routes.sidebar.patients.link
-            )}
+            )} */}
             {renderListItem(
               SidebarIcons.history,
               "Task History",
