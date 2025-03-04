@@ -91,36 +91,27 @@ export function DayHeader({
       (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
     );
 
+    // Set default values based on selectedAvailability
     availabilityForm.reset({
       isAvailable: true,
       phone: {
-        from: selectedAvailability?.phone_start_time
+        from: selectedAvailability?.phone_start_time 
           ? selectedAvailability.phone_start_time.split(":").slice(0, 2).join(":")
-          : "hh:mm",
+          : "",
         to: selectedAvailability?.phone_end_time
           ? selectedAvailability.phone_end_time.split(":").slice(0, 2).join(":")
-          : "hh:mm",
+          : "",
       },
       in_person: {
         from: selectedAvailability?.in_person_start_time
           ? selectedAvailability.in_person_start_time.split(":").slice(0, 2).join(":")
-          : "hh:mm",
+          : "",
         to: selectedAvailability?.in_person_end_time
           ? selectedAvailability.in_person_end_time.split(":").slice(0, 2).join(":")
-          : "hh:mm",
+          : "",
       },
-      break: {
-        from: "",
-        to: ""
-      },
+      break: { from: "", to: "" },
     });
-
-
-
-
-
-
-
     
     setIsAvailabilityModalOpen(true);
   };

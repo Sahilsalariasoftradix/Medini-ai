@@ -29,6 +29,7 @@ import {
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
 import { postAvailabilityGeneral } from "../../../api/userApi";
 import { ISchedule, ISelectedCell } from "../../../utils/Interfaces";
 import { TScheduleKey, TScheduleTypes } from "../../../utils/types";
@@ -38,6 +39,8 @@ import {
   typeMappings,
 } from "../../../utils/constants/stepAvailability";
 import CommonSnackbar from "../../common/CommonSnackbar";
+
+dayjs.extend(isBetween);
 
 const ProceedAvailability = () => {
   // Hooks
@@ -89,43 +92,79 @@ const ProceedAvailability = () => {
 
   // Handle time selecting and changing and time slot selecting checks
   const handleTimeChange = (newValue: Dayjs | null) => {
-    if (newValue) {
-      setSelectedTime(newValue);
-    }
-    if (selectedCell && newValue) {
-      setSchedule((prev) => {
-        const updatedSchedule = [...prev];
-        const key: TScheduleKey = `${selectedCell.type}_${
-          selectedCell.isStart ? "start" : "end"
-        }_time`;
-
-        if (!selectedCell.isStart) {
-          const startKey: TScheduleKey = `${selectedCell.type}_start_time`;
-          const startTime = updatedSchedule[selectedCell.dayIndex][startKey];
-
-          if (!startTime) {
-            setSnackbar({
-              open: true,
-              message: "Please select a start time first.",
-              severity: "error",
-            });
-            return prev;
-          }
-          if (
-            dayjs(newValue.format("HH:mm:ss"), "HH:mm:ss").isBefore(
-              dayjs(startTime, "HH:mm:ss")
-            )
-          ) {
-            setSnackbar({
-              open: true,
-              message: "End time cannot be earlier than start time.",
-              severity: "error",
-            });
-            return prev;
-          }
+    if (newValue && selectedCell) {
+      const proposedTime = newValue.format("HH:mm:ss");
+      const daySchedule = schedule[selectedCell.dayIndex];
+      
+      // Check for overlaps with other slot types
+      const hasOverlap = TScheduleTypes.some(slotType => {
+        if (slotType === selectedCell.type) return false; // Skip checking against same type
+        
+        const startTime = daySchedule[`${slotType}_start_time`];
+        const endTime = daySchedule[`${slotType}_end_time`];
+        
+        if (!startTime || !endTime) return false;
+        
+        const proposedTimeObj = dayjs(proposedTime, "HH:mm:ss");
+        const slotStartTime = dayjs(startTime, "HH:mm:ss");
+        const slotEndTime = dayjs(endTime, "HH:mm:ss");
+        
+        return proposedTimeObj.isBetween(slotStartTime, slotEndTime, 'minute', '[]');
+      });
+  
+      if (hasOverlap) {
+        setSnackbar({
+          open: true,
+          message: "This time overlaps with another slot. Please select a different time.",
+          severity: "error",
+        });
+        return;
+      }
+  
+      // For end time selection, check if it's after start time
+      if (!selectedCell.isStart) {
+        const startKey: TScheduleKey = `${selectedCell.type}_start_time`;
+        const startTime = daySchedule[startKey];
+  
+        if (!startTime) {
+          setSnackbar({
+            open: true,
+            message: "Please select a start time first.",
+            severity: "error",
+          });
+          return;
         }
-        updatedSchedule[selectedCell.dayIndex][key] =
-          newValue.format("HH:mm:ss");
+  
+        if (dayjs(proposedTime, "HH:mm:ss").isBefore(dayjs(startTime, "HH:mm:ss"))) {
+          setSnackbar({
+            open: true,
+            message: "End time cannot be earlier than start time.",
+            severity: "error",
+          });
+          return;
+        }
+      }
+  
+      // For start time selection, check if it's before end time
+      if (selectedCell.isStart) {
+        const endKey: TScheduleKey = `${selectedCell.type}_end_time`;
+        const endTime = daySchedule[endKey];
+  
+        if (endTime && dayjs(proposedTime, "HH:mm:ss").isAfter(dayjs(endTime, "HH:mm:ss"))) {
+          setSnackbar({
+            open: true,
+            message: "Start time cannot be later than end time.",
+            severity: "error",
+          });
+          return;
+        }
+      }
+  
+      setSelectedTime(newValue);
+      setSchedule(prev => {
+        const updatedSchedule = [...prev];
+        const key: TScheduleKey = `${selectedCell.type}_${selectedCell.isStart ? "start" : "end"}_time`;
+        updatedSchedule[selectedCell.dayIndex][key] = proposedTime;
         return updatedSchedule;
       });
     }
