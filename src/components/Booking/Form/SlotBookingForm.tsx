@@ -95,9 +95,13 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
         <Controller
           name="date"
           control={control}
-          render={({ field }) => (
+          render={({ field: { onChange, ...field } }) => (
             <DateInput
               {...field}
+              value={selectedDate}
+              onChange={(newValue) => {
+                onChange(newValue);
+              }}
               label=""
               shouldDisableDate={shouldDisableDate}
               error={!!errors.date || shouldDisableDate(selectedDate)}
