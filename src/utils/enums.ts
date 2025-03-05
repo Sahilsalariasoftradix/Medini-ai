@@ -51,6 +51,7 @@ export enum EnBookings {
   Active = 1,
   Cancelled = 2,
   Unconfirmed = 3,
+  Edit=4
 }
 export enum EStaticID {
   ID = 1,

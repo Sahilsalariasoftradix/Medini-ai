@@ -94,6 +94,16 @@ export const getBookings = async (bookings: TGetBooking) => {
   }
 };
 
+export const updateBooking = async (booking: IBooking) => {
+  try {
+    const resp = await apiClient.post(`bookings/update`, booking);
+    return resp.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const createBooking = async (booking: IBooking) => {
   try {
     const resp = await apiClient.post(`booking`, booking);
