@@ -25,6 +25,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
   loading,
   shouldDisableDate,
   selectedDate,
+  isEditing
 }) => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [contacts, setContacts] = useState<IGetContacts>([]);
@@ -67,17 +68,21 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               placeholder="Search contacts..."
               error={!!errors.contact}
               helperText={errors.contact?.message}
+              //@ts-ignore
+              disabled={isEditing}
             />
           )}
         />
-        <Box display="flex" justifyContent="end">
-          <CommonButton
-            sx={{ width: "50%", float: "right" }}
-            text="Add new contact"
-            onClick={() => setOpenDialog(true)}
-            startIcon={<img src={addIcon} alt="" />}
-          />
-        </Box>
+        {!isEditing && (
+          <Box display="flex" justifyContent="end">
+            <CommonButton
+              sx={{ width: "50%", float: "right" }}
+              text="Add new contact"
+              onClick={() => setOpenDialog(true)}
+              startIcon={<img src={addIcon} alt="" />}
+            />
+          </Box>
+        )}
         <Typography variant="bodyMediumExtraBold" color="grey.600">
           Date
         </Typography>
@@ -183,12 +188,13 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
           )}
         />
       </Box>
-      {/* Add contact */}
-      <AddContact
-        fetchContacts={fetchContacts}
-        openDialog={openDialog}
-        setOpenDialog={setOpenDialog}
-      />
+      {!isEditing && (
+        <AddContact
+          fetchContacts={fetchContacts}
+          openDialog={openDialog}
+          setOpenDialog={setOpenDialog}
+        />
+      )}
     </>
   );
 };

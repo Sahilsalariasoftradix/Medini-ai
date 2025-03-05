@@ -36,7 +36,7 @@ import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
 import SlotBookingForm from "./Form/SlotBookingForm";
 import { IAppointment, IBookingResponse, IFilm } from "../../utils/Interfaces";
-import { cancelBooking, createBooking } from "../../api/userApi";
+import { cancelBooking, createBooking, updateBooking } from "../../api/userApi";
 import { getBookings } from "../../api/userApi";
 import { DaySchedule } from "../../types/calendar";
 
@@ -170,7 +170,7 @@ const TimeSlot = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDate] = useState<Dayjs>(dayjs(date));
-  // console.log(selectedDate)
+
   // Search contact inputs
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options, setOptions] = useState<readonly IFilm[]>([]);
@@ -219,7 +219,7 @@ const TimeSlot = ({
   });
 
   const [appointment, setAppointment] = useState<IAppointment | null>(null);
-  // const [isPartOfLongerSlot, setIsPartOfLongerSlot] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const updateAppointmentStatus = useCallback(() => {
     const currentBooking = bookings.find(
@@ -291,6 +291,7 @@ const TimeSlot = ({
     }
 
     if (selectedStatus === EnBookings.Available) {
+      setIsEditing(false);
       setOpenDialog(true);
     } else {
       setAnchorEl(event.currentTarget);
@@ -300,61 +301,45 @@ const TimeSlot = ({
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
   };
-  const onSubmit = async (data: AppointmentFormData) => {
-    setLoading({ ...loading, data: true });
-    try {
-      const userId = getCurrentUserId();
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-      const startTimeFormatted = dayjs(data.startTime, "HH:mm");
-      console.log(startTimeFormatted,'startTimeFormatted')
 
-      const endTimeFormatted = startTimeFormatted
-        .add(Number(data.length), "minute")
-        .format("HH:mm");
-        console.log(endTimeFormatted,'endTimeFormatted')
-
-      await createBooking({
-        user_id: EStaticID.ID,
-        date: dayjs(data.date).format("YYYY-MM-DD"),
-        start_time: data.startTime,
-        end_time: endTimeFormatted,
-        details: data.reasonForCall,
-        first_name: data.contact.firstName,
-        last_name: data.contact.lastName,
-        email: data.contact.email,
-        phone: data.contact.phone,
-      });
-      // Fetch bookings after creating the appointment
-      await fetchBookings();
-
-      // // Display availability active as of now
-      // setSelectedStatus(EnBookings.Active);
-      // onChange(EnBookings.Active);
-      setOpenDialog(false);
-
-      reset();
-    } catch (error: any) {
-      console.error("Failed to create appointment:", error);
-      setSnackbar({
-        open: true,
-        message: error.message,
-        severity: "error",
-      });
-    } finally {
-      setLoading({ ...loading, data: false });
-    }
-  };
-
-  // Update the status of the booking
   const handleStatusUpdate = async (newStatus: EnBookings) => {
     try {
-      // Prevent changing from Active to Available or Unconfirmed
+      if (
+        selectedStatus === EnBookings.Active &&
+        newStatus === EnBookings.Edit
+      ) {
+        setIsEditing(true);
+        const currentBooking = bookings.find(
+          (booking) => booking.booking_id.toString() === appointmentId
+        );
+        
+        if (currentBooking) {
+          reset({
+            contact: {
+              firstName: currentBooking.first_name,
+              lastName: currentBooking.last_name,
+              email: currentBooking.email,
+              phone: currentBooking.phone,
+              title: '',
+            },
+            date: dayjs(currentBooking.date),
+            startTime: currentBooking.start_time.substring(0, 5),
+            length: dayjs(currentBooking.end_time, "HH:mm:ss")
+              .diff(dayjs(currentBooking.start_time, "HH:mm:ss"), "minute")
+              .toString(),
+            appointmentType: "inPerson",
+            reasonForCall: currentBooking.details,
+          });
+        }
+        setSelectedStatus(EnBookings.Active)
+        setOpenDialog(true);
+        return;
+      }
       if (
         !appointmentId ||
         (selectedStatus === EnBookings.Active &&
           (newStatus === EnBookings.Available ||
+            newStatus === EnBookings.Active ||
             newStatus === EnBookings.Unconfirmed))
       ) {
         return; // Do nothing if trying to revert to Available or Unconfirmed
@@ -385,6 +370,69 @@ const TimeSlot = ({
       });
     } finally {
       setLoading({ ...loading, options: false });
+    }
+  };
+
+  const onSubmit = async (data: AppointmentFormData) => {
+    setLoading({ ...loading, data: true });
+    try {
+      const userId = getCurrentUserId();
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      
+      const startTimeFormatted = dayjs(data.startTime, "HH:mm");
+      const endTimeFormatted = startTimeFormatted
+        .add(Number(data.length), "minute")
+        .format("HH:mm");
+
+      if (isEditing && appointmentId) {
+        await updateBooking({
+          booking_id: EStaticID.ID,
+          user_id: EStaticID.ID,
+          date: dayjs(data.date).format("YYYY-MM-DD"),
+          start_time: data.startTime,
+          end_time: endTimeFormatted,
+          details: data.reasonForCall,
+          first_name: data.contact.firstName,
+          last_name: data.contact.lastName,
+          email: data.contact.email,
+          phone: data.contact.phone,
+        });
+      } else {
+        await createBooking({
+          user_id: EStaticID.ID,
+          date: dayjs(data.date).format("YYYY-MM-DD"),
+          start_time: data.startTime,
+          end_time: endTimeFormatted,
+          details: data.reasonForCall,
+          first_name: data.contact.firstName,
+          last_name: data.contact.lastName,
+          email: data.contact.email,
+          phone: data.contact.phone,
+        });
+      }
+
+      await fetchBookings();
+      setOpenDialog(false);
+      reset();
+
+      setSnackbar({
+        open: true,
+        message: isEditing 
+          ? "Appointment updated successfully" 
+          : "Appointment created successfully",
+        severity: "success",
+      });
+    } catch (error: any) {
+      console.error("Failed to handle appointment:", error);
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: "error",
+      });
+    } finally {
+      setLoading({ ...loading, data: false });
     }
   };
 
@@ -425,7 +473,7 @@ const TimeSlot = ({
       setLoading({ ...loading, options: false });
     }
   };
-  
+
   // Add this useEffect to reset form with new time and date
   useEffect(() => {
     reset({
@@ -476,9 +524,10 @@ const TimeSlot = ({
         onClose={() => {
           setOpenDialog(false);
           reset();
+          setIsEditing(false);
         }}
         confirmButtonType="primary"
-        title="New Appointment"
+        title={isEditing ? "Edit Appointment" : "New Appointment"}
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
@@ -494,7 +543,8 @@ const TimeSlot = ({
           options={options}
           loading={{ input: loading.input }}
           shouldDisableDate={shouldDisableDate}
-          selectedDate={dayjs(date)} 
+          selectedDate={dayjs(date)}
+          isEditing={isEditing}
         />
       </CommonDialog>
 
@@ -560,10 +610,14 @@ const TimeSlot = ({
           </MenuItem>
         ) : (
           [
-            EnBookings.Available,
-            EnBookings.Active,
-            EnBookings.Cancelled,
-            EnBookings.Unconfirmed,
+            ...(selectedStatus === EnBookings.Active
+              ? [EnBookings.Edit,EnBookings.Cancelled]
+              : [
+                  EnBookings.Available,
+                  EnBookings.Active,
+                  EnBookings.Cancelled,
+                  EnBookings.Unconfirmed,
+                ]),
           ].map((option) => (
             <MenuItem
               sx={{ justifyContent: "start", gap: 2 }}
