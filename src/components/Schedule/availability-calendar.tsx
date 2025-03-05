@@ -6,17 +6,19 @@ import {
   Popover,
   Switch,
   Button,
+  Tooltip,
+  CircularProgress,
 } from "@mui/material";
 import { DayHeader } from "./day-header";
 import Grid from "@mui/material/Grid2";
-import  { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
-import { EnAvailability,  EStaticID } from "../../utils/enums";
+import { EnAvailability, EStaticID } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -24,8 +26,34 @@ import { IBookingResponse } from "../../utils/Interfaces";
 import { getBookings } from "../../api/userApi";
 import { BookingTypeIcon } from "./booking-type-icon";
 import { availabilityIcons, otherIcons } from "../../utils/Icons";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import CommonDialog from "../common/CommonDialog";
+import SlotBookingForm from "../Booking/Form/SlotBookingForm";
+// import { EnBookings } from "../../utils/enums";
+import { createBooking } from "../../api/userApi";
 
 dayjs.extend(isSameOrBefore);
+
+const appointmentSchema = z.object({
+  contact: z.object({
+    title: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    phone: z.string(),
+  }),
+  date: z.any(),
+  startTime: z.string(),
+  length: z.string().min(1, "Appointment length is required"),
+  appointmentType: z.enum(["inPerson", "phoneCall"], {
+    errorMap: () => ({ message: "Please select an appointment type" }),
+  }),
+  reasonForCall: z.string().min(1, "Reason for appointment is required"),
+});
+
+type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 export default function AvailabilityCalendar() {
   const {
@@ -39,36 +67,59 @@ export default function AvailabilityCalendar() {
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
-  const [Today, setToday] = useState(dayjs());
+  const [Today, setToday] = useState(() => dayjs(startDate));
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTime, setSelectedTime] = useState("");
+  console.log(selectedTime)
+  const [loading, setLoading] = useState(false);
+  const [openContactSearch, setOpenContactSearch] = useState(false);
+  const [options] = useState<readonly any[]>([]);
 
-  const getSlots = () => {
-    const day = days.find(
-      (day) => day.fullDate === dayjs(Today).format("YYYY-MM-DD")
-    );
-    return day?.availability?.slots;
-  };
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<AppointmentFormData>({
+    resolver: zodResolver(appointmentSchema),
+  });
 
   useEffect(() => {
-    generateDaysFromRange(startDate, endDate);
-    setToday(dayjs(startDate));
-  }, [startDate, endDate]);
+    if (startDate) {
+      setToday(dayjs(startDate));
+    }
+  }, [startDate]);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      generateDaysFromRange(startDate, endDate);
+      fetchBookings();
+    }
+  }, [startDate, endDate, Today]);
 
   const fetchBookings = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await getBookings({
         user_id: EStaticID.ID,
         date: dayjs(Today).format("YYYY-MM-DD"),
         range: EnAvailability.DAY,
       });
-      setBookings(response.bookings);
+      setBookings(response.bookings || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
+      setBookings([]);
+    } finally {
+      setLoading(false);
     }
   }, [Today]);
 
-  useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
+  const getSlots = useCallback(() => {
+    const day = days.find(
+      (day) => day.fullDate === dayjs(Today).format("YYYY-MM-DD")
+    );
+    return day?.availability?.slots || [];
+  }, [days, Today]);
 
   const handleEditAvailability = (day: string) => {
     console.log(`Editing availability for ${day}`);
@@ -83,6 +134,36 @@ export default function AvailabilityCalendar() {
     return `${dayjs(startDate).format("MMM DD")} - ${dayjs(endDate).format(
       "MMM DD, YYYY"
     )}`;
+  };
+
+  const onSubmit = async (data: AppointmentFormData) => {
+    setLoading(true);
+    try {
+      const startTimeFormatted = dayjs(data.startTime, "HH:mm");
+      const endTimeFormatted = startTimeFormatted
+        .add(Number(data.length), "minute")
+        .format("HH:mm");
+
+      await createBooking({
+        user_id: EStaticID.ID,
+        date: dayjs(data.date).format("YYYY-MM-DD"),
+        start_time: data.startTime,
+        end_time: endTimeFormatted,
+        details: data.reasonForCall,
+        first_name: data.contact.firstName,
+        last_name: data.contact.lastName,
+        email: data.contact.email,
+        phone: data.contact.phone,
+      });
+
+      await fetchBookings();
+      setOpenDialog(false);
+      reset();
+    } catch (error: any) {
+      console.error("Failed to create appointment:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -188,9 +269,8 @@ export default function AvailabilityCalendar() {
               sx={{ height: "calc(100vh - 260px)", overflowY: "auto" }}
             >
               <Box width={"100%"} sx={{ minWidth: "80px" }}>
-                {(() => {
-                  const slots = getSlots();
-                  return slots?.map((hour, index) => {
+                {!loading ? (
+                  getSlots().map((hour, index) => {
                     const booking = bookings.find((booking) => {
                       return booking.start_time === `${hour.time}:00`;
                     });
@@ -250,25 +330,41 @@ export default function AvailabilityCalendar() {
                             </>
                           )}
                           {booking ? (
-                            <Typography
-                              variant="caption"
-                              color="#1A202C"
-                              sx={{
-                                fontSize: "14px",
-                                fontWeight: "500",
-                                lineHeight: "21px",
-                                padding: "3px 8px",
-                                borderRadius: "100px",
-                                backgroundColor:
-                                  booking.status === "active"
-                                    ? "#22C55E"
-                                    : booking.status === "cancelled"
-                                    ? "#FF4747"
-                                    : "#FACC15",
-                              }}
-                            >
-                              {booking?.first_name}, {booking?.last_name}
-                            </Typography>
+                            <>
+                              <Typography
+                                variant="caption"
+                                color="#1A202C"
+                                sx={{
+                                  fontSize: "14px",
+                                  fontWeight: "500",
+                                  lineHeight: "21px",
+                                  padding: "3px 8px",
+                                  borderRadius: "100px",
+                                  backgroundColor:
+                                    booking.status === "active"
+                                      ? "#22C55E"
+                                      : booking.status === "cancelled"
+                                      ? "#FF4747"
+                                      : "#FACC15",
+                                }}
+                              >
+                                {booking?.first_name}, {booking?.last_name}
+                              </Typography>
+                              <Tooltip title={booking?.details}>
+                                <Typography
+                                  variant="bodySmallMedium"
+                                  color="grey.600"
+                                  sx={{
+                                    maxWidth: "300px",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {booking?.details}
+                                </Typography>
+                              </Tooltip>
+                            </>
                           ) : hour.isDisabled ? (
                             <Typography
                               variant="caption"
@@ -287,26 +383,55 @@ export default function AvailabilityCalendar() {
                               Do Not Book
                             </Typography>
                           ) : (
-                            <Typography
-                              variant="caption"
-                              color="#1A202C"
+                            <Box
+                              onClick={() => {
+                                setSelectedTime(hour.time);
+                                setOpenDialog(true);
+                                reset({
+                                  date: dayjs(Today),
+                                  startTime: hour.time,
+                                  length: "15",
+                                  appointmentType: "inPerson",
+                                  reasonForCall: "",
+                                });
+                              }}
                               sx={{
-                                fontSize: "14px",
-                                fontWeight: "500",
-                                lineHeight: "21px",
-                                padding: "3px 8px",
-                                borderRadius: "100px",
-                                backgroundColor: "#E2E8F0",
+                                cursor: "pointer",
                               }}
                             >
-                              Empty
-                            </Typography>
+                              <Typography
+                                variant="caption"
+                                color="#1A202C"
+                                sx={{
+                                  fontSize: "14px",
+                                  fontWeight: "500",
+                                  lineHeight: "21px",
+                                  padding: "3px 8px",
+                                  borderRadius: "100px",
+                                  backgroundColor: "#E2E8F0",
+                                }}
+                              >
+                                Empty
+                              </Typography>
+                            </Box>
                           )}
                         </Box>
                       </Box>
                     );
-                  });
-                })()}
+                  })
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      p: 3,
+                      height: "calc(100vh - 260px)",
+                      alignItems: "center",
+                    }}
+                  >
+                    <CircularProgress />
+                  </Box>
+                )}
               </Box>
             </Box>
           </Box>
@@ -553,6 +678,32 @@ export default function AvailabilityCalendar() {
           </Button>
         </Box>
       </Box>
+      <CommonDialog
+        open={openDialog}
+        onClose={() => {
+          setOpenDialog(false);
+          reset();
+        }}
+        confirmButtonType="primary"
+        title="New Appointment"
+        confirmText="Confirm"
+        cancelText="Cancel"
+        onConfirm={handleSubmit(onSubmit)}
+        loading={loading}
+        disabled={loading}
+      >
+        <SlotBookingForm
+          control={control}
+          errors={errors}
+          openContactSearch={openContactSearch}
+          handleClose={() => setOpenContactSearch(false)}
+          handleOpen={() => setOpenContactSearch(true)}
+          options={options}
+          loading={{ input: false }}
+          shouldDisableDate={() => false}
+          selectedDate={dayjs(Today)}
+        />
+      </CommonDialog>
     </Box>
   );
 }
