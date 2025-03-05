@@ -102,10 +102,10 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
       
       // Check if this slot is within any available time range
       const isWithinPhoneAvailability = phoneRange ? 
-        currentTimeMinutes >= phoneRange.start && currentTimeMinutes <= phoneRange.end : false;
+        currentTimeMinutes >= phoneRange.start && currentTimeMinutes <= phoneRange.end - 15: false;
 
       const isWithinInPersonAvailability = inPersonRange ? 
-        currentTimeMinutes >= inPersonRange.start && currentTimeMinutes <= inPersonRange.end : false;
+        currentTimeMinutes >= inPersonRange.start && currentTimeMinutes <= inPersonRange.end - 15 : false;
 
       const isWithinAvailability = isWithinPhoneAvailability || isWithinInPersonAvailability;
 
@@ -119,6 +119,7 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
       });
     }
   }
+
 
   return slots;
 };
@@ -257,7 +258,9 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
   ) => {
     setDays((prevDays) => {
       const newDays = [...prevDays];
-      newDays[dayIndex].availability.slots[slotIndex].status = newStatus;
+      if (newDays[dayIndex]?.availability?.slots?.[slotIndex]) {
+        newDays[dayIndex].availability.slots[slotIndex].status = newStatus;
+      }
       return newDays;
     });
   };

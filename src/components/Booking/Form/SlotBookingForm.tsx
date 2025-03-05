@@ -5,28 +5,18 @@ import addIcon from "../../../assets/icons/add-icn.svg";
 import questionMark from "../../../assets/icons/question.svg";
 import SearchInput from "../../common/SearchInput";
 import CommonButton from "../../common/CommonButton";
-import DateInput from "../../common/DateInput";
 import CommonTextField from "../../common/CommonTextField";
-import dayjs, { Dayjs } from "dayjs";
-import { IFilm, IGetContacts } from "../../../utils/Interfaces";
+import { IGetContacts, ISlotBookingFormProps } from "../../../utils/Interfaces";
 import { useEffect, useState } from "react";
 
 import AddContact from "./AddContact";
 import { getContacts } from "../../../firebase/AuthService";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { datePickerIcons } from "../../../utils/Icons";
 
-interface SlotBookingFormProps {
-  control: any;
-  errors: any;
-  openContactSearch: boolean;
-  handleOpen: () => void;
-  handleClose: () => void;
-  options: readonly IFilm[];
-  loading: { input: boolean };
-  shouldDisableDate: (date: Dayjs) => boolean;
-  selectedDate: dayjs.Dayjs;
-}
-
-const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
+const calenderIcon = () => <img src={datePickerIcons.calendar} alt="" />;
+const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
   control,
   errors,
   openContactSearch,
@@ -55,7 +45,6 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
     email: contact.email,
     phone: contact.phone,
   }));
-  
 
   return (
     <>
@@ -92,26 +81,30 @@ const SlotBookingForm: React.FC<SlotBookingFormProps> = ({
         <Typography variant="bodyMediumExtraBold" color="grey.600">
           Date
         </Typography>
-        <Controller
-          name="date"
-          control={control}
-          render={({ field: { onChange, ...field } }) => (
-            <DateInput
-              {...field}
-              value={selectedDate}
-              onChange={(newValue) => {
-                onChange(newValue);
-              }}
-              label=""
-              shouldDisableDate={shouldDisableDate}
-              error={!!errors.date || shouldDisableDate(selectedDate)}
-              helperText={
-                errors.date?.message ||
-                (shouldDisableDate(selectedDate) ? "Date not available" : "")
-              }
-            />
-          )}
-        />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Controller
+            name="date"
+            control={control}
+            render={({ field: { onChange, ...field } }) => (
+              <DatePicker
+                disabled
+                {...field}
+                value={selectedDate}
+                onChange={(newValue) => {
+                  onChange(newValue);
+                }}
+                slotProps={{
+                  field: {
+                    readOnly: true,
+                  },
+                }}
+                slots={{ openPickerIcon: calenderIcon }}
+                label=""
+                shouldDisableDate={shouldDisableDate}
+              />
+            )}
+          />
+        </LocalizationProvider>
         <Typography variant="bodyMediumExtraBold" color="grey.600">
           Start Time
         </Typography>

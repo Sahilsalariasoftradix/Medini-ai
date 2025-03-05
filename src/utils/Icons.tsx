@@ -19,6 +19,7 @@ import clock from "../assets/icons/time.svg";
 import link from "../assets/icons/link-icon.svg";
 import plus from "../assets/icons/plus-icon.svg";
 import dotsVertical from "../assets/icons/dots-vertical.svg";
+import calendar from "../assets/icons/calender-date.svg";
 
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
@@ -32,28 +33,32 @@ export const Icons: {
 export const SidebarIcons = {
   logo: sidebarlogo,
   home: home, // Assuming 'pill' is the icon for Option 1
-  activity:activity,
-  arrow:arrowdown,
+  activity: activity,
+  arrow: arrowdown,
   billing: billing,
-  patients:patients,
-  history: history, 
+  patients: patients,
+  history: history,
   messages: messages,
   settings: settings,
-  help: help,  // 'help' icon for Option 4
+  help: help, // 'help' icon for Option 4
   // Add more icons as needed
 };
 // Set availability option
-export const availabilityIcons={
-  phone:callBooking,
-  in_person:office,
-  break:dinner
-}
-export const editAvailabilityIcons={
-  clock:clock
-}
+export const availabilityIcons = {
+  phone: callBooking,
+  in_person: office,
+  break: dinner,
+};
+export const editAvailabilityIcons = {
+  clock: clock,
+};
 
-export const otherIcons={
-  link:link,
-  plus:plus,
-  dotsVertical:dotsVertical
-}
+export const otherIcons = {
+  link: link,
+  plus: plus,
+  dotsVertical: dotsVertical,
+};
+
+export const datePickerIcons = {
+  calendar: calendar,
+};

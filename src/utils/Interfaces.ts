@@ -1,3 +1,4 @@
+import dayjs, { Dayjs } from "dayjs";
 import { Dispatch, SetStateAction } from "react";
 
 export interface LoginRequest {
@@ -83,6 +84,17 @@ export interface IAvailability {
   in_person_end_time: string;
   break_start_time: string;
   break_end_time: string;
+}
+export interface ISlotBookingFormProps {
+  control: any;
+  errors: any;
+  openContactSearch: boolean;
+  handleOpen: () => void;
+  handleClose: () => void;
+  options: readonly IFilm[];
+  loading: { input: boolean };
+  shouldDisableDate: (date: Dayjs) => boolean;
+  selectedDate: dayjs.Dayjs;
 }
 
 export interface IAvailabilityRequest {
