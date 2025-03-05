@@ -18,18 +18,11 @@ import {
   postAvailabilitySpecific,
   postUnAvailabilitySpecific,
 } from "../../api/userApi";
-import { IAvailabilityPayload } from "../../utils/Interfaces";
+import { IAvailabilityPayload, IDayHeaderProps } from "../../utils/Interfaces";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonSnackbar from "../common/CommonSnackbar";
 
-interface DayHeaderProps {
-  day: string;
-  date: number;
-  onEditAvailability: () => void;
-  onClearDay: () => void;
-  isAvailable: boolean;
-  isToday: boolean;
-}
+
 
 const menuItemHoverStyle = {
   "&:hover": {
@@ -37,6 +30,7 @@ const menuItemHoverStyle = {
   },
   gap: 1,
 };
+
 const appointmentSchema = z.object({
   reason: z.enum(Object.values(EnCancelAppointment) as [string, ...string[]]),
 });
@@ -67,7 +61,7 @@ export function DayHeader({
   onClearDay,
   isAvailable,
   isToday,
-}: DayHeaderProps) {
+}: IDayHeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const [openModal, setOpenModal] = useState(false);
@@ -83,6 +77,7 @@ export function DayHeader({
     message: "",
     severity: "error",
   });
+  console.log(snackbar,'k')
   const [clearAvailabilityModal, setClearAvailabilityModal] = useState(false);
 
   const handleEditAvailability = () => {
@@ -204,6 +199,7 @@ export function DayHeader({
   const InPersonIcon = () => (
     <img src={editAvailabilityIcons.clock} alt="icon" />
   );
+  
   const handleAvailabilitySubmit = async (data: AvailabilityFormData) => {
     setLoading(true);
 
@@ -226,6 +222,7 @@ export function DayHeader({
     };
 
     let errorMessage = "";
+  
 
     switch (true) {
       case phoneStart.isAfter(phoneEnd):
@@ -253,6 +250,7 @@ export function DayHeader({
     if (errorMessage) {
       setSnackbar({ open: true, message: errorMessage, severity: "error" });
       setLoading(false);
+      console.log(errorMessage)
       return;
     }
 
@@ -264,8 +262,8 @@ export function DayHeader({
         phone_end_time: `${data.phone.to}:00`,
         in_person_start_time: `${data.in_person.from}:00`,
         in_person_end_time: `${data.in_person.to}:00`,
-        break_start_time: `${data.break.from}:00`,
-        break_end_time: `${data.break.to}:00`,
+        // break_start_time: `${data.break.from}:00`,
+        // break_end_time: `${data.break.to}:00`,
       };
 
       const response = await postAvailabilitySpecific(payload);
@@ -339,6 +337,9 @@ export function DayHeader({
                     },
                   },
                 },
+                actionBar:{
+                  actions:['accept'],
+                }
               }}
               slots={{ openPickerIcon: InPersonIcon }}
             />
@@ -398,7 +399,7 @@ export function DayHeader({
         <CommonDialog
           open={isAvailabilityModalOpen}
           onClose={() => setIsAvailabilityModalOpen(false)}
-          title="Availability"
+          title="Edit Availability"
           cancelText="Cancel"
           confirmText="Mark Available"
           onConfirm={availabilityForm.handleSubmit(handleAvailabilitySubmit)}
@@ -434,6 +435,13 @@ export function DayHeader({
               </Box>
             ))}
           </Box>
+           {/* Snackbar */}
+      <CommonSnackbar
+        open={snackbar.open}
+        onClose={handleSnackbarClose}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
         </CommonDialog>
       )}
 
@@ -541,14 +549,8 @@ export function DayHeader({
             Clear Day
           </Typography>
         </MenuItem>
+     
       </Menu>
-      {/* Snackbar */}
-      <CommonSnackbar
-        open={snackbar.open}
-        onClose={handleSnackbarClose}
-        message={snackbar.message}
-        severity={snackbar.severity}
-      />
     </Box>
   );
 }

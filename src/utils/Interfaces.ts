@@ -116,8 +116,8 @@ export interface IAvailabilityPayload {
   phone_end_time: string;
   in_person_start_time: string;
   in_person_end_time: string;
-  break_start_time:string;
-  break_end_time:string;
+  break_start_time?:string;
+  break_end_time?:string;
 }
 export interface IDayAvailability {
   date: string;
@@ -125,6 +125,14 @@ export interface IDayAvailability {
   phone_end_time: string | null;
   in_person_start_time: string | null;
   in_person_end_time: string | null;
+}
+export interface IDayHeaderProps {
+  day: string;
+  date: number;
+  onEditAvailability: () => void;
+  onClearDay: () => void;
+  isAvailable: boolean;
+  isToday: boolean;
 }
 export interface ISchedule {
   day_of_week: string;
