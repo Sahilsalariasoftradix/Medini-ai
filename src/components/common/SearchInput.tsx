@@ -7,32 +7,8 @@ import {
   FormHelperText,
 } from "@mui/material";
 import searchIcon from "../../assets/icons/search-Input.svg";
+import { ISearchInputProps } from "../../utils/Interfaces";
 
-interface Option {
-  title: string;
-  year?: number;
-  [key: string]: any;
-}
-
-interface SearchInputProps {
-  options: readonly Option[];
-  loading?: boolean;
-  onOpen?: () => void;
-  onClose?: () => void;
-  open?: boolean;
-  placeholder?: string;
-  onChange?: (value: Option | null) => void;
-  error?: boolean;
-  helperText?: string;
-}
-
-// function sleep(duration: number): Promise<void> {
-//   return new Promise<void>((resolve) => {
-//     setTimeout(() => {
-//       resolve();
-//     }, duration);
-//   });
-// }
 
 export default function SearchInput({
   options,
@@ -44,23 +20,32 @@ export default function SearchInput({
   onChange,
   error,
   helperText,
-}: SearchInputProps) {
+  disabled,
+  value,
+  defaultValue,
+  getOptionLabel = (option) => option.title,
+  isEditing,
+}: ISearchInputProps) {
   return (
     <>
-      <Autocomplete  
+      <Autocomplete
         open={open}
         onOpen={onOpen}
         onClose={onClose}
         isOptionEqualToValue={(option, value) => option.title === value.title}
-        getOptionLabel={(option) => option.title}
+        getOptionLabel={getOptionLabel}
         options={options}
         loading={loading}
         onChange={(_, value) => onChange?.(value)}
+        disabled={disabled}
+        value={value}
+        defaultValue={isEditing ? defaultValue : value}
         renderInput={(params) => (
           <>
             <TextField
               {...params}
               placeholder={placeholder}
+              disabled={disabled}
               fullWidth
               slotProps={{
                 input: {
@@ -81,7 +66,11 @@ export default function SearchInput({
                 },
               }}
             />
-            {error && <FormHelperText sx={{marginLeft:'14px',marginRight:'14px'}}>{helperText}</FormHelperText>}
+            {error && (
+              <FormHelperText sx={{ marginLeft: "14px", marginRight: "14px" }}>
+                {helperText}
+              </FormHelperText>
+            )}
           </>
         )}
       />

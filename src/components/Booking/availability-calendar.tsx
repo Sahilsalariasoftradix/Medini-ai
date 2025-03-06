@@ -39,6 +39,7 @@ import { IAppointment, IBookingResponse, IFilm } from "../../utils/Interfaces";
 import { cancelBooking, createBooking, updateBooking } from "../../api/userApi";
 import { getBookings } from "../../api/userApi";
 import { DaySchedule } from "../../types/calendar";
+import { mapApiStatusToEnum } from "../../utils/common";
 
 dayjs.extend(isSameOrBefore);
 
@@ -312,7 +313,7 @@ const TimeSlot = ({
         const currentBooking = bookings.find(
           (booking) => booking.booking_id.toString() === appointmentId
         );
-        
+
         if (currentBooking) {
           reset({
             contact: {
@@ -320,7 +321,7 @@ const TimeSlot = ({
               lastName: currentBooking.last_name,
               email: currentBooking.email,
               phone: currentBooking.phone,
-              title: '',
+              title: currentBooking.phone,
             },
             date: dayjs(currentBooking.date),
             startTime: currentBooking.start_time.substring(0, 5),
@@ -331,7 +332,7 @@ const TimeSlot = ({
             reasonForCall: currentBooking.details,
           });
         }
-        setSelectedStatus(EnBookings.Active)
+        setSelectedStatus(EnBookings.Active);
         setOpenDialog(true);
         return;
       }
@@ -345,7 +346,7 @@ const TimeSlot = ({
         return; // Do nothing if trying to revert to Available or Unconfirmed
       }
 
-      if (newStatus === EnBookings.Cancelled) {
+      if (newStatus === EnBookings.Cancel) {
         setStatusToUpdate(newStatus);
         setOpenCancelDialog(true);
         return;
@@ -380,7 +381,7 @@ const TimeSlot = ({
       if (!userId) {
         throw new Error("User not authenticated");
       }
-      
+
       const startTimeFormatted = dayjs(data.startTime, "HH:mm");
       const endTimeFormatted = startTimeFormatted
         .add(Number(data.length), "minute")
@@ -388,11 +389,12 @@ const TimeSlot = ({
 
       if (isEditing && appointmentId) {
         await updateBooking({
-          booking_id: EStaticID.ID,
-          user_id: EStaticID.ID,
+          booking_id: Number(appointmentId),
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
-          end_time: endTimeFormatted,
+          end_time: dayjs(data.startTime, "HH:mm")
+            .add(15, "minute")
+            .format("HH:mm"),
           details: data.reasonForCall,
           first_name: data.contact.firstName,
           last_name: data.contact.lastName,
@@ -419,8 +421,8 @@ const TimeSlot = ({
 
       setSnackbar({
         open: true,
-        message: isEditing 
-          ? "Appointment updated successfully" 
+        message: isEditing
+          ? "Appointment updated successfully"
           : "Appointment created successfully",
         severity: "success",
       });
@@ -611,11 +613,11 @@ const TimeSlot = ({
         ) : (
           [
             ...(selectedStatus === EnBookings.Active
-              ? [EnBookings.Edit,EnBookings.Cancelled]
+              ? [EnBookings.Edit, EnBookings.Cancel]
               : [
                   EnBookings.Available,
                   EnBookings.Active,
-                  EnBookings.Cancelled,
+                  EnBookings.Cancel,
                   EnBookings.Unconfirmed,
                 ]),
           ].map((option) => (
@@ -1000,7 +1002,7 @@ export default function AvailabilityCalendar() {
                     ).length || 0,
                   cancelled:
                     day.appointments?.filter(
-                      (apt) => Number(apt.status) === EnBookings.Cancelled
+                      (apt) => Number(apt.status) === EnBookings.Cancel
                     ).length || 0,
                   unconfirmed:
                     day.appointments?.filter(
@@ -1019,16 +1021,3 @@ export default function AvailabilityCalendar() {
     </Box>
   );
 }
-
-const mapApiStatusToEnum = (status: string): EnBookings => {
-  switch (status.toLowerCase()) {
-    case "active":
-      return EnBookings.Active;
-    case "cancelled":
-      return EnBookings.Cancelled;
-    case "unconfirmed":
-      return EnBookings.Unconfirmed;
-    default:
-      return EnBookings.Available;
-  }
-};

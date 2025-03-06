@@ -25,10 +25,11 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
   loading,
   shouldDisableDate,
   selectedDate,
-  isEditing
+  isEditing,
 }) => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [contacts, setContacts] = useState<IGetContacts>([]);
+  const [selectedContact, setSelectedContact] = useState(null);
 
   const fetchContacts = async () => {
     const contactList = await getContacts();
@@ -38,9 +39,17 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
     fetchContacts();
   }, []);
 
+  useEffect(() => {
+    // Get the current contact value from the form
+    const currentValue = control._formValues?.contact;
+    if (currentValue && Object.keys(currentValue).length > 0) {
+      setSelectedContact(currentValue);
+    }
+  }, [control._formValues?.contact]);
+
   const contactOptions = contacts.map((contact) => ({
     title: `${contact.firstName} ${contact.lastName}`,
-    key: `${contact.firstName}-${contact.lastName}-${contact.email}`, // Unique key
+    key: `${contact.firstName}-${contact.lastName}-${contact.phone}`,
     firstName: contact.firstName,
     lastName: contact.lastName,
     email: contact.email,
@@ -68,8 +77,12 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               placeholder="Search contacts..."
               error={!!errors.contact}
               helperText={errors.contact?.message}
-              //@ts-ignore
-              disabled={isEditing}
+              // disabled={isEditing}
+              value={selectedContact}
+              defaultValue={selectedContact}
+              getOptionLabel={(option) =>
+                `${option.firstName} ${option.lastName}`
+              }
             />
           )}
         />
@@ -136,11 +149,13 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               fullWidth
               error={!!errors.length}
               helperText={errors.length?.message}
+              disabled={isEditing}
+              value={isEditing ? "15" : "15"}
             >
               <MenuItem value="15">15 minutes</MenuItem>
-              <MenuItem value="30">30 minutes</MenuItem>
+              {/* <MenuItem value="30">30 minutes</MenuItem>
               <MenuItem value="45">45 minutes</MenuItem>
-              <MenuItem value="60">60 minutes</MenuItem>
+              <MenuItem value="60">60 minutes</MenuItem> */}
             </CommonTextField>
           )}
         />

@@ -29,11 +29,11 @@ export type ContactData = z.infer<typeof contactSchema>;
 const AddContact = ({
   openDialog,
   setOpenDialog,
-  fetchContacts,  // Add this as a prop to call fetchContacts
+  fetchContacts, // Add this as a prop to call fetchContacts
 }: {
   openDialog: boolean;
   setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
-  fetchContacts: () => void;  // This will be the fetchContacts function passed from parent
+  fetchContacts: () => void; // This will be the fetchContacts function passed from parent
 }) => {
   const {
     setSnackbarOpen,
@@ -67,12 +67,16 @@ const AddContact = ({
       setSnackbarOpen(true);
       setSnackbarSeverity("success");
       setSnackbarMessage("Contact created successfully!");
-      setOpenDialog(false);
-      reset();
-      setIsLoading(false);
-      fetchContacts();  
+      setTimeout(() => {
+        setOpenDialog(false);
+        reset();
+        setIsLoading(false);
+        setSnackbarOpen(false);
+      }, 500);
+      fetchContacts();
     } catch (error: any) {
-      setSnackbarMessage(error);
+      setSnackbarMessage(error.message || "An unexpected error occurred");
+      setSnackbarSeverity("error");
       setSnackbarOpen(true);
       console.error("Error submitting form:", error);
       setIsLoading(false);
@@ -158,14 +162,14 @@ const AddContact = ({
             />
           )}
         />
+        {/* Snackbar */}
+        <CommonSnackbar
+          open={snackbarOpen}
+          onClose={handleSnackbarClose}
+          message={snackbarMessage}
+          severity={snackbarSeverity}
+        />
       </CommonDialog>
-      {/* Snackbar */}
-      <CommonSnackbar
-        open={snackbarOpen}
-        onClose={handleSnackbarClose}
-        message={snackbarMessage}
-        severity={snackbarSeverity}
-      />
     </>
   );
 };

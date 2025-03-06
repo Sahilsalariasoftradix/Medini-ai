@@ -97,6 +97,27 @@ export interface ISlotBookingFormProps {
   selectedDate: dayjs.Dayjs;
   isEditing?: boolean;
 }
+export interface Option {
+  title: string;
+  year?: number;
+  [key: string]: any;
+}
+export interface ISearchInputProps {
+  options: readonly Option[];
+  loading?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+  open?: boolean;
+  placeholder?: string;
+  onChange?: (value: Option | null) => void;
+  error?: boolean;
+  helperText?: string;
+  disabled?: boolean;
+  value?: any;
+  defaultValue?: any;
+  getOptionLabel?: (option: any) => string;
+  isEditing?: boolean;
+}
 
 export interface IAvailabilityRequest {
   user_id: number;
@@ -181,6 +202,18 @@ export interface IBooking {
   email: string;
   phone: string;
 }
+export interface IUpdateBooking {
+  booking_id: number;
+  date: string;
+  start_time: string;
+  end_time: string;
+  details: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+}
+
 export interface IBookingResponse {
   booking_id: number;
   first_name: string;

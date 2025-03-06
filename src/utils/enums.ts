@@ -49,12 +49,13 @@ export enum EnCallPurpose {
 export enum EnBookings {
   Available = 0,
   Active = 1,
-  Cancelled = 2,
+  Cancel = 2,
   Unconfirmed = 3,
   Edit=4
 }
 export enum EStaticID {
   ID = 1,
+  ID2=2
 }
 export enum EnCancelAppointment {
   DoctorSick = "Doctor is sick",
