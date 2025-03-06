@@ -30,7 +30,13 @@ export default function SearchInput({
     <>
       <Autocomplete
         open={open}
+       
         onOpen={onOpen}
+        sx={{
+          "& .MuiInputBase-root": {
+            border: error ? "1px solid #FF0000" : "1px solid #E2E8F0",
+          },
+        }}
         onClose={onClose}
         isOptionEqualToValue={(option, value) => option.title === value.title}
         getOptionLabel={getOptionLabel}

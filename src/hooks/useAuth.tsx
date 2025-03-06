@@ -6,12 +6,14 @@ import { formErrorMessage } from "../utils/errorHandler";
 export const SignUpSchema = z.object({
   email: z
     .string()
-    .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
+    .min(1, { message: formErrorMessage.email.required })
+    .max(100, "Max 100 characters.") // Checks if the field is empty
     .email({ message: formErrorMessage.email.invalid }), // Checks for a valid email format
   password: z
     .string()
     .min(1, { message: formErrorMessage.password.required }) // Empty password
     .min(8, { message: formErrorMessage.password.tooShort }) // Less than 8 characters
+    .max(20, "Max 20 characters.")
     .refine(
       (password) =>
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
@@ -35,12 +37,14 @@ export const SignUpSchema = z.object({
 export const SignInSchema = z.object({
   email: z
     .string()
-    .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
+    .min(1, { message: formErrorMessage.email.required })
+    .max(100, "Max 100 characters.") // Checks if the field is empty
     .email({ message: formErrorMessage.email.invalid }), // Checks for a valid email format
   password: z
     .string()
     .min(1, { message: formErrorMessage.password.required }) // Empty password
-    .min(8, { message: formErrorMessage.password.tooShort }) // Less than 8 characters
+    .min(8, { message: formErrorMessage.password.tooShort })
+    .max(20, "Max 20 characters.") // Less than 8 characters
     .refine(
       (password) =>
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
@@ -56,7 +60,8 @@ export const SignInSchema = z.object({
 export const ResetPasswordSchema = z.object({
   email: z
     .string()
-    .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
+    .min(1, { message: formErrorMessage.email.required })
+    .max(100, "Max 100 characters.") // Checks if the field is empty
     .email({ message: formErrorMessage.email.invalid }), // Checks for a valid email format
 });
 // Type declaration for schema

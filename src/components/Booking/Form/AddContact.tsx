@@ -75,7 +75,7 @@ const AddContact = ({
       }, 500);
       fetchContacts();
     } catch (error: any) {
-      setSnackbarMessage(error.message || "An unexpected error occurred");
+      setSnackbarMessage('Phone number already exists. Please use a different number.');
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       console.error("Error submitting form:", error);

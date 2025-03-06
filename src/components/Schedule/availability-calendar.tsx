@@ -8,6 +8,10 @@ import {
   Button,
   Tooltip,
   CircularProgress,
+  Menu,
+  MenuItem,
+  Divider,
+  AlertProps,
 } from "@mui/material";
 import { DayHeader } from "./day-header";
 import Grid from "@mui/material/Grid2";
@@ -23,16 +27,19 @@ import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { IBookingResponse } from "../../utils/Interfaces";
-import { getBookings, updateBooking } from "../../api/userApi";
+import { cancelBooking, getBookings, updateBooking } from "../../api/userApi";
 import { BookingTypeIcon } from "./booking-type-icon";
 import { availabilityIcons, otherIcons } from "../../utils/Icons";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import CommonDialog from "../common/CommonDialog";
 import SlotBookingForm from "../Booking/Form/SlotBookingForm";
 // import { EnBookings } from "../../utils/enums";
 import { createBooking } from "../../api/userApi";
+import { CancelFormData, CANCELLATION_REASONS, cancelSchema } from "../Booking/availability-calendar";
+import CommonTextField from "../common/CommonTextField";
+import CommonSnackbar from "../common/CommonSnackbar";
 
 dayjs.extend(isSameOrBefore);
 
@@ -67,16 +74,22 @@ export default function AvailabilityCalendar() {
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
-  const [Today, setToday] = useState(() => dayjs(startDate));
+  const [today, setToday] = useState(dayjs());
+  const [changed, setChanged] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedTime, setSelectedTime] = useState("");
-  console.log(selectedTime);
+  // const [selectedTime, setSelectedTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options] = useState<readonly any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
- 
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "error" as AlertProps["severity"],
+  });
   const {
     control,
     handleSubmit,
@@ -85,9 +98,20 @@ export default function AvailabilityCalendar() {
   } = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
   });
+  const {
+    control: cancelControl,
+    handleSubmit: handleCancelSubmit,
+    formState: { errors: cancelErrors },
+    reset: resetCancel,
+  } = useForm<CancelFormData>({
+    resolver: zodResolver(cancelSchema),
+    defaultValues: {
+      reasonForCancelling: "Schedule Conflict",
+    },
+  });
 
   useEffect(() => {
-    if (startDate) {
+    if (startDate && changed) {
       setToday(dayjs(startDate));
     }
   }, [startDate]);
@@ -97,14 +121,14 @@ export default function AvailabilityCalendar() {
       generateDaysFromRange(startDate, endDate);
       fetchBookings();
     }
-  }, [startDate, endDate, Today]);
+  }, [startDate, endDate, today]);
 
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getBookings({
         user_id: EStaticID.ID,
-        date: dayjs(Today).format("YYYY-MM-DD"),
+        date: dayjs(today).format("YYYY-MM-DD"),
         range: EnAvailability.DAY,
       });
       setBookings(response.bookings || []);
@@ -114,14 +138,14 @@ export default function AvailabilityCalendar() {
     } finally {
       setLoading(false);
     }
-  }, [Today]);
+  }, [today]);
 
   const getSlots = useCallback(() => {
     const day = days.find(
-      (day) => day.fullDate === dayjs(Today).format("YYYY-MM-DD")
+      (day) => day.fullDate === dayjs(today).format("YYYY-MM-DD")
     );
     return day?.availability?.slots || [];
-  }, [days, Today]);
+  }, [days, today]);
 
   const handleEditAvailability = (day: string) => {
     console.log(`Editing availability for ${day}`);
@@ -137,9 +161,45 @@ export default function AvailabilityCalendar() {
       "MMM DD, YYYY"
     )}`;
   };
-
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
   const findBookingForTimeSlot = (time: string) => {
     return bookings.find((booking) => booking.start_time === `${time}:00`);
+  };
+  const onCancelSubmit = async () => {
+    setLoading(true);
+    try {
+      if (!appointmentId) return;
+
+
+      // Send cancel status to the API with dynamic booking ID
+      const currentBooking = bookings.find(
+        (booking) => booking.booking_id.toString() === appointmentId
+      );
+      if (currentBooking) {
+        await cancelBooking(currentBooking.booking_id);
+        fetchBookings();
+      }
+
+      setOpenCancelDialog(false);
+      resetCancel();
+
+      setSnackbar({
+        open: true,
+        message: "Appointment cancelled successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Failed to cancel appointment:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to cancel appointment",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
@@ -198,7 +258,10 @@ export default function AvailabilityCalendar() {
             mb: 3,
           }}
         >
-          <IconButton onClick={handlePreviousWeek}>
+          <IconButton onClick={()=>{
+            setChanged(true)
+            handlePreviousWeek();
+          } }>
             <img src={leftArrow} alt="previous week" />
           </IconButton>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -206,7 +269,10 @@ export default function AvailabilityCalendar() {
               {formatDateRange()}
             </Typography>
           </Box>
-          <IconButton onClick={handleNextWeek}>
+          <IconButton onClick={()=>{
+            setChanged(true)
+            handleNextWeek();
+          } }>
             <img src={rightArrow} alt="next week" />
           </IconButton>
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
@@ -275,7 +341,7 @@ export default function AvailabilityCalendar() {
                   onClick={() => setToday(dayjs(day.fullDate))}
                 >
                   <DayHeader
-                    isToday={day.fullDate == dayjs(Today).format("YYYY-MM-DD")}
+                    isToday={day.fullDate == dayjs(today).format("YYYY-MM-DD")}
                     day={day.day}
                     date={day.date}
                     onEditAvailability={() => handleEditAvailability(day.day)}
@@ -367,13 +433,10 @@ export default function AvailabilityCalendar() {
                                       ? "#FF4747"
                                       : "#FACC15",
                                 }}
-                                onClick={() => {
+                                onClick={(e) => {
                                   if (booking?.status === "active") {
-                                    setOpenDialog(true);
-                                    setIsEditing(true);
-                                    setAppointmentId(
-                                      booking.booking_id.toString()
-                                    );
+                                    setMenuAnchorEl(e.currentTarget);
+                                    setAppointmentId(booking.booking_id.toString());
                                     reset({
                                       contact: {
                                         firstName: booking.first_name,
@@ -383,25 +446,13 @@ export default function AvailabilityCalendar() {
                                         title: booking.phone,
                                       },
                                       date: dayjs(booking.date),
-                                      startTime: booking.start_time.substring(
-                                        0,
-                                        5
-                                      ),
-                                      length: dayjs(
-                                        booking.end_time,
-                                        "HH:mm:ss"
-                                      )
-                                        .diff(
-                                          dayjs(booking.start_time, "HH:mm:ss"),
-                                          "minute"
-                                        )
+                                      startTime: booking.start_time.substring(0, 5),
+                                      length: dayjs(booking.end_time, "HH:mm:ss")
+                                        .diff(dayjs(booking.start_time, "HH:mm:ss"), "minute")
                                         .toString(),
                                       appointmentType: "inPerson",
                                       reasonForCall: booking.details,
                                     });
-                                  } else {
-                                    setIsEditing(false);
-                                    return;
                                   }
                                 }}
                               >
@@ -442,11 +493,11 @@ export default function AvailabilityCalendar() {
                           ) : (
                             <Box
                               onClick={() => {
-                                setSelectedTime(hour.time);
+                                // setSelectedTime(hour.time);
                                 setOpenDialog(true);
                                 setAppointmentId(null);
                                 reset({
-                                  date: dayjs(Today),
+                                  date: dayjs(today),
                                   startTime: hour.time,
                                   length: "15",
                                   appointmentType: "inPerson",
@@ -760,10 +811,98 @@ export default function AvailabilityCalendar() {
           options={options}
           loading={{ input: false }}
           shouldDisableDate={() => false}
-          selectedDate={dayjs(Today)}
+          selectedDate={dayjs(today)}
           isEditing={isEditing}
         />
       </CommonDialog>
+
+      <CommonDialog
+        open={openCancelDialog}
+        onClose={() => {
+          setOpenCancelDialog(false);
+          resetCancel();
+        }}
+        confirmButtonType="error"
+        title="Cancel Appointment"
+        confirmText="Confirm"
+        cancelText="Back"
+        onConfirm={handleCancelSubmit(onCancelSubmit)}
+        loading={loading}
+        disabled={loading}
+      >
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+            Reason for Cancellation
+          </Typography>
+          <Controller
+            name="reasonForCancelling"
+            control={cancelControl}
+            render={({ field }) => (
+              <CommonTextField
+                {...field}
+                select
+                fullWidth
+                error={!!cancelErrors.reasonForCancelling}
+                helperText={cancelErrors.reasonForCancelling?.message}
+              >
+                {CANCELLATION_REASONS.map((reason) => (
+                  <MenuItem key={reason} value={reason}>
+                    {reason}
+                  </MenuItem>
+                ))}
+              </CommonTextField>
+            )}
+          />
+        </Box>
+      </CommonDialog>
+      <CommonSnackbar
+        open={snackbar.open}
+        onClose={handleSnackbarClose}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={() => setMenuAnchorEl(null)}
+        sx={{
+          "& .MuiPaper-root": {
+            backdropFilter: "blur(3px)",
+            backgroundColor: "rgba(255, 255, 255, 0.3)",
+            border: "1px solid #718096",
+            p: 0,
+            borderTopLeftRadius: 0,
+          },
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          sx={{ justifyContent: "start", gap: 2 }}
+          onClick={() => {
+            setOpenDialog(true);
+            setIsEditing(true);
+            setMenuAnchorEl(null);
+          }}
+        >
+          <StatusIcon status={1} />
+          <Typography variant="bodySmallSemiBold" color="grey.500">
+            Edit
+          </Typography>
+        </MenuItem>
+        <MenuItem
+          sx={{ justifyContent: "start", gap: 2 }}
+          onClick={() => {
+            setOpenCancelDialog(true);
+            setMenuAnchorEl(null);
+          }}
+        >
+          <StatusIcon status={2} />
+          <Typography variant="bodySmallSemiBold" color="grey.500">
+            Cancel
+          </Typography>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }
