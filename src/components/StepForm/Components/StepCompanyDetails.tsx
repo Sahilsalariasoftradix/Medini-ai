@@ -49,7 +49,6 @@ const CompanyDetails: React.FC = () => {
   });
 
   const onSubmit = async (data: CompanyDetailsSchemaType) => {
-    console.log(data);
     setIsLoading(true);
     try {
       // Step 1: Get the current user ID

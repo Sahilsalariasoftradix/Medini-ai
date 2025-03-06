@@ -77,7 +77,6 @@ export function DayHeader({
     message: "",
     severity: "error",
   });
-  console.log(snackbar,'k')
   const [clearAvailabilityModal, setClearAvailabilityModal] = useState(false);
 
   const handleEditAvailability = () => {
@@ -86,7 +85,6 @@ export function DayHeader({
       (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
     );
 
-    console.log('Selected Availability:', selectedAvailability); // Debug log
 
     // First set the modal to open
     setIsAvailabilityModalOpen(true);
@@ -114,7 +112,6 @@ export function DayHeader({
         break: { from: "", to: "" },
       });
 
-      console.log('Form Values After Reset:', availabilityForm.getValues()); // Debug log
     }, 0);
   };
   const handleClearAvailability = async () => {
@@ -192,8 +189,7 @@ export function DayHeader({
     handleClose();
   };
 
-  const onSubmit = (data: AppointmentFormData) => {
-    console.log("Form data:", data);
+  const onSubmit = () => {
     setOpenModal(false);
   };
   const InPersonIcon = () => (

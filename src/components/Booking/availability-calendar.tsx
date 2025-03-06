@@ -95,11 +95,11 @@ const appointmentSchema = z.object({
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
-const cancelSchema = z.object({
+export const cancelSchema = z.object({
   reasonForCancelling: z.string().min(1, "Cancellation reason is required"),
 });
 
-const CANCELLATION_REASONS = [
+export const CANCELLATION_REASONS = [
   "Schedule Conflict",
   "Personal Emergency",
   "Rescheduling Needed",
@@ -107,7 +107,7 @@ const CANCELLATION_REASONS = [
   "Other",
 ] as const;
 
-type CancelFormData = z.infer<typeof cancelSchema>;
+export type CancelFormData = z.infer<typeof cancelSchema>;
 
 const getAvailableHourRange = (days: DaySchedule[]) => {
   let earliestHour = 24;
@@ -197,6 +197,7 @@ const TimeSlot = ({
       reasonForCall: "",
     },
   });
+
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
