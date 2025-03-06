@@ -1,3 +1,5 @@
+import { EnBookings } from "./enums";
+
 // Function to get pathname for page
 export const getPageNameFromPath = (path: string) => {
   const pathSegment = path.split("/")[1] || "Dashboard";
@@ -14,3 +16,15 @@ export const getMaxHeight = () => ({
     xl: "100%",
   },
 });
+export const mapApiStatusToEnum = (status: string): EnBookings => {
+  switch (status.toLowerCase()) {
+    case "active":
+      return EnBookings.Active;
+    case "cancelled":
+      return EnBookings.Cancel;
+    case "unconfirmed":
+      return EnBookings.Unconfirmed;
+    default:
+      return EnBookings.Available;
+  }
+};

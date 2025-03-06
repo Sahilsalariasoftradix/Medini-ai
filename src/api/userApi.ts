@@ -4,6 +4,7 @@ import {
   IBooking,
   ICompanyDetails,
   IGetAvailability,
+  IUpdateBooking,
   TGetBooking,
 } from "../utils/Interfaces";
 import apiClient from "./apiClient";
@@ -94,7 +95,7 @@ export const getBookings = async (bookings: TGetBooking) => {
   }
 };
 
-export const updateBooking = async (booking: IBooking) => {
+export const updateBooking = async (booking: IUpdateBooking) => {
   try {
     const resp = await apiClient.post(`bookings/update`, booking);
     return resp.data;

@@ -23,7 +23,7 @@ import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { IBookingResponse } from "../../utils/Interfaces";
-import { getBookings } from "../../api/userApi";
+import { getBookings, updateBooking } from "../../api/userApi";
 import { BookingTypeIcon } from "./booking-type-icon";
 import { availabilityIcons, otherIcons } from "../../utils/Icons";
 import { z } from "zod";
@@ -70,11 +70,13 @@ export default function AvailabilityCalendar() {
   const [Today, setToday] = useState(() => dayjs(startDate));
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
-  console.log(selectedTime)
+  console.log(selectedTime);
   const [loading, setLoading] = useState(false);
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options] = useState<readonly any[]>([]);
-
+  const [isEditing, setIsEditing] = useState(false);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+ 
   const {
     control,
     handleSubmit,
@@ -136,6 +138,10 @@ export default function AvailabilityCalendar() {
     )}`;
   };
 
+  const findBookingForTimeSlot = (time: string) => {
+    return bookings.find((booking) => booking.start_time === `${time}:00`);
+  };
+
   const onSubmit = async (data: AppointmentFormData) => {
     setLoading(true);
     try {
@@ -143,18 +149,33 @@ export default function AvailabilityCalendar() {
       const endTimeFormatted = startTimeFormatted
         .add(Number(data.length), "minute")
         .format("HH:mm");
-
-      await createBooking({
-        user_id: EStaticID.ID,
-        date: dayjs(data.date).format("YYYY-MM-DD"),
-        start_time: data.startTime,
-        end_time: endTimeFormatted,
-        details: data.reasonForCall,
-        first_name: data.contact.firstName,
-        last_name: data.contact.lastName,
-        email: data.contact.email,
-        phone: data.contact.phone,
-      });
+      if (isEditing && appointmentId) {
+        await updateBooking({
+          booking_id: Number(appointmentId),
+          date: dayjs(data.date).format("YYYY-MM-DD"),
+          start_time: data.startTime,
+          end_time: dayjs(data.startTime, "HH:mm")
+            .add(15, "minute")
+            .format("HH:mm"),
+          details: data.reasonForCall,
+          first_name: data.contact.firstName,
+          last_name: data.contact.lastName,
+          email: data.contact.email,
+          phone: data.contact.phone,
+        });
+      } else {
+        await createBooking({
+          user_id: EStaticID.ID,
+          date: dayjs(data.date).format("YYYY-MM-DD"),
+          start_time: data.startTime,
+          end_time: endTimeFormatted,
+          details: data.reasonForCall,
+          first_name: data.contact.firstName,
+          last_name: data.contact.lastName,
+          email: data.contact.email,
+          phone: data.contact.phone,
+        });
+      }
 
       await fetchBookings();
       setOpenDialog(false);
@@ -271,9 +292,8 @@ export default function AvailabilityCalendar() {
               <Box width={"100%"} sx={{ minWidth: "80px" }}>
                 {!loading ? (
                   getSlots().map((hour, index) => {
-                    const booking = bookings.find((booking) => {
-                      return booking.start_time === `${hour.time}:00`;
-                    });
+                    const booking = findBookingForTimeSlot(hour.time);
+                    console.log(booking);
                     return (
                       <Box
                         key={index}
@@ -347,8 +367,45 @@ export default function AvailabilityCalendar() {
                                       ? "#FF4747"
                                       : "#FACC15",
                                 }}
+                                onClick={() => {
+                                  if (booking?.status === "active") {
+                                    setOpenDialog(true);
+                                    setIsEditing(true);
+                                    setAppointmentId(
+                                      booking.booking_id.toString()
+                                    );
+                                    reset({
+                                      contact: {
+                                        firstName: booking.first_name,
+                                        lastName: booking.last_name,
+                                        email: booking.email,
+                                        phone: booking.phone,
+                                        title: booking.phone,
+                                      },
+                                      date: dayjs(booking.date),
+                                      startTime: booking.start_time.substring(
+                                        0,
+                                        5
+                                      ),
+                                      length: dayjs(
+                                        booking.end_time,
+                                        "HH:mm:ss"
+                                      )
+                                        .diff(
+                                          dayjs(booking.start_time, "HH:mm:ss"),
+                                          "minute"
+                                        )
+                                        .toString(),
+                                      appointmentType: "inPerson",
+                                      reasonForCall: booking.details,
+                                    });
+                                  } else {
+                                    setIsEditing(false);
+                                    return;
+                                  }
+                                }}
                               >
-                                {booking?.first_name}, {booking?.last_name}
+                                {booking?.first_name} {booking?.last_name}
                               </Typography>
                               <Tooltip title={booking?.details}>
                                 <Typography
@@ -387,6 +444,7 @@ export default function AvailabilityCalendar() {
                               onClick={() => {
                                 setSelectedTime(hour.time);
                                 setOpenDialog(true);
+                                setAppointmentId(null);
                                 reset({
                                   date: dayjs(Today),
                                   startTime: hour.time,
@@ -682,10 +740,11 @@ export default function AvailabilityCalendar() {
         open={openDialog}
         onClose={() => {
           setOpenDialog(false);
+          setIsEditing(false);
           reset();
         }}
         confirmButtonType="primary"
-        title="New Appointment"
+        title={isEditing ? "Edit Appointment" : "New Appointment"}
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
@@ -702,6 +761,7 @@ export default function AvailabilityCalendar() {
           loading={{ input: false }}
           shouldDisableDate={() => false}
           selectedDate={dayjs(Today)}
+          isEditing={isEditing}
         />
       </CommonDialog>
     </Box>

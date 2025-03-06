@@ -92,18 +92,28 @@ export const createNewContact = async (
       firebaseFirestore,
       EnFirebaseCollections.CONTACTS
     );
-    
+    // Check if the phone number already exists
+    const phoneQuery = query(
+      createContactRef,
+      where("phone", "==", contactData.phone)
+    );
+    const querySnapshot = await getDocs(phoneQuery);
+    if (!querySnapshot.empty) {
+      throw new Error(
+        "Phone number already exists. Please use a different number."
+      );
+    }
     // Create a new document in Firestore
     const docRef = await addDoc(createContactRef, {
       ...contactData,
       createdAt: serverTimestamp(),
     });
-    
+
     // Return the newly created document's ID
     return docRef.id;
   } catch (error) {
     console.error("Error creating new contact:", error);
-    throw new Error('Failed to create new contact');  // Throwing a custom error message
+    throw new Error("Failed to create new contact"); // Throwing a custom error message
   }
 };
 

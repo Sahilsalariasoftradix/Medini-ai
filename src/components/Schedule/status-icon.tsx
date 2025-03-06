@@ -21,7 +21,7 @@ export const StatusIcon = ({ status, handleClick, sx }: StatusIconProps) => {
     case EnBookings.Active:
       icon = active;
       break;
-    case EnBookings.Cancelled:
+    case EnBookings.Cancel:
       icon = cancel;
       break;
     case EnBookings.Unconfirmed:
