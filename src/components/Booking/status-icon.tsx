@@ -3,6 +3,7 @@ import available from "../../assets/icons/available.svg";
 import cancel from "../../assets/icons/cancelled.svg";
 import active from "../../assets/icons/active.svg";
 import unconfirmed from "../../assets/icons/unconfirmed.svg";
+import edit from '../../assets/icons/edit-availability.svg'
 import { Box, SxProps } from "@mui/material";
 
 interface StatusIconProps {
@@ -26,6 +27,9 @@ export const StatusIcon = ({ status, handleClick, sx }: StatusIconProps) => {
       break;
     case EnBookings.Unconfirmed:
       icon = unconfirmed;
+      break;
+    case EnBookings.Edit:
+      icon = edit;
       break;
     default:
       icon = available;

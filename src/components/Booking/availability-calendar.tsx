@@ -39,7 +39,7 @@ import { IAppointment, IBookingResponse, IFilm } from "../../utils/Interfaces";
 import { cancelBooking, createBooking, updateBooking } from "../../api/userApi";
 import { getBookings } from "../../api/userApi";
 import { DaySchedule } from "../../types/calendar";
-import { mapApiStatusToEnum } from "../../utils/common";
+import { isPastDateTime, mapApiStatusToEnum } from "../../utils/common";
 
 dayjs.extend(isSameOrBefore);
 
@@ -282,9 +282,9 @@ const TimeSlot = ({
       dayjs(availableDate).isSame(date, "day")
     );
   };
-
+  const isPastDate = isPastDateTime(date, time);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    if (disabled) {
+    if (disabled || isPastDate) {
       return;
     }
 
@@ -495,12 +495,17 @@ const TimeSlot = ({
           alignItems: "center",
           justifyContent: "center",
           borderRight: "1px solid #EDF2F7",
-          backgroundColor: disabled ? "grey.300" : "grey.50",
-          opacity: disabled ? 0.5 : 1,
-          cursor: disabled || appointment?.parentId ? "not-allowed" : "pointer",
+          backgroundColor: disabled || isPastDate ? "grey.300" : "grey.50",
+          opacity: disabled || isPastDate ? 0.5 : 1,
+          cursor:
+            disabled || appointment?.parentId || isPastDate
+              ? "not-allowed"
+              : "pointer",
           "&:hover": {
             backgroundColor:
-              disabled || appointment?.parentId ? "grey.300" : "primary.light",
+              disabled || appointment?.parentId || isPastDate
+                ? "grey.300"
+                : "primary.light",
           },
           position: "relative",
         }}
@@ -613,31 +618,36 @@ const TimeSlot = ({
           </MenuItem>
         ) : (
           [
-            ...(selectedStatus === EnBookings.Active
+            ...(selectedStatus === EnBookings.Active && !isPastDate
               ? [EnBookings.Edit, EnBookings.Cancel]
+              : isPastDate
+              ? [] // Empty array for past dates - no options available
               : [
                   EnBookings.Available,
                   EnBookings.Active,
                   EnBookings.Cancel,
                   EnBookings.Unconfirmed,
                 ]),
-          ].map((option) => (
-            <MenuItem
-              sx={{ justifyContent: "start", gap: 2 }}
-              key={option}
-              onClick={async () => {
-                if (appointmentId) {
-                  await handleStatusUpdate(option);
-                }
-                setAnchorEl(null);
-              }}
-            >
-              <StatusIcon status={option} />
-              <Typography variant="bodySmallSemiBold" color="grey.500">
-                {EnBookings[option]}
-              </Typography>
-            </MenuItem>
-          ))
+          ].map((option) => {
+            console.log(option);
+            return (
+              <MenuItem
+                sx={{ justifyContent: "start", gap: 1 }}
+                key={option}
+                onClick={async () => {
+                  if (appointmentId) {
+                    await handleStatusUpdate(option);
+                  }
+                  setAnchorEl(null);
+                }}
+              >
+                <StatusIcon status={option} />
+                <Typography variant="bodySmallSemiBold" color="grey.500">
+                  {EnBookings[option]}
+                </Typography>
+              </MenuItem>
+            );
+          })
         )}
       </Menu>
 
