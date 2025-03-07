@@ -70,15 +70,18 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
             <SearchInput
               {...field}
               open={openContactSearch}
+              // key={selectedContact?.phone}
               onOpen={handleOpen}
               onClose={handleClose}
+              setSelectedContact={setSelectedContact}
               options={contactOptions}
               loading={loading.input}
               placeholder="Search contacts..."
-              error={!!errors.contact?.phone?.message}
+              error={!!errors.contact}
               helperText={errors.contact?.phone?.message}
               // disabled={isEditing}
               value={selectedContact}
+              isEditing={isEditing}
               defaultValue={selectedContact}
               getOptionLabel={(option) =>
                 `${option.firstName} ${option.lastName}`

@@ -9,7 +9,6 @@ import {
 import searchIcon from "../../assets/icons/search-Input.svg";
 import { ISearchInputProps } from "../../utils/Interfaces";
 
-
 export default function SearchInput({
   options,
   loading = false,
@@ -25,16 +24,20 @@ export default function SearchInput({
   defaultValue,
   getOptionLabel = (option) => option.title,
   isEditing,
+  setSelectedContact,
 }: ISearchInputProps) {
+  // console.log(error);
   return (
     <>
       <Autocomplete
         open={open}
-       
         onOpen={onOpen}
         sx={{
           "& .MuiInputBase-root": {
-            border: error ? "1px solid #FF0000" : "1px solid #E2E8F0",
+            border:
+              error || (isEditing && value === null)
+                ? "1px solid #FF0000"
+                : "1px solid #E2E8F0",
           },
         }}
         onClose={onClose}
@@ -43,6 +46,14 @@ export default function SearchInput({
         options={options}
         loading={loading}
         onChange={(_, value) => onChange?.(value)}
+        //@ts-ignore
+        onInputChange={(event, newInputValue, reason) => {
+          // console.log(newInputValue,'lll')
+          if (reason === "clear") {
+            setSelectedContact?.(null);
+            return;
+          }
+        }}
         disabled={disabled}
         value={value}
         defaultValue={isEditing ? defaultValue : value}
@@ -74,9 +85,14 @@ export default function SearchInput({
             />
             {error && (
               <FormHelperText sx={{ marginLeft: "14px", marginRight: "14px" }}>
-                {helperText}
+                Please select a contact
               </FormHelperText>
             )}
+            {/* {isEditing && value === null && (
+              <FormHelperText sx={{ marginLeft: "14px", marginRight: "14px" }}>
+                {"Please select a contact"}
+              </FormHelperText>
+            )} */}
           </>
         )}
       />

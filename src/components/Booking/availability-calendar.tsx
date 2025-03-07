@@ -676,7 +676,9 @@ export default function AvailabilityCalendar() {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [loading, setLoading] = useState(false);
-
+  // useEffect(() => {
+  //   fetchInitialAvailability();
+  // }, [fetchInitialAvailability]);
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
   }, [startDate, endDate]);
