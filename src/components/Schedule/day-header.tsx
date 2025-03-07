@@ -26,9 +26,6 @@ export function DayHeader({
     message: "",
     severity: "error",
   });
-
-
-
   // Closing snackbar
   const handleSnackbarClose = () => {
     setSnackbar((prevSnackbar) => ({
@@ -36,7 +33,6 @@ export function DayHeader({
       open: false,
     }));
   };
-  console.log(isAvailable)
 
   return (
     <Box

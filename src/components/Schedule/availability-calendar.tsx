@@ -75,6 +75,7 @@ export default function AvailabilityCalendar() {
     generateDaysFromRange,
     handleNextWeek,
     handlePreviousWeek,
+    fetchInitialAvailability,
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -82,7 +83,6 @@ export default function AvailabilityCalendar() {
   const [today, setToday] = useState(dayjs());
   const [changed, setChanged] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  // const [selectedTime, setSelectedTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options] = useState<readonly any[]>([]);
@@ -95,6 +95,7 @@ export default function AvailabilityCalendar() {
     message: "",
     severity: "error" as AlertProps["severity"],
   });
+
   const {
     control,
     handleSubmit,
@@ -119,7 +120,11 @@ export default function AvailabilityCalendar() {
     if (startDate && changed) {
       setToday(dayjs(startDate));
     }
-  }, [startDate]);
+  }, [startDate, changed]);
+
+  // useEffect(() => {
+  //   fetchInitialAvailability();
+  // }, []);
 
   useEffect(() => {
     if (startDate && endDate) {

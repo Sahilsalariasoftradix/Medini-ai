@@ -21,7 +21,8 @@ interface AvailabilityContextType {
   handleNextWeek: () => void;
   handlePreviousWeek: () => void;
   refreshAvailability: () => Promise<void>;
-  availabilities:any
+  availabilities:any;
+  fetchInitialAvailability: () => Promise<void>;
   // appointmentId:string | null;
   // setAppointmentId:Dispatch<SetStateAction<string | null>>;
 }
@@ -127,10 +128,8 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
 export function AvailabilityProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [days, setDays] = useState<DaySchedule[]>([]);
-
   const [availabilities, setAvailabilities] = useState<IDayAvailability[]>([]);
-  const [isInitialFetch, setIsInitialFetch] = useState(true);
-  // const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchAvailabilityData = useCallback(async (date: Date) => {
     try {
@@ -139,7 +138,6 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
         date: dayjs(date).format("YYYY-MM-DD"),
         range: EnAvailability.WEEK,
       });
-      setAvailabilities(response.availability);
       return response.availability;
     } catch (error) {
       console.error("Error fetching availability:", error);
@@ -195,43 +193,48 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchInitialAvailability = useCallback(async () => {
+    if (isLoading) return; // Prevent multiple simultaneous calls
+    
+    setIsLoading(true);
     try {
       const availability = await fetchAvailabilityData(new Date());
       
       if (availability.length > 0) {
         const firstDate = dayjs(availability[0].date).toDate();
         const lastDate = dayjs(availability[availability.length - 1].date).toDate();
+        setAvailabilities(availability);
         setDateRange([firstDate, lastDate]);
         generateDaysFromRange(firstDate, lastDate, availability);
       }
     } catch (error) {
       console.error("Error fetching initial availability:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsInitialFetch(false);
   }, [fetchAvailabilityData, generateDaysFromRange]);
 
   const refreshAvailability = useCallback(async () => {
-    if (!dateRange[0]) return;
+    if (!dateRange[0] || isLoading) return;
     
+    setIsLoading(true);
     try {
       const availability = await fetchAvailabilityData(dateRange[0]);
       if (dateRange[0] && dateRange[1]) {
+        setAvailabilities(availability);
         generateDaysFromRange(dateRange[0], dateRange[1], availability);
       }
     } catch (error) {
       console.error("Error refreshing availability:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [dateRange, fetchAvailabilityData, generateDaysFromRange]);
+  }, [dateRange, fetchAvailabilityData, generateDaysFromRange, isLoading]);
 
   useEffect(() => {
-    fetchInitialAvailability();
-  }, [fetchInitialAvailability]);
-
-  useEffect(() => {
-    if (!isInitialFetch && dateRange[0] && dateRange[1]) {
+    if (dateRange[0] && dateRange[1]) {
       refreshAvailability();
     }
-  }, [dateRange, refreshAvailability, isInitialFetch]);
+  }, [dateRange]);
 
   const handlePreviousWeek = () => {
     if (!dateRange[0] || !dateRange[1]) return;
@@ -287,7 +290,8 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
         handleNextWeek,
         handlePreviousWeek,
         refreshAvailability,
-        availabilities
+        availabilities,
+        fetchInitialAvailability
         // setAppointmentId,
         // appointmentId
       }}

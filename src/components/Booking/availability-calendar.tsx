@@ -667,23 +667,32 @@ export default function AvailabilityCalendar() {
     dateRange,
     setDateRange,
     updateSlotStatus,
-    generateDaysFromRange,
-    // setDays,
+    // generateDaysFromRange,
     handleNextWeek,
     handlePreviousWeek,
+    fetchInitialAvailability
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Combine the two useEffect hooks into one
   useEffect(() => {
-    generateDaysFromRange(startDate, endDate);
-  }, [startDate, endDate]);
+    const initializeCalendar = async () => {
+      setLoading(true);
+      await fetchInitialAvailability();
+      if (startDate) {
+        await fetchBookings();
+      }
+      setLoading(false);
+    };
+
+    initializeCalendar();
+  }, []); // Run only once on mount
 
   const fetchBookings = async () => {
     try {
-      setLoading(true);
       const response = await getBookings({
         user_id: EStaticID.ID,
         date: dayjs(startDate).format("YYYY-MM-DD"),
@@ -692,14 +701,15 @@ export default function AvailabilityCalendar() {
       setBookings(response.bookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Add useEffect for fetching bookings when startDate changes
   useEffect(() => {
-    fetchBookings();
-  }, [startDate]); // Depend only on startDate
+    if (startDate) {
+      fetchBookings();
+    }
+  }, [startDate]);
 
   const handleEditAvailability = (day: string) => {
     console.log(`Editing availability for ${day}`);
