@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AnonymousLayout from "../../layouts/AnonymousLayout";
 import Login from "../../pages/Auth/Login";
 import MainLayout from "../../layouts/MainLayout";
-import Home from "../../pages/Home";
+// import Home from "../../pages/Home";
 import AuthFlow from "../../layouts/AuthFlowLayout";
 import VerifyEmail from "../../pages/verification/verify-email";
 import SignUp from "../../pages/Auth/sign-up";
@@ -57,7 +57,7 @@ const AppRoutes: React.FC = () => {
         {/* Protected Routes (Only for Authenticated & Verified Users) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            <Route path={routes.dashboard.home} element={<Home />} />
+            <Route path={routes.dashboard.home} element={<Booking />} />
             <Route path={routes.sidebar.schedule.link} element={<Schedule />} />
             <Route
               path={routes.sidebar.callCenter.link}
