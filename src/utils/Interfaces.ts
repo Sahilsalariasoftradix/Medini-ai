@@ -117,6 +117,7 @@ export interface ISearchInputProps {
   defaultValue?: any;
   getOptionLabel?: (option: any) => string;
   isEditing?: boolean;
+  setSelectedContact?: Dispatch<SetStateAction<null>>;
 }
 
 export interface IAvailabilityRequest {

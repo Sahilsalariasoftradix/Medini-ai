@@ -122,9 +122,9 @@ export default function AvailabilityCalendar() {
     }
   }, [startDate, changed]);
 
-  // useEffect(() => {
-  //   fetchInitialAvailability();
-  // }, []);
+  useEffect(() => {
+    fetchInitialAvailability();
+  }, []);
 
   useEffect(() => {
     if (startDate && endDate) {
