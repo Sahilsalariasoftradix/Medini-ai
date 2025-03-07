@@ -80,7 +80,6 @@ export default function AvailabilityCalendar() {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [today, setToday] = useState(dayjs());
-  console.log(today);
   const [changed, setChanged] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   // const [selectedTime, setSelectedTime] = useState("");
@@ -368,7 +367,6 @@ export default function AvailabilityCalendar() {
                 {!loading ? (
                   getSlots().map((hour, index) => {
                     const booking = findBookingForTimeSlot(hour.time);
-                    console.log(booking);
                     return (
                       <Box
                         key={index}
