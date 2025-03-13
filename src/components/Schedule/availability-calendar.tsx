@@ -530,7 +530,7 @@ export default function AvailabilityCalendar() {
   };
 
   return (
-    <Box display={"grid"} gridTemplateColumns={"2fr 1fr"} gap={2}>
+    <Box display={"grid"} gridTemplateColumns={"2fr 1.5fr"} gap={2}>
       <Box>
         <Box
           sx={{
@@ -882,7 +882,7 @@ export default function AvailabilityCalendar() {
             p: "10px",
             border: "1px solid #E2E8F0",
             borderRadius: "16px",
-            marginBottom: "40px",
+            marginBottom: "10px",
           }}
         >
           <Box>
@@ -940,7 +940,7 @@ export default function AvailabilityCalendar() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                mb: 4,
+                mb: 1,
               }}
             >
               <Typography
