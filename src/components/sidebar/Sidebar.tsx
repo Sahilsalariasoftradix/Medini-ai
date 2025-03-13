@@ -165,24 +165,24 @@ const Sidebar = ({
               </List>
             </Collapse> */}
 
-            {renderListItem(
+            {/* {renderListItem(
               SidebarIcons.billing,
               "Billing",
               undefined,
               routes.sidebar.billing.link
-            )}
+            )} */}
             {/* {renderListItem(
               SidebarIcons.patients,
               "Patients",
               undefined,
               routes.sidebar.patients.link
             )} */}
-            {renderListItem(
+            {/* {renderListItem(
               SidebarIcons.history,
               "Task History",
               undefined,
               routes.sidebar.history.link
-            )}
+            )} */}
             {renderListItem(
               SidebarIcons.messages,
               "Messages",

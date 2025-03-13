@@ -6,7 +6,6 @@ import { EnOnboardingStatus } from "../utils/enums";
 
 const ProtectedRoute = () => {
   const { user, loading, userDetails } = useAuth();
-
   // Show loader while both auth and user details are loading
   if (loading || userDetails === undefined) {
     return <PageLoader />;

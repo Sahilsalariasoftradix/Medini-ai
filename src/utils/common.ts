@@ -36,3 +36,47 @@ export const isPastDateTime = (date: Date, time: string) => {
     dayjs(`${dayjs(date).format("YYYY-MM-DD")} ${time}`).isBefore(dayjs())
   );
 };
+export const formatType = (type: string) => {
+  return type
+    .replace(/_/g, " ") // Replace underscores with spaces
+    .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+};
+
+export const displayDays=["", "M", "T", "W", "T", "F", "S", "S"]
+export const dayDataMapping=["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
+export const getDaysData=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+ // Update the day mapping to use unique keys
+export const dayMapping: { [key: string]: string } = {
+  MO: "MON",
+  TU: "TUE",
+  WE: "WED",
+  TH: "THU",
+  FR: "FRI",
+  SA: "SAT",
+  SU: "SUN",
+};
+
+// Function to map availabilities array to weeklyAvailability structure
+export const mapAvailabilitiesToWeekly = (availabilities: any[], dayMapping: any) => {
+  const weeklyAvailability: any = {};
+
+  availabilities.forEach((availability) => {
+    const dayName = dayjs(availability.date).format("dddd").toLowerCase(); // Convert date to weekday
+    if (!dayMapping[dayName]) return; // Skip if mapping is not available
+
+    weeklyAvailability[dayMapping[dayName]] = {
+      phone:
+        availability.phone_start_time && availability.phone_end_time
+          ? { from: availability.phone_start_time, to: availability.phone_end_time }
+          : null,
+      in_person:
+        availability.in_person_start_time && availability.in_person_end_time
+          ? { from: availability.in_person_start_time, to: availability.in_person_end_time }
+          : null,
+      break: null, // No break data available
+    };
+  });
+
+  return weeklyAvailability;
+};

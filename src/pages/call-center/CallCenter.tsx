@@ -26,12 +26,24 @@ import searchIcon from "../../assets/icons/Search.svg";
 import CommonButton from "../../components/common/CommonButton";
 import add from "../../assets/icons/add-icn.svg";
 import filter from "../../assets/icons/Filter.svg";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RoundCheckbox } from "../../components/common/RoundCheckbox";
-import { Chip, Pagination, Select } from "@mui/material";
+import { Chip, Pagination, Select, TextField } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { overRideSvgColor } from "../../utils/filters";
-
+import CommonDialog from "../../components/common/CommonDialog";
+import { IFilm, IGetContacts } from "../../utils/Interfaces";
+import { getContacts } from "../../firebase/AuthService";
+import { Controller, useForm } from "react-hook-form";
+import SearchInput from "../../components/common/SearchInput";
+import { sleep } from "../../components/Booking/availability-calendar";
+import { topFilms } from "../../utils/staticText";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import addIcon from "../../assets/icons/add-icn.svg";
+import AddContact from "../../components/Booking/Form/AddContact";
+import CustomSelect from "../../components/common/CustomSelect";
+import { EnCallPurposeOptions } from "../../utils/enums";
 interface Data {
   id: number;
   contact: string;
@@ -895,13 +907,122 @@ const ActionMenu = ({ row }: { row: Data }) => {
   );
 };
 
+// Update the schema to include the new fields
+const addCallSchema = z.object({
+  contact: z.object({
+    title: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    phone: z.string(),
+  }),
+  callPurpose: z.string().optional(),
+  appointmentReason: z.string().optional(),
+  inPersonOnly: z.boolean().default(false),
+  bookingStartDate: z.string().default("Today"),
+  bookingEndDate: z.string().default("2 months"),
+  appointmentLength: z.string().default("15 minutes"),
+});
+
+type AddCallSchema = z.infer<typeof addCallSchema>;
+
+const callPurposeOptions = [
+  { label: EnCallPurposeOptions.CANCEL, value: EnCallPurposeOptions.CANCEL },
+  { label: EnCallPurposeOptions.BOOK, value: EnCallPurposeOptions.BOOK },
+  {
+    label: EnCallPurposeOptions.RESCHEDULE,
+    value: EnCallPurposeOptions.RESCHEDULE,
+  },
+  {
+    label: EnCallPurposeOptions.REQUESTINFO,
+    value: EnCallPurposeOptions.REQUESTINFO,
+  },
+];
 const CallCenter = () => {
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Data>("contact");
   const [selected, setSelected] = useState<readonly number[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(7);
+  const [openAddCallDetails, setOpenAddCallDetails] = useState(false);
+  const [contacts, setContacts] = useState<IGetContacts>([]);
+  // Search contact inputs
+  const [openContactSearch, setOpenContactSearch] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [openAddContact, setOpenAddContact] = useState(false);
+  //@ts-ignore
+  const [isEditing, setIsEditing] = useState(false);
+  //@ts-ignore
+  const [options, setOptions] = useState<readonly IFilm[]>([]);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<AddCallSchema>({
+    resolver: zodResolver(addCallSchema),
+    defaultValues: {
+      contact: {
+        title: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+      },
+      callPurpose: "",
+      appointmentReason: "",
+      inPersonOnly: false,
+      bookingStartDate: "Today",
+      bookingEndDate: "2 months",
+      appointmentLength: "15 minutes",
+    },
+  });
 
+  const [loading, setLoading] = useState({
+    input: false,
+    data: false,
+    options: false,
+  });
+  const contactOptions = contacts.map((contact) => ({
+    title: `${contact.firstName} ${contact.lastName}`,
+    key: `${contact.firstName}-${contact.lastName}-${contact.phone}`,
+    firstName: contact.firstName,
+    lastName: contact.lastName,
+    email: contact.email,
+    phone: contact.phone,
+  }));
+
+  const handleClose = () => {
+    setOpenContactSearch(false);
+    setOptions([]);
+  };
+
+  const fetchContacts = async () => {
+    const contactList = await getContacts();
+    setContacts(contactList);
+  };
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  useEffect(() => {
+    // Get the current contact value from the form
+    const currentValue = control._formValues?.contact;
+    if (currentValue && Object.keys(currentValue).length > 0) {
+      setSelectedContact(currentValue);
+    }
+  }, [control._formValues?.contact]);
+  const handleOpen = () => {
+    setOpenContactSearch(true);
+    (async () => {
+      setLoading({ ...loading, input: true });
+      await sleep(1000); // For demo purposes.
+      setLoading({ ...loading, input: false });
+
+      setOptions([...topFilms]);
+    })();
+  };
   // Add this calculation for total pages
   const totalPages = Math.ceil(rows.length / rowsPerPage);
 
@@ -923,7 +1044,7 @@ const CallCenter = () => {
     }
     setSelected([]);
   };
-//@ts-ignore
+  //@ts-ignore
   const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
     const selectedIndex = selected.indexOf(id);
     let newSelected: readonly number[] = [];
@@ -972,6 +1093,13 @@ const CallCenter = () => {
     [order, orderBy, page, rowsPerPage]
   );
 
+  const onSubmit = (data: AddCallSchema) => {
+    console.log("Form data:", data);
+    // Handle form submission
+    setOpenAddCallDetails(false);
+    reset();
+  };
+
   return (
     <Box sx={{ px: "12px" }}>
       <Box
@@ -994,6 +1122,7 @@ const CallCenter = () => {
             variant="contained"
             startIcon={<img src={add} alt="add" />}
             text="Add New Call"
+            onClick={() => setOpenAddCallDetails(true)}
             sx={{ py: "11px", px: "20px" }}
           />
           <CommonButton
@@ -1175,6 +1304,240 @@ const CallCenter = () => {
           </Box>
         </Paper>
       </Box>
+      <CommonDialog
+        open={openAddCallDetails}
+        onClose={() => {
+          setOpenAddCallDetails(false);
+          reset();
+          // setIsEditing(false);
+        }}
+        confirmButtonType="primary"
+        title={"Call Details"}
+        confirmText="Confirm"
+        cancelText="Cancel"
+        onConfirm={handleSubmit(onSubmit)}
+        // loading={loading.data}
+        // disabled={loading.data}
+      >
+        <Controller
+          name="contact"
+          control={control}
+          render={({ field }) => (
+            <SearchInput
+              {...field}
+              open={openContactSearch}
+              // key={selectedContact}
+              onOpen={handleOpen}
+              onClose={handleClose}
+              setSelectedContact={setSelectedContact}
+              options={contactOptions}
+              loading={loading.input}
+              placeholder="Search contacts..."
+              error={!!errors.contact}
+              helperText={errors.contact?.phone?.message}
+              // disabled={isEditing}
+              value={selectedContact}
+              defaultValue={selectedContact}
+              getOptionLabel={(option) =>
+                `${option.firstName} ${option.lastName}`
+              }
+            />
+          )}
+        />
+        {!isEditing && (
+          <Box display="flex" justifyContent="end" mt={2}>
+            <CommonButton
+              sx={{ width: "50%", float: "right" }}
+              text="Add new contact"
+              onClick={() => setOpenAddContact(true)}
+              startIcon={<img src={addIcon} alt="" />}
+            />
+          </Box>
+        )}
+
+        <Typography variant="bodyMediumExtraBold" my={2}>
+          Details
+        </Typography>
+
+        <CustomSelect
+          name="callPurpose"
+          control={control}
+          errors={errors}
+          options={callPurposeOptions}
+          placeholder="Call Purpose"
+        />
+
+        {/* Add Reason for appointment field */}
+        <Box mt={2}>
+          <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+            Reason for appointment
+          </Typography>
+          <Controller
+            name="appointmentReason"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                multiline
+                rows={4}
+                placeholder="Enter reason for the appointment. If not provided the AI will say the doctor didn't specify"
+                error={!!errors.appointmentReason}
+                helperText={errors.appointmentReason?.message}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                  },
+                }}
+              />
+            )}
+          />
+        </Box>
+
+        {/* Add In Person Only toggle */}
+        <Box mt={2}>
+          <Typography variant="bodyMediumMedium" mb={1}>
+            In Person Only?
+          </Typography>
+          <Box display="flex" gap={4}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Controller
+                name="inPersonOnly"
+                control={control}
+                render={({ field }) => (
+                  <RoundCheckbox
+                    checked={field.value === true}
+                    onChange={() => field.onChange(true)}
+                    label=""
+                  />
+                )}
+              />
+              <Typography variant="bodyMediumMedium">Yes</Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Controller
+                name="inPersonOnly"
+                control={control}
+                render={({ field }) => (
+                  <RoundCheckbox
+                    checked={field.value === false}
+                    onChange={() => field.onChange(false)}
+                    label=""
+                  />
+                )}
+              />
+              <Typography variant="bodyMediumMedium">No</Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Add Book Between section */}
+        <Typography variant="bodyMediumMedium" mt={3} mb={1}>
+          Book Between
+        </Typography>
+
+        {/* From date */}
+        <Box mt={2}>
+          <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+            From
+          </Typography>
+          <CustomSelect
+            name="bookingStartDate"
+            control={control}
+            errors={errors}
+            options={[
+              { label: "Today", value: "Today" },
+              { label: "Tomorrow", value: "Tomorrow" },
+              { label: "Next week", value: "Next week" },
+            ]}
+          />
+        </Box>
+
+        {/* Not Later Than */}
+        <Box mt={2}>
+          <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+            Not Later Than
+          </Typography>
+          <Box display="flex" gap={2}>
+            <CustomSelect
+              name="bookingEndDate"
+              control={control}
+              errors={errors}
+              options={[
+                { label: "1 week from now", value: "1 week" },
+                { label: "2 weeks from now", value: "2 weeks" },
+                { label: "3 weeks from now", value: "3 weeks" },
+                { label: "1 month from now", value: "1 month" },
+                { label: "2 months from now", value: "2 months" },
+                { label: "3 months from now", value: "3 months" },
+                { label: "1 year from now", value: "1 year" },
+                { label: "2 years from now", value: "2 years" },
+                { label: "3 years from now", value: "3 years" },
+              ]}
+            />
+            <Typography
+              variant="bodySmallMedium"
+              color="grey.600"
+              alignSelf="center"
+            >
+              from Jan 11
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Appointment Length */}
+        <Box mt={2}>
+          <Typography
+            variant="bodySmallMedium"
+            color="grey.600"
+            mb={1}
+            display="flex"
+            alignItems="center"
+            gap={1}
+          >
+            Length
+            <Box
+              component="span"
+              sx={{
+                width: 16,
+                height: 16,
+                borderRadius: "50%",
+                border: "1px solid #E2E8F0",
+                display: "inline-flex",
+                justifyContent: "center",
+                alignItems: "center",
+                fontSize: "10px",
+                color: "grey.500",
+              }}
+            >
+              i
+            </Box>
+          </Typography>
+          <CustomSelect
+            name="appointmentLength"
+            control={control}
+            errors={errors}
+            options={[
+              { label: "15 minutes", value: "15 minutes" },
+              { label: "30 minutes", value: "30 minutes" },
+              { label: "45 minutes", value: "45 minutes" },
+              { label: "1 hour", value: "1 hour" },
+              { label: "1 hour 15 minutes", value: "1 hour 15 minutes" },
+              { label: "1 hour 30 minutes", value: "1 hour 30 minutes" },
+              { label: "1 hour 45 minutes", value: "1 hour 45 minutes" },
+              { label: "2 hours", value: "2 hours" },
+            ]}
+          />
+        </Box>
+
+        {!isEditing && (
+          <AddContact
+            fetchContacts={fetchContacts}
+            openDialog={openAddContact}
+            setOpenDialog={setOpenAddContact}
+          />
+        )}
+      </CommonDialog>
     </Box>
   );
 };

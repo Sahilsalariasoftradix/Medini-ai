@@ -43,7 +43,7 @@ import { isPastDateTime, mapApiStatusToEnum } from "../../utils/common";
 
 dayjs.extend(isSameOrBefore);
 
-function sleep(duration: number): Promise<void> {
+export function sleep(duration: number): Promise<void> {
   return new Promise<void>((resolve) => {
     setTimeout(() => {
       resolve();

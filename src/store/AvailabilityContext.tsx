@@ -157,7 +157,7 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
     null,
   ]);
   const [days, setDays] = useState<DaySchedule[]>([]);
-
+console.log(days)
   const [availabilities, setAvailabilities] = useState<IDayAvailability[]>([]);
   const [isInitialFetch, setIsInitialFetch] = useState(true);
   // const [appointmentId, setAppointmentId] = useState<string | null>(null);

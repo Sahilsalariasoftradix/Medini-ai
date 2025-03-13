@@ -43,6 +43,7 @@ import { staticText } from "../utils/staticText";
 import {
   EnFirebaseCollections,
   EnOnboardingStatus,
+  EnSocialLogin,
   EnVerifiedStatus,
 } from "../utils/enums";
 
@@ -115,21 +116,20 @@ export const getCurrentUserId = (): string | null => {
   return user ? user.uid : null; // user.uid contains the unique identifier for the authenticated user
 };
 
-
 //* Function to update a user's details in the Firestore database
 export const updateUserDetailsInFirestore = async (
   userId: string, // User ID to identify the document to update
-  userDetails: Partial<IUserDetails> ,// Using Partial to allow updating only some of the user's details
+  userDetails: Partial<IUserDetails>, // Using Partial to allow updating only some of the user's details
   companyId?: number // Added companyId as a parameter
 ): Promise<void> => {
   try {
     // Create an update object by spreading the provided userDetails
     // Add the updated timestamp and set the onboardingStatus to a default value
-    const userDocUpdate:any = {
+    const userDocUpdate: any = {
       ...userDetails, // Merge the provided user details with other fields
       // company_id: companyId, // Add companyId to the update
       updatedAt: serverTimestamp(), // Add a server-generated timestamp for the update time
-      
+
       // onboardingStatus: EnOnboardingStatus.STATUS_1, // Set onboarding status to a default value (STATUS_1)
     };
     // Add company_id to the update only if it is provided
@@ -193,62 +193,35 @@ export const getContacts = async (): Promise<IContact[]> => {
     return contactsList as any;
   } catch (error) {
     // Log an error message if something goes wrong during the fetch
-    console.error('error fetching contacts:', error);
+    console.error("error fetching contacts:", error);
     // Rethrow the error with a custom error message
-    throw new Error('could not fetch contacts'); // Custom error message for failed fetching operation
+    throw new Error("could not fetch contacts"); // Custom error message for failed fetching operation
   }
 };
 
+export const generateSequentialId = async (
+  collectionName: string
+): Promise<number> => {
+  const counterRef = doc(
+    firebaseFirestore,
+    EnFirebaseCollections.COUNTERS,
+    collectionName
+  );
 
-// Function to sign up a user with email and password, create their Firestore document, and send verification email
-// export const signUpWithEmail = async (
-//   email: string, // User's email address
-//   password: string, // User's password
-//   firstName: string, // User's first name
-//   lastName: string // User's last name
-// ): Promise<string | void> => {
-//   try {
-//     // Step 1: Create the user in Firebase Authentication using email and password
-//     const userCredential = await createUserWithEmailAndPassword(
-//       firebaseAuth, // Firebase Auth instance
-//       email, // User's email
-//       password // User's password
-//     );
-//     // Get the user object from the created userCredential
-//     const user = userCredential.user;
-//     // Optionally, sign out the user immediately after account creation if you don't want them signed in
-//     await signOut(firebaseAuth);
+  return await runTransaction(firebaseFirestore, async (transaction) => {
+    const counterDoc = await transaction.get(counterRef);
+    let newId = 1; // Default starting ID
 
-//     // Step 2: Save the user's details in Firestore
-//     const userData = {
-//       id: user.uid, // Firebase user ID
-//       email: user.email, // User's email
-//       firstName, // User's first name
-//       lastName, // User's last name
-//       createdAt: Timestamp.now().seconds, // UNIX timestamp for account creation
-//       updatedAt: null, // Initially null
-//       deletedAt: null, // Initially null
-//       status: EnVerifiedStatus.UNVERIFIED, // 1 for verified 0 for unverified
-//       onboardingStatus: EnOnboardingStatus.STATUS_0, //0 for unverified 1 for verified 2 for second verified
-//     };
-//     // Set the user data in the Firestore 'users' collection using the user's UID
-//     await setDoc(
-//       doc(firebaseFirestore, EnFirebaseCollections.USERS, user.uid),
-//       userData
-//     );
+    if (counterDoc.exists()) {
+      newId = counterDoc.data().lastId + 1;
+    }
 
-//     // Step 3: Send an email verification to the user
-//     await sendEmailVerification(user);
+    // Update Firestore counter document
+    transaction.set(counterRef, { lastId: newId });
 
-//     // Step 4: Return a success message
-//     return `Welcome, ${firstName}${" "}${lastName}! ${
-//       staticText.firestore.accountSucceededMessage
-//     }`;
-//   } catch (error: any) {
-//     // Step 5: Handle errors by throwing a custom error message
-//     throw new Error(getAuthErrorMessage(error.code)); // Map Firebase error code to a custom message
-//   }
-// };
+    return newId;
+  });
+};
 export const signUpWithEmail = async (
   email: string,
   password: string,
@@ -257,26 +230,17 @@ export const signUpWithEmail = async (
 ): Promise<string | void> => {
   try {
     // Step 1: Create user in Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      firebaseAuth,
+      email,
+      password
+    );
     const user = userCredential.user;
     await signOut(firebaseAuth); // Sign out the user immediately after creation (optional)
 
     // Step 2: Generate auto-incrementing `prop` ID using a Firestore transaction
-    const counterRef = doc(firebaseFirestore, "counters", "users");
 
-    const newPropId = await runTransaction(firebaseFirestore, async (transaction) => {
-      const counterDoc = await transaction.get(counterRef);
-      let propId = 1; // Default value
-
-      if (counterDoc.exists()) {
-        propId = counterDoc.data().lastId + 1;
-      }
-
-      // Update the counter
-      transaction.set(counterRef, { lastId: propId });
-
-      return propId;
-    });
+    const newPropId = await generateSequentialId(EnFirebaseCollections.USERS);
 
     // Step 3: Save user details in Firestore
     const userData = {
@@ -292,7 +256,10 @@ export const signUpWithEmail = async (
       onboardingStatus: EnOnboardingStatus.STATUS_0,
     };
 
-    await setDoc(doc(firebaseFirestore, EnFirebaseCollections.USERS, user.uid), userData);
+    await setDoc(
+      doc(firebaseFirestore, EnFirebaseCollections.USERS, user.uid),
+      userData
+    );
 
     // Step 4: Send email verification
     await sendEmailVerification(user);
@@ -370,37 +337,105 @@ export const resetPasswordWithEmail = async (
 };
 
 //* Google sign-in function using Firebase Authentication
-export const signInWithGoogle = async (): Promise<string | void> => {
+export const signInWithGoogle = async (
+  setUserDetails: (details: any) => void
+): Promise<string | void> => {
   try {
-    // Step 1: Create an instance of the GoogleAuthProvider for Google sign-in
-    const provider = new GoogleAuthProvider(); // GoogleAuthProvider is used to configure the Google sign-in
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(firebaseAuth, provider);
 
-    // Step 2: Trigger the Google sign-in popup
-    await signInWithPopup(firebaseAuth, provider); // This opens a popup for the user to sign in with Google
+    const user = result.user;
 
-    // Step 3: Return a success message after successful sign-in
-    return staticText.firestore.signInWithGoogleMessage; // Custom success message (e.g., "Successfully signed in with Google")
+    if (!user) throw new Error("Google sign-in failed");
+
+    const userRef = doc(
+      firebaseFirestore,
+      EnFirebaseCollections.USERS,
+      user.uid
+    );
+    const userSnap = await getDoc(userRef);
+
+    let userDetails;
+
+    if (!userSnap.exists()) {
+      // Step 2: Generate auto-incrementing `prop` ID using a Firestore transaction
+
+      const newPropId = await generateSequentialId(EnFirebaseCollections.USERS);
+      // Extract first and last name
+      const fullName = user.displayName?.split(" ") || ["", ""];
+      const firstName = fullName[0] || "";
+      const lastName = fullName.slice(1).join(" ") || ""; // Handles multi-word last names
+
+      userDetails = {
+        uid: user.uid,
+        uuid: newPropId, // Auto-incremented ID
+        firstName,
+        lastName,
+        email: user.email || "",
+        photoURL: user.photoURL || "",
+        createdAt: Timestamp.now().seconds, // Store as seconds
+        updatedAt: null,
+        deletedAt: null,
+        status: EnVerifiedStatus.VERIFIED,
+        onboardingStatus: EnOnboardingStatus.STATUS_0,
+        loginType: EnSocialLogin.GOOGLE,
+      };
+
+      await setDoc(userRef, userDetails);
+    } else {
+      userDetails = userSnap.data();
+    }
+
+    setUserDetails(userDetails); // ✅ Update context immediately after signing in
+
+    return "Successfully signed in with Google";
   } catch (error: any) {
-    // Step 4: Handle any errors that occur during the sign-in process
-    // Convert the Firebase error code to a user-friendly error message
-    throw new Error(getAuthErrorMessage(error.code)); // Throw the error for UI handling
+    throw new Error(getAuthErrorMessage(error.code));
   }
 };
 
 //* Apple sign-in function using Firebase Authentication
-export const signInWithApple = async (): Promise<string | void> => {
+export const signInWithApple = async (setUserDetails: any): Promise<void> => {
   try {
-    // Step 1: Create an instance of the OAuthProvider for Apple sign-in
-    const provider = new OAuthProvider("apple.com"); // OAuthProvider is used for Apple authentication with Firebase
+    // Step 1: Create an instance of the Apple OAuth provider
+    const provider = new OAuthProvider(EnSocialLogin.APPLE);
 
-    // Step 2: Trigger the Apple sign-in popup
-    await signInWithPopup(firebaseAuth, provider); // This opens a popup for the user to sign in with Apple
+    // Step 2: Trigger Apple sign-in popup
+    const result = await signInWithPopup(firebaseAuth, provider);
+    const user = result.user;
 
-    // Step 3: Return a success message after successful sign-in
-    return staticText.firestore.signInWithAppMessage; // Custom success message (e.g., "Successfully signed in with Apple")
+    if (!user) throw new Error("Apple sign-in failed. No user data found.");
+
+    // Step 3: Save user details to Firestore
+    const userRef = doc(
+      firebaseFirestore,
+      EnFirebaseCollections.USERS,
+      user.uid
+    );
+    const newPropId = await generateSequentialId(EnFirebaseCollections.USERS);
+    const userData = {
+      uid: user.uid,
+      uuid: newPropId, // Auto-incremented ID
+      firstName: user.displayName?.split(" ")[0] || "",
+      lastName: user.displayName?.split(" ")[1] || "",
+      email: user.email || "",
+      photoURL: user.photoURL || "",
+      createdAt: Timestamp.now().seconds,
+      updatedAt: null,
+      deletedAt: null,
+      status: EnVerifiedStatus.VERIFIED,
+      onboardingStatus: EnOnboardingStatus.STATUS_0,
+      loginType: EnSocialLogin.APPLE,
+    };
+
+    await setDoc(userRef, userData, { merge: true });
+
+    // Step 4: Update user details in state for instant UI update
+    setUserDetails(userData);
+
+    console.log("Apple Sign-In Successful");
   } catch (error: any) {
-    // Step 4: Handle any errors that occur during the sign-in process
-    // Convert the Firebase error code to a user-friendly error message
-    throw new Error(getAuthErrorMessage(error.code)); // Throw the error for UI handling
+    console.error("Apple Sign-In Failed:", error.message);
+    throw new Error(getAuthErrorMessage(error.code));
   }
 };

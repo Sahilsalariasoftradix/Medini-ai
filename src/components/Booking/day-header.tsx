@@ -10,7 +10,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EnCancelAppointment, EStaticID } from "../../utils/enums";
 import { useState } from "react";
-import { availabilityIcons, editAvailabilityIcons } from "../../utils/Icons";
+import { availabilityIcons, InPersonIcon } from "../../utils/Icons";
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
@@ -22,37 +22,47 @@ import { IAvailabilityPayload, IDayHeaderProps } from "../../utils/Interfaces";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonSnackbar from "../common/CommonSnackbar";
 
-
-
-const menuItemHoverStyle = {
+export const menuItemHoverStyle = {
   "&:hover": {
     filter: overRideSvgColor.blue,
   },
   gap: 1,
 };
 
-const appointmentSchema = z.object({
+export const appointmentSchema = z.object({
   reason: z.enum(Object.values(EnCancelAppointment) as [string, ...string[]]),
 });
 
-const availabilitySchema = z.object({
-  isAvailable: z.boolean(),
-  phone: z.object({
-    from: z.string().min(1, "Start time is required"),
-    to: z.string().min(1, "End time is required"),
-  }),
-  in_person: z.object({
-    from: z.string().min(1, "Start time is required"),
-    to: z.string().min(1, "End time is required"),
-  }),
-  break: z.object({
-    from: z.string(),
-    to: z.string(),
-  }),
-});
+export const availabilitySchema = z
+  .object({
+    isAvailable: z.boolean(),
+    phone: z.object({
+      from: z.string().min(1, "Start time is required"),
+      to: z.string().min(1, "End time is required"),
+    }).partial(), // Make fields optional by default
+    in_person: z.object({
+      from: z.string().min(1, "Start time is required"),
+      to: z.string().min(1, "End time is required"),
+    }).partial(), // Make fields optional by default
+    break: z.object({
+      from: z.string(),
+      to: z.string(),
+    }).partial(),
+  })
+  .refine(
+    (data) =>
+      (data.phone.from && data.phone.to) ||
+      (data.in_person.from && data.in_person.to),
+    {
+      message: "At least one booking type (phone or in-person) is required.",
+      path: ["phone"], // or ["in_person"] to show the error there
+    }
+  );
 
-type AppointmentFormData = z.infer<typeof appointmentSchema>;
-type AvailabilityFormData = z.infer<typeof availabilitySchema>;
+
+
+export type AppointmentFormData = z.infer<typeof appointmentSchema>;
+export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
 
 export function DayHeader({
   day,
@@ -85,7 +95,6 @@ export function DayHeader({
       (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
     );
 
-
     // First set the modal to open
     setIsAvailabilityModalOpen(true);
 
@@ -95,23 +104,34 @@ export function DayHeader({
         isAvailable: true,
         in_person: {
           from: selectedAvailability?.in_person_start_time
-            ? selectedAvailability.in_person_start_time.split(":").slice(0, 2).join(":")
+            ? selectedAvailability.in_person_start_time
+                .split(":")
+                .slice(0, 2)
+                .join(":")
             : "",
           to: selectedAvailability?.in_person_end_time
-            ? selectedAvailability.in_person_end_time.split(":").slice(0, 2).join(":")
+            ? selectedAvailability.in_person_end_time
+                .split(":")
+                .slice(0, 2)
+                .join(":")
             : "",
         },
         phone: {
           from: selectedAvailability?.phone_start_time
-            ? selectedAvailability.phone_start_time.split(":").slice(0, 2).join(":")
+            ? selectedAvailability.phone_start_time
+                .split(":")
+                .slice(0, 2)
+                .join(":")
             : "",
           to: selectedAvailability?.phone_end_time
-            ? selectedAvailability.phone_end_time.split(":").slice(0, 2).join(":")
+            ? selectedAvailability.phone_end_time
+                .split(":")
+                .slice(0, 2)
+                .join(":")
             : "",
         },
         break: { from: "", to: "" },
       });
-
     }, 0);
   };
   const handleClearAvailability = async () => {
@@ -121,7 +141,7 @@ export function DayHeader({
         //@ts-ignore
         (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
       );
-      
+
       await postUnAvailabilitySpecific({
         user_id: EStaticID.ID,
         date: dayjs().set("date", date).format("YYYY-MM-DD"),
@@ -130,7 +150,7 @@ export function DayHeader({
         in_person_start_time: selectedAvailability?.in_person_start_time,
         in_person_end_time: selectedAvailability?.in_person_end_time,
       });
-      
+
       setSnackbar({
         open: true,
         message: "Availability cleared successfully",
@@ -138,7 +158,7 @@ export function DayHeader({
       });
       await refreshAvailability();
     } catch (error) {
-      console.log(error,'error')
+      console.log(error, "error");
       setSnackbar({
         open: true,
         message: "Failed to clear availability",
@@ -192,10 +212,8 @@ export function DayHeader({
   const onSubmit = () => {
     setOpenModal(false);
   };
-  const InPersonIcon = () => (
-    <img src={editAvailabilityIcons.clock} alt="icon" />
-  );
-  
+
+
   const handleAvailabilitySubmit = async (data: AvailabilityFormData) => {
     setLoading(true);
 
@@ -218,7 +236,6 @@ export function DayHeader({
     };
 
     let errorMessage = "";
-  
 
     switch (true) {
       case phoneStart.isAfter(phoneEnd):
@@ -246,7 +263,7 @@ export function DayHeader({
     if (errorMessage) {
       setSnackbar({ open: true, message: errorMessage, severity: "error" });
       setLoading(false);
-      console.log(errorMessage)
+      console.log(errorMessage);
       return;
     }
 
@@ -306,7 +323,7 @@ export function DayHeader({
       </Typography>
 
       <Controller
-      //@ts-ignore
+        //@ts-ignore
         name={name}
         control={availabilityForm.control}
         render={({ field, fieldState }) => (
@@ -333,9 +350,9 @@ export function DayHeader({
                     },
                   },
                 },
-                actionBar:{
-                  actions:['accept'],
-                }
+                actionBar: {
+                  actions: ["accept"],
+                },
               }}
               slots={{ openPickerIcon: InPersonIcon }}
             />
@@ -431,13 +448,13 @@ export function DayHeader({
               </Box>
             ))}
           </Box>
-           {/* Snackbar */}
-      <CommonSnackbar
-        open={snackbar.open}
-        onClose={handleSnackbarClose}
-        message={snackbar.message}
-        severity={snackbar.severity}
-      />
+          {/* Snackbar */}
+          <CommonSnackbar
+            open={snackbar.open}
+            onClose={handleSnackbarClose}
+            message={snackbar.message}
+            severity={snackbar.severity}
+          />
         </CommonDialog>
       )}
 
@@ -502,7 +519,11 @@ export function DayHeader({
           <Typography variant="bodyMediumExtraBold" color="grey.600">
             Are you sure you want to clear the availability for this day?
           </Typography>
-          <Typography variant="bodySmallSemiBold" color="grey.500" sx={{ mt: 1 }}>
+          <Typography
+            variant="bodySmallSemiBold"
+            color="grey.500"
+            sx={{ mt: 1 }}
+          >
             This action cannot be undone.
           </Typography>
         </Box>
@@ -545,7 +566,6 @@ export function DayHeader({
             Clear Day
           </Typography>
         </MenuItem>
-     
       </Menu>
     </Box>
   );

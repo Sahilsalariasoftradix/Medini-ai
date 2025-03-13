@@ -5,7 +5,6 @@ import {
   Typography,
   Popover,
   Switch,
-  Button,
   Tooltip,
   CircularProgress,
   Menu,
@@ -14,6 +13,7 @@ import {
   AlertProps,
 } from "@mui/material";
 import { DayHeader } from "./day-header";
+import edit from "../../assets/icons/edit-table.svg";
 import Grid from "@mui/material/Grid2";
 import { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
@@ -26,9 +26,14 @@ import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { IBookingResponse } from "../../utils/Interfaces";
-import { cancelBooking, getBookings, updateBooking } from "../../api/userApi";
+import {
+  cancelBooking,
+  getBookings,
+  updateBooking,
+  postAvailabilityGeneral,
+} from "../../api/userApi";
 import { BookingTypeIcon } from "./booking-type-icon";
-import { availabilityIcons, otherIcons } from "../../utils/Icons";
+import { otherIcons } from "../../utils/Icons";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,7 +49,10 @@ import {
 import CommonTextField from "../common/CommonTextField";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { StatusIcon } from "../Booking/status-icon";
-import { isPastDateTime } from "../../utils/common";
+import { isPastDateTime, mapAvailabilitiesToWeekly } from "../../utils/common";
+import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
+import { menuItemHoverStyle } from "../Booking/day-header";
+import CommonButton from "../common/CommonButton";
 
 dayjs.extend(isSameOrBefore);
 
@@ -67,6 +75,66 @@ const appointmentSchema = z.object({
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
+// Add this near the top of the file, with other constant declarations
+const dayMapping: { [key: string]: string } = {
+  MO: "monday",
+  TU: "tuesday",
+  WE: "wednesday",
+  TH: "thursday",
+  FR: "friday",
+  SA: "saturday",
+  SU: "sunday",
+};
+
+// Add this helper function near the top of the file
+const checkAvailabilityOverlap = (
+  phone: { from: string; to: string },
+  inPerson: { from: string; to: string },
+  breakTime: { from: string; to: string }
+) => {
+  const phoneStart = dayjs(`2024-01-01 ${phone.from}`);
+  const phoneEnd = dayjs(`2024-01-01 ${phone.to}`);
+  const inPersonStart = dayjs(`2024-01-01 ${inPerson.from}`);
+  const inPersonEnd = dayjs(`2024-01-01 ${inPerson.to}`);
+  const breakStart = dayjs(`2024-01-01 ${breakTime.from}`);
+  const breakEnd = dayjs(`2024-01-01 ${breakTime.to}`);
+
+  // Check if break time overlaps with phone availability
+  const breakOverlapsPhone =
+    (breakStart.isValid() && phoneStart.isValid() &&
+      (breakStart.isBetween(phoneStart, phoneEnd) ||
+        breakEnd.isBetween(phoneStart, phoneEnd))) ||
+    (phoneStart.isBetween(breakStart, breakEnd) ||
+      phoneEnd.isBetween(breakStart, breakEnd));
+
+  // Check if break time overlaps with in-person availability
+  const breakOverlapsInPerson =
+    (breakStart.isValid() && inPersonStart.isValid() &&
+      (breakStart.isBetween(inPersonStart, inPersonEnd) ||
+        breakEnd.isBetween(inPersonStart, inPersonEnd))) ||
+    (inPersonStart.isBetween(breakStart, breakEnd) ||
+      inPersonEnd.isBetween(breakStart, breakEnd));
+
+  // Check if phone and in-person times overlap
+  const phoneOverlapsInPerson =
+    phoneStart.isValid() && inPersonStart.isValid() &&
+    ((phoneStart.isBetween(inPersonStart, inPersonEnd) ||
+      phoneEnd.isBetween(inPersonStart, inPersonEnd)) ||
+      (inPersonStart.isBetween(phoneStart, phoneEnd) ||
+        inPersonEnd.isBetween(phoneStart, phoneEnd)));
+
+  return {
+    hasOverlap: breakOverlapsPhone || breakOverlapsInPerson || phoneOverlapsInPerson,
+    message: breakOverlapsPhone
+      ? "Break time overlaps with Phone availability"
+      : breakOverlapsInPerson
+      ? "Break time overlaps with In Person availability"
+      : phoneOverlapsInPerson
+      ? "Phone and In Person availability times overlap"
+      : "",
+  };
+};
+
 export default function AvailabilityCalendar() {
   const {
     days,
@@ -76,9 +144,12 @@ export default function AvailabilityCalendar() {
     handleNextWeek,
     handlePreviousWeek,
     fetchInitialAvailability,
+    availabilities,
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [anchorEl1, setAnchorEl1] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl1);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [today, setToday] = useState(dayjs());
   const [changed, setChanged] = useState(false);
@@ -95,6 +166,9 @@ export default function AvailabilityCalendar() {
     message: "",
     severity: "error" as AlertProps["severity"],
   });
+  const handleClose = () => {
+    setAnchorEl1(null);
+  };
 
   const {
     control,
@@ -116,6 +190,34 @@ export default function AvailabilityCalendar() {
     },
   });
 
+  // Add these new states for availability form
+  const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [openEditAvailability, setOpenEditAvailability] = useState(false);
+  const [repeat, setRepeat] = useState(false);
+  const [checkedDays, setCheckedDays] = useState<string[]>([]);
+  const [weeklyAvailability, setWeeklyAvailability] = useState({});
+  const [transformedWeeklyAvailability, setTransformedWeeklyAvailability] =
+    useState(
+      mapAvailabilitiesToWeekly(availabilities, {
+        monday: "monday",
+        tuesday: "tuesday",
+        wednesday: "wednesday",
+        thursday: "thursday",
+        friday: "friday",
+        saturday: "saturday",
+        sunday: "sunday",
+      })
+    );
+  // console.log(transformedWeeklyAvailability);
+
+  const availabilityForm = useForm({
+    defaultValues: {
+      phone: { from: "", to: "" },
+      in_person: { from: "", to: "" },
+      break: { from: "", to: "" },
+    },
+  });
   useEffect(() => {
     if (startDate && changed) {
       setToday(dayjs(startDate));
@@ -254,6 +356,177 @@ export default function AvailabilityCalendar() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCheckboxChange = (day: string) => {
+    setCheckedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  };
+
+  const handleDayClick = (day: string, ) => {
+    // Get the selected day's data from the most up-to-date availability
+    const selectedDayData =
+      transformedWeeklyAvailability[dayMapping[day]] ||
+      //@ts-ignore
+      weeklyAvailability[dayMapping[day]];
+
+    // Reset form with the existing data - trim any ":00" seconds from time values
+    availabilityForm.reset({
+      phone: {
+        from: selectedDayData?.phone?.from ? selectedDayData.phone.from.replace(/:00$/, "") : "",
+        to: selectedDayData?.phone?.to ? selectedDayData.phone.to.replace(/:00$/, "") : "",
+      },
+      in_person: {
+        from: selectedDayData?.in_person?.from ? selectedDayData.in_person.from.replace(/:00$/, "") : "",
+        to: selectedDayData?.in_person?.to ? selectedDayData.in_person.to.replace(/:00$/, "") : "",
+      },
+      break: {
+        from: selectedDayData?.break?.from ? selectedDayData.break.from.replace(/:00$/, "") : "",
+        to: selectedDayData?.break?.to ? selectedDayData.break.to.replace(/:00$/, "") : "",
+      },
+    });
+
+    // Set available state based on whether there's any data
+    setAvailable(!!selectedDayData);
+
+    // Add the day to checkedDays if not already present
+    if (!checkedDays.includes(day)) {
+      setCheckedDays([day]); // Change this to only include the clicked day
+    }
+
+    setIsAvailabilityModalOpen(true);
+  };
+
+  const handleAvailabilityModalSubmit = (data: any) => {
+    // Validate times only if the day is available
+    if (available) {
+      // Check if any times are empty
+      const hasEmptyTimes = 
+        (!data.phone.from && data.phone.to) || 
+        (data.phone.from && !data.phone.to) ||
+        (!data.in_person.from && data.in_person.to) || 
+        (data.in_person.from && !data.in_person.to) ||
+        (!data.break.from && data.break.to) || 
+        (data.break.from && !data.break.to);
+
+      if (hasEmptyTimes) {
+        setSnackbar({
+          open: true,
+          message: "Please provide both start and end times for each selected availability",
+          severity: "error",
+        });
+        return;
+      }
+
+      // Check for invalid time ranges
+      const isPhoneValid = !data.phone.from || dayjs(`2024-01-01 ${data.phone.from}`).isBefore(dayjs(`2024-01-01 ${data.phone.to}`));
+      const isInPersonValid = !data.in_person.from || dayjs(`2024-01-01 ${data.in_person.from}`).isBefore(dayjs(`2024-01-01 ${data.in_person.to}`));
+      const isBreakValid = !data.break.from || dayjs(`2024-01-01 ${data.break.from}`).isBefore(dayjs(`2024-01-01 ${data.break.to}`));
+
+      if (!isPhoneValid || !isInPersonValid || !isBreakValid) {
+        setSnackbar({
+          open: true,
+          message: "End time must be after start time",
+          severity: "error",
+        });
+        return;
+      }
+
+      // Check for overlapping times
+      const { hasOverlap, message } = checkAvailabilityOverlap(
+        data.phone,
+        data.in_person,
+        data.break
+      );
+
+      if (hasOverlap) {
+        setSnackbar({
+          open: true,
+          message,
+          severity: "error",
+        });
+        return;
+      }
+    }
+
+    // Create a new availability object with the form data
+    const newAvailability = {
+      phone: data.phone,
+      in_person: data.in_person,
+      break: data.break,
+      is_available: available,
+    };
+
+    // Update the local weeklyAvailability state
+    const updatedAvailability = { ...transformedWeeklyAvailability };
+    checkedDays.forEach((day) => {
+      const dayKey = dayMapping[day].toLowerCase();
+      updatedAvailability[dayKey] = newAvailability;
+    });
+
+    // Update both states to ensure consistency
+    setWeeklyAvailability(updatedAvailability);
+    setTransformedWeeklyAvailability(updatedAvailability);
+
+    setIsAvailabilityModalOpen(false);
+
+  };
+
+  const handleSaveAvailability = async () => {
+    setLoading(true);
+    try {
+      const formData = availabilityForm.getValues();
+
+      const formattedAvailabilities = checkedDays.map((day) => ({
+        day_of_week: dayMapping[day].toLowerCase(),
+        phone_start_time: formData.phone.from + ":00",
+        phone_end_time: formData.phone.to + ":00",
+        in_person_start_time: formData.in_person.from + ":00",
+        in_person_end_time: formData.in_person.to + ":00",
+        break_start_time: formData.break.from + ":00",
+        break_end_time: formData.break.to + ":00",
+      }));
+
+      const payload = {
+        user_id: EStaticID.ID,
+        availabilities: formattedAvailabilities,
+      };
+
+      await postAvailabilityGeneral(payload);
+
+      // Refresh the availability data
+      await fetchInitialAvailability();
+
+      setOpenEditAvailability(false);
+      setCheckedDays([]); // Reset checked days after saving
+
+      setSnackbar({
+        open: true,
+        message: "Availability updated successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update availability:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to update availability",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimeSlot = (slot: any) => {
+    if (!slot || !slot.from || !slot.to) return "Unavailable";
+    return `${slot.from} - ${slot.to}`;
+  };
+
+  const handleEditAvailabilityClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setAnchorEl1(event.currentTarget);
   };
 
   return (
@@ -674,135 +947,106 @@ export default function AvailabilityCalendar() {
                 variant="bodyLargeMedium"
                 sx={{ fontWeight: "800", fontSize: "14px", lineHeight: "21px" }}
               >
-                Availability
+                {openEditAvailability ? "Edit Availability" : " Availability"}
               </Typography>
               <IconButton
+                onClick={handleEditAvailabilityClick}
                 sx={{ border: "1px solid #E2E8F0", borderRadius: "12px" }}
               >
                 <img src={otherIcons.dotsVertical} alt="dotsVertical" />
               </IconButton>
+              <Menu
+                id="day-menu"
+                anchorEl={anchorEl1}
+                open={open}
+                sx={{
+                  "& .MuiPaper-root": {
+                    backdropFilter: "blur(5px)",
+                    backgroundColor: "rgba(255, 255, 255, 0.3)",
+                    border: "1px solid #358FF7",
+                    p: 0,
+                    boxShadow: "0px 5px 10px 0px #0000001A",
+                    borderRadius: "16px",
+                  },
+                }}
+                onClose={handleClose}
+                MenuListProps={{
+                  "aria-labelledby": "day-menu-button",
+                }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setOpenEditAvailability(true);
+                    handleClose();
+                  }}
+                  sx={menuItemHoverStyle}
+                >
+                  <Box component="img" alt="edit" src={edit} />
+                  <Typography variant="bodySmallSemiBold" color="grey.600">
+                    Edit Availability
+                  </Typography>
+                </MenuItem>
+              </Menu>
             </Box>
 
-            <Box sx={{ mb: 1, display: "flex", width: "100%", gap: 0 }}>
-              <Box width={"50px"}>
-                {["", "M", "T", "W", "T", "F", "S", "S"].map((item, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      borderLeft: index !== 0 ? "1px solid #E2E8F0" : "",
-                      borderTop: index === 1 ? "1px solid #E2E8F0" : "",
-                      borderBottom: index === 7 ? "1px solid #E2E8F0" : "",
-                      borderTopLeftRadius: index === 1 ? "16px" : "",
-                      borderBottomLeftRadius: index === 7 ? "16px" : "",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "14px",
-                        width: "50px",
-                        height: "50px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "800",
-                        lineHeight: "21px",
-                        color: "#1A202C",
-                      }}
-                    >
-                      {item}
-                    </Typography>
-                  </Box>
-                ))}
+            <SetAvailabilityForm
+              availabilityForm={availabilityForm}
+              handleAvailabilitySubmit={availabilityForm.handleSubmit(
+                handleAvailabilityModalSubmit
+              )}
+              available={available}
+              setAvailable={setAvailable}
+              repeat={repeat}
+              setRepeat={setRepeat}
+              checkedDays={checkedDays}
+              handleCheckboxChange={handleCheckboxChange}
+              handleDayClick={openEditAvailability ? handleDayClick : undefined}
+              formatTimeSlot={formatTimeSlot}
+              weeklyAvailability={
+                 transformedWeeklyAvailability
+              }
+              dayMapping={dayMapping}
+              isAvailabilityModalOpen={isAvailabilityModalOpen}
+              setIsAvailabilityModalOpen={setIsAvailabilityModalOpen}
+              loading={loading}
+              snackbar={snackbar}
+              handleSnackbarClose={handleSnackbarClose}
+            />
+            {openEditAvailability && (
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  mt: 4,
+                  justifyContent: "space-around",
+                }}
+              >
+                <CommonButton
+                  variant="outlined"
+                  onClick={() => setOpenEditAvailability(false)}
+                  text="Cancel"
+                  sx={{
+                    borderColor: "grey.200",
+                    color: "grey.500",
+                    "&:hover": {
+                      borderColor: "grey.300",
+                    },
+                  }}
+                  fullWidth
+                />
+                <CommonButton
+                  variant="contained"
+                  text="Save"
+                  fullWidth
+                  onClick={handleSaveAvailability}
+                  disabled={loading}
+                />
               </Box>
-              <Box sx={{ display: "flex", width: "100%" }}>
-                {[
-                  {
-                    icon: availabilityIcons.phone,
-                    name: "Phone Availability",
-                    bgColor: "#EDF2F7",
-                  },
-                  {
-                    icon: availabilityIcons.in_person,
-                    name: "Inpatients",
-                    bgColor: "#E8F5FF",
-                  },
-                  {
-                    icon: availabilityIcons.break,
-                    name: "Break",
-                    bgColor: "#DFF1E6",
-                  },
-                ].map((item, itemIndex) => (
-                  <div style={{ width: "100%" }}>
-                    <Box
-                      sx={{
-                        border: "1px solid #E2E8F0",
-                        borderTopLeftRadius: "16px",
-                        borderTopRightRadius: "16px",
-                        backgroundColor: item.bgColor,
-                        height: "50px",
-                        textAlign: "center",
-                        gap: 1,
-                      }}
-                      key={itemIndex}
-                    >
-                      <img
-                        src={item.icon}
-                        alt={item.name}
-                        height={"18px"}
-                        width={"18px"}
-                        style={{ marginTop: "5px" }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: "8px",
-                          fontWeight: "600",
-                          lineHeight: "12px",
-                          color: "#1A202C",
-                        }}
-                      >
-                        {item.name}
-                      </Typography>
-                    </Box>
-
-                    {["M", "T", "W", "T", "F", "S", "S"].map((item, index) => (
-                      <Box
-                        key={item}
-                        sx={{
-                          borderLeft: "1px solid #0000001A",
-                          borderRight: "1px solid #0000001A",
-                          borderEndEndRadius:
-                            itemIndex === 2 && index === 6 ? "16px" : "",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontSize: "10px",
-                            width: "100%",
-                            height: "50px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: "500",
-                            lineHeight: "10px",
-                            color: "#1A202C",
-                            borderBottom:
-                              index === 6 ? "1px solid #E2E8F0" : "",
-                            borderEndEndRadius:
-                              itemIndex === 2 && index === 6 ? "16px" : "",
-                          }}
-                        >
-                          09:00 - 16:00
-                        </Typography>
-                      </Box>
-                    ))}
-                  </div>
-                ))}
-              </Box>
-            </Box>
+            )}
           </Box>
         </Paper>
 
-        <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
+        {/* <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
           <Button
             variant="outlined"
             startIcon={<img src={otherIcons.link} alt="link" />}
@@ -841,7 +1085,7 @@ export default function AvailabilityCalendar() {
           >
             Upload ICS
           </Button>
-        </Box>
+        </Box> */}
       </Box>
       <CommonDialog
         open={openDialog}
