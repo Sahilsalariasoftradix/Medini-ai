@@ -35,7 +35,7 @@ export const staticText = {
     inviteBUttonText: "Invite",
   },
   firestore:{
-    accountSucceededMessage:"Account created successfully.",
+    accountSucceededMessage:"A link has been sent to your email account. Please verify Your account from the link.",
     successLoggedInMessage:"Welcome back! You are successfully logged in.",
     passwordResetText: "Password reset email sent successfully. Check your inbox.",
     signInWithGoogleMessage: "Successfully signed in with Google!",
