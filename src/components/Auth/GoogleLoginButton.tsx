@@ -41,7 +41,7 @@ const GoogleSignInButton: React.FC<{setLoadingSocialLogin: (loading: boolean) =>
             overflow: "hidden",
             whiteSpace: "nowrap",
           }}
-          variant="bodyLargeMedium"
+          variant="bodyMediumMedium"
         >
           {text.googleSignInButton}
         </Typography>
