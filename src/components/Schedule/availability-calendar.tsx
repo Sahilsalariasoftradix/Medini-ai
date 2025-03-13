@@ -528,6 +528,17 @@ export default function AvailabilityCalendar() {
   ) => {
     setAnchorEl1(event.currentTarget);
   };
+  useEffect(() => {
+    setTransformedWeeklyAvailability(mapAvailabilitiesToWeekly(availabilities, {
+      monday: "monday",
+      tuesday: "tuesday",
+      wednesday: "wednesday",
+      thursday: "thursday",
+      friday: "friday",
+      saturday: "saturday",
+      sunday: "sunday",
+    }));
+  }, [availabilities]);
 
   return (
     <Box display={"grid"} gridTemplateColumns={"2fr 1.5fr"} gap={2}>
