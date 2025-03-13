@@ -10,6 +10,7 @@ import PageLoader from "../components/Loading/PageLoader";
 const AuthFlowLayout = () => {
   const { user, loading, userDetails } = useAuth();
 
+
   // ✅ Show loading state while userDetails are still loading
   if (loading || userDetails == undefined) {
     return <PageLoader />;

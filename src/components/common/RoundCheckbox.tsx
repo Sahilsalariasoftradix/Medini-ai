@@ -2,6 +2,7 @@ import React from "react";
 import Checkbox, { CheckboxProps } from "@mui/material/Checkbox";
 import { styled } from "@mui/material/styles";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import { Typography } from "@mui/material";
 
 // Styled components for the checkbox icons with dynamic sizes and colors
 const BpIcon = styled("span")<{
@@ -77,6 +78,8 @@ export function RoundCheckbox({
   checkedIcon = <BpCheckedIcon size={checkedIconSize} color={checkedColor} />,
   icon = <BpIcon size={iconSize} color={iconColor} />,
   control = <Checkbox />,
+  labelMargin = undefined,
+  activeLabel = undefined,
   ...props
 }: CheckboxProps & {
   label: string;
@@ -88,12 +91,17 @@ export function RoundCheckbox({
   checkedIcon?: React.ReactNode;
   icon?: React.ReactNode;
   control?: React.ReactNode;
+  labelMargin?: string;
+  activeLabel?: string;
 }) {
   return (
     <FormControlLabel
       labelPlacement={labelPlacement}
       control={React.cloneElement(control as React.ReactElement, {
-        sx: { "&:hover": { bgcolor: "transparent" } },
+        sx: {
+          "&:hover": { bgcolor: "transparent" },
+          padding: { lg: "9px", md: "9px", sm: 0, xs: 0 },
+        },
         disableRipple: true,
         color: "default",
         checkedIcon,
@@ -101,8 +109,20 @@ export function RoundCheckbox({
         inputProps: { "aria-label": label },
         ...props, // Pass all other props to the Checkbox component
       })}
-      label={label}
-      sx={{ margin: label ? undefined : 0 }} // Conditionally set marginLeft to 0 if label is not available
+      label={
+        <Typography
+          variant={activeLabel ? "bodyMediumExtraBold" : 'bodyMediumMedium'} 
+          sx={{ mb: { lg: "0px", md: "0px", sm: "5px", xs: "5px" } }}
+        >
+          {label}
+        </Typography>
+      }
+      sx={{
+        margin: label
+          ? { lg: labelMargin, md: labelMargin, sm: "5px", xs: "5px" }
+          : 0,
+        fontSize: { lg: "14px", md: "14px", sm: "12px", xs: "12px" },
+      }} // Conditionally set marginLeft to 0 if label is not available
     />
   );
 }

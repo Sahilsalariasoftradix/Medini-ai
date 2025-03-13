@@ -10,6 +10,7 @@ export enum EnVerifiedStatus {
 }
 export enum EnFirebaseCollections {
   USERS = "users",
+  COUNTERS = "counters",
   REASONS = "reasons",
   APPOINTMENTS = "appointments",
   CONTACTS = "contacts",
@@ -71,4 +72,15 @@ export enum  EnAvailability{
   WEEK= 'week',
   MONTH='month',
   DAY='day'
+}
+export enum EnSocialLogin {
+  GOOGLE = "google",
+  APPLE = "apple.com",
+}
+export enum EnCallPurposeOptions {
+  CANCEL = "Cancel Appointment",
+  BOOK = "Book Appointment",
+  RESCHEDULE = "Reschedule Appointment",
+  REQUESTINFO = "Request Info",
+  INFORMPATIENT = "Inform Patient",
 }

@@ -20,6 +20,10 @@ import link from "../assets/icons/link-icon.svg";
 import plus from "../assets/icons/plus-icon.svg";
 import dotsVertical from "../assets/icons/dots-vertical.svg";
 import calendar from "../assets/icons/calender-date.svg";
+import googleIcon from "../assets/icons/google-icon.svg";
+import appleIcon from "../assets/icons/apple-icon.svg";
+import hidden from "../assets/icons/eye-off.svg";
+import visibile from "../assets/icons/eye-on.svg";
 
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
@@ -62,3 +66,11 @@ export const otherIcons = {
 export const datePickerIcons = {
   calendar: calendar,
 };
+// Static Icons
+export const GoogleIcon = <img alt="edit" src={googleIcon} />;
+export const AppleIcon = <img alt="edit" src={appleIcon} />;
+export const VisibilityOff = <img alt="edit" src={hidden} />;
+export const Visibility = <img alt="edit" src={visibile} />;
+export const InPersonIcon = () => (
+  <img src={editAvailabilityIcons.clock} alt="icon" />
+);

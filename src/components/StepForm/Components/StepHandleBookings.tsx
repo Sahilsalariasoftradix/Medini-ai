@@ -44,10 +44,10 @@ const HandleBookings = () => {
       setTimeout(() => {
         goToNextStep();
       }, 1000);
-      setIsLoading(false);
     } catch (error) {
-      setIsLoading(false);
       console.error(errorSavingUserDetailsMessage, error);
+    }finally{
+      setIsLoading(false);
     }
   };
 

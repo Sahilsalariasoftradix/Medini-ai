@@ -18,8 +18,6 @@ export default function SearchInput({
   placeholder = "Search...",
   onChange,
   error,
-  //@ts-ignore
-  helperText,
   disabled,
   value,
   defaultValue,

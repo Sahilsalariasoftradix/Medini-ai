@@ -77,13 +77,13 @@ export interface IFilm {
 }
 
 export interface IAvailability {
-  day_of_week: string;
-  phone_start_time: string;
-  phone_end_time: string;
-  in_person_start_time: string;
-  in_person_end_time: string;
-  break_start_time: string;
-  break_end_time: string;
+  day_of_week: string | null;
+  phone_start_time: string | null;
+  phone_end_time: string | null;
+  in_person_start_time: string | null;
+  in_person_end_time: string | null;
+  break_start_time: string | null;
+  break_end_time: string | null;
 }
 export interface ISlotBookingFormProps {
   control: any;
@@ -126,11 +126,11 @@ export interface IAvailabilityRequest {
 }
 export interface IAvailabilitySpecific {
   user_id: number;
-  date: string,
-  phone_start_time: string,
-  phone_end_time: string,
-  in_person_start_time: string,
-  in_person_end_time: string
+  date: string;
+  phone_start_time: string;
+  phone_end_time: string;
+  in_person_start_time: string;
+  in_person_end_time: string;
 }
 export interface IAvailabilityPayload {
   user_id: number;
@@ -139,8 +139,8 @@ export interface IAvailabilityPayload {
   phone_end_time: string;
   in_person_start_time: string;
   in_person_end_time: string;
-  break_start_time?:string;
-  break_end_time?:string;
+  break_start_time?: string;
+  break_end_time?: string;
 }
 export interface IDayAvailability {
   date: string;
@@ -188,7 +188,7 @@ export interface IContact {
   firstName: string;
   lastName: string;
   phone: string;
-  user_id?:string
+  user_id?: string;
 }
 
 export interface IBooking {
@@ -236,5 +236,15 @@ export interface IAppointment {
   parentId?: string;
 }
 
+export interface ITimeSlot {
+  from: string;
+  to: string;
+}
+
+export interface IDayAvailability {
+  phone?: ITimeSlot;
+  in_person?: ITimeSlot;
+  break?: ITimeSlot;
+}
 
 export type IGetContacts = IContact[];
