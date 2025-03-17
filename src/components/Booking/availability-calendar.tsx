@@ -673,6 +673,7 @@ export default function AvailabilityCalendar() {
     // setDays,
     handleNextWeek,
     handlePreviousWeek,
+    fetchInitialAvailability
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -682,9 +683,9 @@ export default function AvailabilityCalendar() {
 
 
   const {userDetails} = useAuth();
-  // useEffect(() => {
-  //   fetchInitialAvailability();
-  // }, [fetchInitialAvailability]);
+  useEffect(() => {
+    fetchInitialAvailability();
+  }, [fetchInitialAvailability]);
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
   }, [startDate, endDate]);
