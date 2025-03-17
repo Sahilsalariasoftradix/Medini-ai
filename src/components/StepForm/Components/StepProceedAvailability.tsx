@@ -11,7 +11,7 @@ import {
   errorSavingUserDetailsMessage,
   userNotSignedInErrorMessage,
 } from "../../../utils/errorHandler";
-import { EnOnboardingStatus, EStaticID } from "../../../utils/enums";
+import { EnOnboardingStatus } from "../../../utils/enums";
 import { routes } from "../../../utils/links";
 import { useAuth } from "../../../store/AuthContext";
 import { useState } from "react";
@@ -93,7 +93,7 @@ const ProceedAvailability = () => {
     message: "",
     severity: "error",
   });
-
+  
   // Update the weeklyAvailability state with unique keys
   const [weeklyAvailability, setWeeklyAvailability] = useState<{
     [key: string]: IDayAvailability;
@@ -236,7 +236,7 @@ const ProceedAvailability = () => {
       resetForm();
       // Create the final payload
       const payload = {
-        user_id: EStaticID.ID, // Replace with actual user ID if needed
+        user_id: userDetails?.user_id, // Replace with actual user ID if needed
         availabilities,
       };
 

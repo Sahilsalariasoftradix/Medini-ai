@@ -66,6 +66,7 @@ export interface IHeaderProps {
   pageName: string;
 }
 export interface INewContactData {
+  // user_id: number;
   firstName: string;
   lastName: string;
   phone: string;
@@ -248,3 +249,10 @@ export interface IDayAvailability {
 }
 
 export type IGetContacts = IContact[];
+export interface IUser{
+first_name:string;
+last_name:string;
+email:string;
+phone:string;
+password:string;
+}

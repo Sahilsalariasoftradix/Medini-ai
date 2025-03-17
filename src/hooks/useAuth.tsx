@@ -32,6 +32,7 @@ export const SignUpSchema = z.object({
     .string()
     .min(1, formErrorMessage.lastName.required)
     .max(50, formErrorMessage.lastName.tooLong),
+
 });
 // Validation schema
 export const SignInSchema = z.object({

@@ -84,3 +84,7 @@ export enum EnCallPurposeOptions {
   REQUESTINFO = "Request Info",
   INFORMPATIENT = "Inform Patient",
 }
+export enum EnUserCreationStatus {
+  SUCCESS = "User created successfully",
+  FAILED = "User creation failed",
+}

@@ -33,7 +33,7 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import { overRideSvgColor } from "../../utils/filters";
 import CommonDialog from "../../components/common/CommonDialog";
 import { IFilm, IGetContacts } from "../../utils/Interfaces";
-import { getContacts } from "../../firebase/AuthService";
+import {  getContactsByUserId } from "../../firebase/AuthService";
 import { Controller, useForm } from "react-hook-form";
 import SearchInput from "../../components/common/SearchInput";
 import { sleep } from "../../components/Booking/availability-calendar";
@@ -44,6 +44,7 @@ import addIcon from "../../assets/icons/add-icn.svg";
 import AddContact from "../../components/Booking/Form/AddContact";
 import CustomSelect from "../../components/common/CustomSelect";
 import { EnCallPurposeOptions } from "../../utils/enums";
+import { useAuth } from "../../store/AuthContext";
 interface Data {
   id: number;
   contact: string;
@@ -996,9 +997,10 @@ const CallCenter = () => {
     setOpenContactSearch(false);
     setOptions([]);
   };
+  const {userDetails} = useAuth();
 
   const fetchContacts = async () => {
-    const contactList = await getContacts();
+    const contactList = await getContactsByUserId(userDetails?.user_id);
     setContacts(contactList);
   };
 

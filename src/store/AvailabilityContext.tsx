@@ -7,10 +7,11 @@ import {
   useCallback,
 } from "react";
 import { DaySchedule } from "../types/calendar";
-import { EnAvailability, EnBookings, EStaticID } from "../utils/enums";
+import { EnAvailability, EnBookings } from "../utils/enums";
 import dayjs from "dayjs";
 import { getAvailability } from "../api/userApi";
 import { IDayAvailability } from "../utils/Interfaces";
+import { useAuth } from "./AuthContext";
 
 interface AvailabilityContextType {
   days: DaySchedule[];
@@ -42,7 +43,8 @@ const AvailabilityContext = createContext<AvailabilityContextType | undefined>(
 const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
   const slots = [];
 
-  const timeToMinutes = (time: string): number => {
+  const timeToMinutes = (time: string | null): number => {
+    if (!time) return 0;
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
   };
@@ -77,18 +79,18 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
 
   // Get valid time ranges
   const phoneRange =
-    dayAvailability.phone_start_time !== "00:00:00"
+    dayAvailability.phone_start_time && dayAvailability.phone_start_time !== "00:00:00"
       ? {
-          start: timeToMinutes(dayAvailability.phone_start_time!),
-          end: timeToMinutes(dayAvailability.phone_end_time!),
+          start: timeToMinutes(dayAvailability.phone_start_time),
+          end: timeToMinutes(dayAvailability.phone_end_time),
         }
       : null;
 
   const inPersonRange =
-    dayAvailability.in_person_start_time !== "00:00:00"
+    dayAvailability.in_person_start_time && dayAvailability.in_person_start_time !== "00:00:00"
       ? {
-          start: timeToMinutes(dayAvailability.in_person_start_time!),
-          end: timeToMinutes(dayAvailability.in_person_end_time!),
+          start: timeToMinutes(dayAvailability.in_person_start_time),
+          end: timeToMinutes(dayAvailability.in_person_end_time),
         }
       : null;
 
@@ -157,15 +159,19 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
     null,
   ]);
   const [days, setDays] = useState<DaySchedule[]>([]);
-console.log(days)
   const [availabilities, setAvailabilities] = useState<IDayAvailability[]>([]);
   const [isInitialFetch, setIsInitialFetch] = useState(true);
   // const [appointmentId, setAppointmentId] = useState<string | null>(null);
-
+  const {userDetails} = useAuth();
   const fetchAvailabilityData = useCallback(async (date: Date) => {
+    if (!userDetails?.user_id) {
+      console.log("No user ID available for availability fetch");
+      return [];
+    }
+    
     try {
       const response = await getAvailability({
-        user_id: EStaticID.ID,
+        user_id: userDetails.user_id,
         date: dayjs(date).format("YYYY-MM-DD"),
         range: EnAvailability.WEEK,
       });
@@ -175,7 +181,7 @@ console.log(days)
       console.error("Error fetching availability:", error);
       return [];
     }
-  }, []);
+  }, [userDetails?.user_id]);
 
   const generateDaysFromRange = useCallback(
     (
@@ -229,6 +235,11 @@ console.log(days)
   );
 
   const fetchInitialAvailability = useCallback(async () => {
+    if (!userDetails?.user_id) {
+      console.log("Waiting for user details before fetching availability");
+      return;
+    }
+    
     try {
       const availability = await fetchAvailabilityData(new Date());
 
@@ -244,7 +255,7 @@ console.log(days)
       console.error("Error fetching initial availability:", error);
     }
     setIsInitialFetch(false);
-  }, [fetchAvailabilityData, generateDaysFromRange]);
+  }, [fetchAvailabilityData, generateDaysFromRange, userDetails?.user_id]);
 
   const refreshAvailability = useCallback(async () => {
     if (!dateRange[0]) return;
@@ -260,8 +271,10 @@ console.log(days)
   }, [dateRange, fetchAvailabilityData, generateDaysFromRange]);
 
   useEffect(() => {
-    fetchInitialAvailability();
-  }, [fetchInitialAvailability]);
+    if (userDetails?.user_id) {
+      fetchInitialAvailability();
+    }
+  }, [fetchInitialAvailability, userDetails?.user_id]);
 
   useEffect(() => {
     if (!isInitialFetch && dateRange[0] && dateRange[1]) {

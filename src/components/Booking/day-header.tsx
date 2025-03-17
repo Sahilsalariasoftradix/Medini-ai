@@ -8,7 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import CommonTextField from "../common/CommonTextField";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EnCancelAppointment, EStaticID } from "../../utils/enums";
+import { EnCancelAppointment } from "../../utils/enums";
 import { useState } from "react";
 import { availabilityIcons, InPersonIcon } from "../../utils/Icons";
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
@@ -21,6 +21,7 @@ import {
 import { IAvailabilityPayload, IDayHeaderProps } from "../../utils/Interfaces";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonSnackbar from "../common/CommonSnackbar";
+import { useAuth } from "../../store/AuthContext";
 
 export const menuItemHoverStyle = {
   "&:hover": {
@@ -143,7 +144,7 @@ export function DayHeader({
       );
 
       await postUnAvailabilitySpecific({
-        user_id: EStaticID.ID,
+        user_id: userDetails?.user_id,
         date: dayjs().set("date", date).format("YYYY-MM-DD"),
         phone_start_time: selectedAvailability?.phone_start_time,
         phone_end_time: selectedAvailability?.phone_end_time,
@@ -214,9 +215,9 @@ export function DayHeader({
   };
 
 
+  const {userDetails} = useAuth();
   const handleAvailabilitySubmit = async (data: AvailabilityFormData) => {
     setLoading(true);
-
     // Convert string times to dayjs objects for comparison
     const phoneStart = dayjs(data.phone.from, "HH:mm");
     const phoneEnd = dayjs(data.phone.to, "HH:mm");
@@ -269,7 +270,7 @@ export function DayHeader({
 
     try {
       const payload: IAvailabilityPayload = {
-        user_id: EStaticID.ID,
+        user_id: userDetails?.user_id,
         date: dayjs().set("date", date).format("YYYY-MM-DD"),
         phone_start_time: `${data.phone.from}:00`,
         phone_end_time: `${data.phone.to}:00`,

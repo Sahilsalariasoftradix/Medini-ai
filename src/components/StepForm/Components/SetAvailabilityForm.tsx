@@ -48,8 +48,7 @@ const SetAvailabilityForm = ({
   snackbar: any;
   handleSnackbarClose: any;
 }) => {
-    console.log(weeklyAvailability,'ll')
-    console.log(dayMapping,'dayMapping')
+  
   return (
     <Box sx={{ mt: 2, display: "flex", width: "100%", gap: 0 }}>
       <Box width={"50px"}>
@@ -163,7 +162,7 @@ const SetAvailabilityForm = ({
                         : itemIndex === 1
                         ? weeklyAvailability[dayMapping[day]]?.in_person
                         : weeklyAvailability[dayMapping[day]]?.break;
-                        console.log(weeklyAvailability[dayMapping[day]])
+                  
 
                     return formatTimeSlot(slot) === "Unavailable" ? (
                       <Box
