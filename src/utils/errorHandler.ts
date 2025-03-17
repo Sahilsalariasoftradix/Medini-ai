@@ -72,21 +72,24 @@ export const resetPasswordEmailAlreadyRegisteredMessage =
 // Auth forms error messages
 export const formErrorMessage = {
   email: {
-    required: "Email address is required.",
-    invalid: "Please enter a valid email address.",
+    required: "Email is required",
+    invalid: "Invalid email format",
   },
   firstName: {
-    required: "First name is required.",
-    tooLong: "First name is too long.",
+    required: "First name is required",
+    tooLong: "First name is too long",
   },
   lastName: {
-    required: "Last name is required.",
-    tooLong: "Last name is too long.",
+    required: "Last name is required",
+    tooLong: "Last name is too long",
   },
   password: {
-    required: "Password is required.",
-    tooShort: "Minimum 8 characters required.",
-    errorMessage:
-      "Password must contain 8 characters (at least 1 uppercase, 1 lowercase, 1 number, and 1 special character).",
+    required: "Password is required",
+    tooShort: "Password must be at least 8 characters",
+    errorMessage: "Invalid password format",
+  },
+  phone: {
+    required: "Phone number is required",
+    tooLong: "Phone number is too long",
   },
 };

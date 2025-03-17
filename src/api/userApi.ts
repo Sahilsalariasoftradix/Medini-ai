@@ -5,6 +5,7 @@ import {
   ICompanyDetails,
   IGetAvailability,
   IUpdateBooking,
+  IUser,
   TGetBooking,
 } from "../utils/Interfaces";
 import apiClient from "./apiClient";
@@ -125,5 +126,14 @@ export const cancelBooking = async (bookingID: number) => {
   } catch (error) {
     console.error(error);
     throw error;
+  }
+};
+export const createUser = async (userData: IUser) => {
+  try {
+    const response = await apiClient.post("users/create", userData);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error creating user:", error);
+    throw new Error(error.response?.data?.error || "User creation failed.");
   }
 };

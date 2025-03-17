@@ -175,27 +175,25 @@ export const getReasons = async () => {
     throw new Error(errorFetchingReasonsMessageText); // Custom error message for failed fetching operation
   }
 };
-//* Function to fetch all reasons from the Firestore 'reasons' collection
-export const getContacts = async (): Promise<IContact[]> => {
-  // Get a reference to the Firestore database
+//* Function to fetch all contacts from the Firestore 'contacts' collection
+export const getContactsByUserId = async (userId: string): Promise<IContact[]> => {
   const db = getFirestore();
-  // Reference to the 'reasons' collection in Firestore
   const contactsCollection = collection(db, EnFirebaseCollections.CONTACTS);
 
   try {
-    // Fetch all documents from the 'reasons' collection
-    const snapshot = await getDocs(contactsCollection);
-    // Map through the documents in the snapshot and create an array of reason objects
+    // Query Firestore to filter contacts by user_id
+    const contactsQuery = query(contactsCollection, where("user_id", "==", userId));
+    const snapshot = await getDocs(contactsQuery);
+
+    // Map through the documents and return the filtered contacts
     const contactsList = snapshot.docs.map((doc) => ({
-      ...doc.data(), // Include the rest of the document's data
+      ...doc.data(), // Spread document data
     }));
-    // Return the list of reasons
-    return contactsList as any;
+
+    return contactsList as IContact[];
   } catch (error) {
-    // Log an error message if something goes wrong during the fetch
-    console.error("error fetching contacts:", error);
-    // Rethrow the error with a custom error message
-    throw new Error("could not fetch contacts"); // Custom error message for failed fetching operation
+    console.error("Error fetching contacts:", error);
+    throw new Error("Could not fetch contacts for the given user ID");
   }
 };
 
@@ -226,7 +224,8 @@ export const signUpWithEmail = async (
   email: string,
   password: string,
   firstName: string,
-  lastName: string
+  lastName: string,
+  user_id: number
 ): Promise<string | void> => {
   try {
     // Step 1: Create user in Firebase Authentication
@@ -240,12 +239,13 @@ export const signUpWithEmail = async (
 
     // Step 2: Generate auto-incrementing `prop` ID using a Firestore transaction
 
-    const newPropId = await generateSequentialId(EnFirebaseCollections.USERS);
+   
 
     // Step 3: Save user details in Firestore
     const userData = {
       id: user.uid,
-      uuid: newPropId, // Auto-incremented ID
+      // uuid: newPropId, // Auto-incremented ID
+      user_id:user_id,
       email: user.email,
       firstName,
       lastName,

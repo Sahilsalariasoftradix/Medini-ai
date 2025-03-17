@@ -21,7 +21,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
-import { EnAvailability, EnBookings, EStaticID } from "../../utils/enums";
+import { EnAvailability, EnBookings } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -53,6 +53,7 @@ import { isPastDateTime, mapAvailabilitiesToWeekly } from "../../utils/common";
 import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
 import { menuItemHoverStyle } from "../Booking/day-header";
 import CommonButton from "../common/CommonButton";
+import { useAuth } from "../../store/AuthContext";
 
 dayjs.extend(isSameOrBefore);
 
@@ -101,30 +102,34 @@ const checkAvailabilityOverlap = (
 
   // Check if break time overlaps with phone availability
   const breakOverlapsPhone =
-    (breakStart.isValid() && phoneStart.isValid() &&
+    (breakStart.isValid() &&
+      phoneStart.isValid() &&
       (breakStart.isBetween(phoneStart, phoneEnd) ||
         breakEnd.isBetween(phoneStart, phoneEnd))) ||
-    (phoneStart.isBetween(breakStart, breakEnd) ||
-      phoneEnd.isBetween(breakStart, breakEnd));
+    phoneStart.isBetween(breakStart, breakEnd) ||
+    phoneEnd.isBetween(breakStart, breakEnd);
 
   // Check if break time overlaps with in-person availability
   const breakOverlapsInPerson =
-    (breakStart.isValid() && inPersonStart.isValid() &&
+    (breakStart.isValid() &&
+      inPersonStart.isValid() &&
       (breakStart.isBetween(inPersonStart, inPersonEnd) ||
         breakEnd.isBetween(inPersonStart, inPersonEnd))) ||
-    (inPersonStart.isBetween(breakStart, breakEnd) ||
-      inPersonEnd.isBetween(breakStart, breakEnd));
+    inPersonStart.isBetween(breakStart, breakEnd) ||
+    inPersonEnd.isBetween(breakStart, breakEnd);
 
   // Check if phone and in-person times overlap
   const phoneOverlapsInPerson =
-    phoneStart.isValid() && inPersonStart.isValid() &&
-    ((phoneStart.isBetween(inPersonStart, inPersonEnd) ||
-      phoneEnd.isBetween(inPersonStart, inPersonEnd)) ||
-      (inPersonStart.isBetween(phoneStart, phoneEnd) ||
-        inPersonEnd.isBetween(phoneStart, phoneEnd)));
+    phoneStart.isValid() &&
+    inPersonStart.isValid() &&
+    (phoneStart.isBetween(inPersonStart, inPersonEnd) ||
+      phoneEnd.isBetween(inPersonStart, inPersonEnd) ||
+      inPersonStart.isBetween(phoneStart, phoneEnd) ||
+      inPersonEnd.isBetween(phoneStart, phoneEnd));
 
   return {
-    hasOverlap: breakOverlapsPhone || breakOverlapsInPerson || phoneOverlapsInPerson,
+    hasOverlap:
+      breakOverlapsPhone || breakOverlapsInPerson || phoneOverlapsInPerson,
     message: breakOverlapsPhone
       ? "Break time overlaps with Phone availability"
       : breakOverlapsInPerson
@@ -209,7 +214,21 @@ export default function AvailabilityCalendar() {
         sunday: "sunday",
       })
     );
-  // console.log(transformedWeeklyAvailability);
+    const {userDetails} = useAuth()
+  // Add this useEffect to update transformedWeeklyAvailability when availabilities changes
+  useEffect(() => {
+    setTransformedWeeklyAvailability(
+      mapAvailabilitiesToWeekly(availabilities, {
+        monday: "monday",
+        tuesday: "tuesday",
+        wednesday: "wednesday",
+        thursday: "thursday",
+        friday: "friday",
+        saturday: "saturday",
+        sunday: "sunday",
+      })
+    );
+  }, [availabilities]);
 
   const availabilityForm = useForm({
     defaultValues: {
@@ -239,7 +258,7 @@ export default function AvailabilityCalendar() {
     try {
       setLoading(true);
       const response = await getBookings({
-        user_id: EStaticID.ID,
+        user_id:userDetails?.user_id,
         date: dayjs(today).format("YYYY-MM-DD"),
         range: EnAvailability.DAY,
       });
@@ -336,7 +355,7 @@ export default function AvailabilityCalendar() {
         });
       } else {
         await createBooking({
-          user_id: EStaticID.ID,
+          user_id: userDetails?.user_id,
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
           end_time: endTimeFormatted,
@@ -364,7 +383,7 @@ export default function AvailabilityCalendar() {
     );
   };
 
-  const handleDayClick = (day: string, ) => {
+  const handleDayClick = (day: string) => {
     // Get the selected day's data from the most up-to-date availability
     const selectedDayData =
       transformedWeeklyAvailability[dayMapping[day]] ||
@@ -374,16 +393,28 @@ export default function AvailabilityCalendar() {
     // Reset form with the existing data - trim any ":00" seconds from time values
     availabilityForm.reset({
       phone: {
-        from: selectedDayData?.phone?.from ? selectedDayData.phone.from.replace(/:00$/, "") : "",
-        to: selectedDayData?.phone?.to ? selectedDayData.phone.to.replace(/:00$/, "") : "",
+        from: selectedDayData?.phone?.from
+          ? selectedDayData.phone.from.replace(/:00$/, "")
+          : "",
+        to: selectedDayData?.phone?.to
+          ? selectedDayData.phone.to.replace(/:00$/, "")
+          : "",
       },
       in_person: {
-        from: selectedDayData?.in_person?.from ? selectedDayData.in_person.from.replace(/:00$/, "") : "",
-        to: selectedDayData?.in_person?.to ? selectedDayData.in_person.to.replace(/:00$/, "") : "",
+        from: selectedDayData?.in_person?.from
+          ? selectedDayData.in_person.from.replace(/:00$/, "")
+          : "",
+        to: selectedDayData?.in_person?.to
+          ? selectedDayData.in_person.to.replace(/:00$/, "")
+          : "",
       },
       break: {
-        from: selectedDayData?.break?.from ? selectedDayData.break.from.replace(/:00$/, "") : "",
-        to: selectedDayData?.break?.to ? selectedDayData.break.to.replace(/:00$/, "") : "",
+        from: selectedDayData?.break?.from
+          ? selectedDayData.break.from.replace(/:00$/, "")
+          : "",
+        to: selectedDayData?.break?.to
+          ? selectedDayData.break.to.replace(/:00$/, "")
+          : "",
       },
     });
 
@@ -402,27 +433,40 @@ export default function AvailabilityCalendar() {
     // Validate times only if the day is available
     if (available) {
       // Check if any times are empty
-      const hasEmptyTimes = 
-        (!data.phone.from && data.phone.to) || 
+      const hasEmptyTimes =
+        (!data.phone.from && data.phone.to) ||
         (data.phone.from && !data.phone.to) ||
-        (!data.in_person.from && data.in_person.to) || 
+        (!data.in_person.from && data.in_person.to) ||
         (data.in_person.from && !data.in_person.to) ||
-        (!data.break.from && data.break.to) || 
+        (!data.break.from && data.break.to) ||
         (data.break.from && !data.break.to);
 
       if (hasEmptyTimes) {
         setSnackbar({
           open: true,
-          message: "Please provide both start and end times for each selected availability",
+          message:
+            "Please provide both start and end times for each selected availability",
           severity: "error",
         });
         return;
       }
 
       // Check for invalid time ranges
-      const isPhoneValid = !data.phone.from || dayjs(`2024-01-01 ${data.phone.from}`).isBefore(dayjs(`2024-01-01 ${data.phone.to}`));
-      const isInPersonValid = !data.in_person.from || dayjs(`2024-01-01 ${data.in_person.from}`).isBefore(dayjs(`2024-01-01 ${data.in_person.to}`));
-      const isBreakValid = !data.break.from || dayjs(`2024-01-01 ${data.break.from}`).isBefore(dayjs(`2024-01-01 ${data.break.to}`));
+      const isPhoneValid =
+        !data.phone.from ||
+        dayjs(`2024-01-01 ${data.phone.from}`).isBefore(
+          dayjs(`2024-01-01 ${data.phone.to}`)
+        );
+      const isInPersonValid =
+        !data.in_person.from ||
+        dayjs(`2024-01-01 ${data.in_person.from}`).isBefore(
+          dayjs(`2024-01-01 ${data.in_person.to}`)
+        );
+      const isBreakValid =
+        !data.break.from ||
+        dayjs(`2024-01-01 ${data.break.from}`).isBefore(
+          dayjs(`2024-01-01 ${data.break.to}`)
+        );
 
       if (!isPhoneValid || !isInPersonValid || !isBreakValid) {
         setSnackbar({
@@ -470,7 +514,6 @@ export default function AvailabilityCalendar() {
     setTransformedWeeklyAvailability(updatedAvailability);
 
     setIsAvailabilityModalOpen(false);
-
   };
 
   const handleSaveAvailability = async () => {
@@ -480,16 +523,24 @@ export default function AvailabilityCalendar() {
 
       const formattedAvailabilities = checkedDays.map((day) => ({
         day_of_week: dayMapping[day].toLowerCase(),
-        phone_start_time: formData.phone.from + ":00",
-        phone_end_time: formData.phone.to + ":00",
-        in_person_start_time: formData.in_person.from + ":00",
-        in_person_end_time: formData.in_person.to + ":00",
-        break_start_time: formData.break.from + ":00",
-        break_end_time: formData.break.to + ":00",
+        phone_start_time: formData.phone.from
+          ? formData.phone.from + ":00"
+          : null,
+        phone_end_time: formData.phone.to ? formData.phone.to + ":00" : null,
+        in_person_start_time: formData.in_person.from
+          ? formData.in_person.from + ":00"
+          : null,
+        in_person_end_time: formData.in_person.to
+          ? formData.in_person.to + ":00"
+          : null,
+        break_start_time: formData.break.from
+          ? formData.break.from + ":00"
+          : null,
+        break_end_time: formData.break.to ? formData.break.to + ":00" : null,
       }));
 
       const payload = {
-        user_id: EStaticID.ID,
+        user_id: userDetails?.user_id,
         availabilities: formattedAvailabilities,
       };
 
@@ -520,7 +571,13 @@ export default function AvailabilityCalendar() {
 
   const formatTimeSlot = (slot: any) => {
     if (!slot || !slot.from || !slot.to) return "Unavailable";
-    return `${slot.from} - ${slot.to}`;
+
+    const formatTime = (time: string) => {
+      // Convert only if time is in HH:mm:ss format
+      return time.match(/^\d{2}:\d{2}:\d{2}$/) ? time.slice(0, -3) : time;
+    };
+
+    return `${formatTime(slot.from)} - ${formatTime(slot.to)}`;
   };
 
   const handleEditAvailabilityClick = (
@@ -528,20 +585,9 @@ export default function AvailabilityCalendar() {
   ) => {
     setAnchorEl1(event.currentTarget);
   };
-  useEffect(() => {
-    setTransformedWeeklyAvailability(mapAvailabilitiesToWeekly(availabilities, {
-      monday: "monday",
-      tuesday: "tuesday",
-      wednesday: "wednesday",
-      thursday: "thursday",
-      friday: "friday",
-      saturday: "saturday",
-      sunday: "sunday",
-    }));
-  }, [availabilities]);
 
   return (
-    <Box display={"grid"} gridTemplateColumns={"2fr 1.5fr"} gap={2}>
+    <Box display={"grid"} gridTemplateColumns={"2fr 1fr"} gap={2}>
       <Box>
         <Box
           sx={{
@@ -1013,9 +1059,7 @@ export default function AvailabilityCalendar() {
               handleCheckboxChange={handleCheckboxChange}
               handleDayClick={openEditAvailability ? handleDayClick : undefined}
               formatTimeSlot={formatTimeSlot}
-              weeklyAvailability={
-                 transformedWeeklyAvailability
-              }
+              weeklyAvailability={transformedWeeklyAvailability}
               dayMapping={dayMapping}
               isAvailabilityModalOpen={isAvailabilityModalOpen}
               setIsAvailabilityModalOpen={setIsAvailabilityModalOpen}

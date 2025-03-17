@@ -59,11 +59,10 @@ const AddContact = ({
       email: "",
     },
   });
-
   const onSubmit: SubmitHandler<ContactData> = async (data) => {
     setIsLoading(true);
     try {
-      await createNewContact(data);
+      await createNewContact({...data});
       setSnackbarOpen(true);
       setSnackbarSeverity("success");
       setSnackbarMessage("Contact created successfully!");

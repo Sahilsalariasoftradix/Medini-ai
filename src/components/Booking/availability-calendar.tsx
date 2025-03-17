@@ -19,7 +19,7 @@ import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
-import { EnAvailability, EnBookings, EStaticID } from "../../utils/enums";
+import { EnAvailability, EnBookings } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonTextField from "../common/CommonTextField";
 import DatePicker from "react-datepicker";
@@ -40,6 +40,7 @@ import { cancelBooking, createBooking, updateBooking } from "../../api/userApi";
 import { getBookings } from "../../api/userApi";
 import { DaySchedule } from "../../types/calendar";
 import { isPastDateTime, mapApiStatusToEnum } from "../../utils/common";
+import { useAuth } from "../../store/AuthContext";
 
 dayjs.extend(isSameOrBefore);
 
@@ -283,6 +284,7 @@ const TimeSlot = ({
     );
   };
   const isPastDate = isPastDateTime(date, time);
+  const {userDetails} = useAuth();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (disabled || isPastDate) {
       return;
@@ -404,7 +406,7 @@ const TimeSlot = ({
         });
       } else {
         await createBooking({
-          user_id: EStaticID.ID,
+          user_id: userDetails?.user_id,
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
           end_time: endTimeFormatted,
@@ -676,6 +678,10 @@ export default function AvailabilityCalendar() {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [loading, setLoading] = useState(false);
+
+
+
+  const {userDetails} = useAuth();
   // useEffect(() => {
   //   fetchInitialAvailability();
   // }, [fetchInitialAvailability]);
@@ -687,7 +693,7 @@ export default function AvailabilityCalendar() {
     try {
       setLoading(true);
       const response = await getBookings({
-        user_id: EStaticID.ID,
+        user_id:userDetails?.user_id,
         date: dayjs(startDate).format("YYYY-MM-DD"),
         range: EnAvailability.WEEK,
       });
@@ -698,7 +704,6 @@ export default function AvailabilityCalendar() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchBookings();
   }, [startDate]); // Depend only on startDate

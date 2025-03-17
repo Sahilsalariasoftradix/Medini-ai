@@ -36,9 +36,16 @@ import { getMaxHeight } from "../../../utils/common";
 import { Visibility, VisibilityOff } from "../../../utils/Icons";
 import SocialLogin from "../SocialLogin";
 import { useState } from "react";
+import { IUser } from "../../../utils/Interfaces";
+import { createUser } from "../../../api/userApi";
+import { EnUserCreationStatus } from "../../../utils/enums";
+import "react-international-phone/style.css";
+import { MuiPhone } from "./CustomPhoneInput";
 
 const SignUpForm = () => {
   const [loadingSocialLogin, setLoadingSocialLogin] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [formSubmitted, setFormSubmitted] = useState(false);
   // Validate hook
   const {
     register,
@@ -66,30 +73,58 @@ const SignUpForm = () => {
 
   // Form submission handler
   const onSubmit: SubmitHandler<SignUpSchemaType> = async (data) => {
+    setFormSubmitted(true);
+    if ( phone.length < 10) {
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Please enter a valid phone number");
+      setSnackbarOpen(true);
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      // Calling signUpWithEmail with email and password from form data
-      const successMessage = await signUpWithEmail(
-        data.email,
-        data.password,
-        data.firstName,
-        data.lastName
-      );
-      setSnackbarSeverity("success");
-      setSnackbarMessage(successMessage || successfullyRegisteredMessage);
-      setSnackbarOpen(true);
-      reset();
-      setIsLoading(false);
-      setTimeout(() => {
-        navigate(routes.auth.signIn);
-      }, 2000);
+      const userData: IUser = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        phone: phone,
+        password: data.password,
+      };
+
+      const responseData = await createUser(userData);
+
+      // Ensure response is valid before proceeding
+      if (
+        responseData &&
+        responseData.message === EnUserCreationStatus.SUCCESS
+      ) {
+     
+        const successMessage = await signUpWithEmail(
+          data.email,
+          data.password,
+          data.firstName,
+          data.lastName,
+          responseData.user.user_id
+        );
+        setSnackbarSeverity("success");
+        setSnackbarMessage(successMessage || successfullyRegisteredMessage);
+        setSnackbarOpen(true);
+        reset();
+        setIsLoading(false);
+        setTimeout(() => {
+          navigate(routes.auth.signIn);
+        }, 2000);
+      } else {
+        throw new Error("Failed to create user.");
+      }
     } catch (error: any) {
       setSnackbarSeverity("error");
       setSnackbarMessage(error.message || unexpectedErrorMessage);
-      setIsLoading(false);
       setSnackbarOpen(true);
+      setIsLoading(false);
     }
   };
+
   return (
     <Box
       display={"flex"}
@@ -158,7 +193,13 @@ const SignUpForm = () => {
                   />
                 </Grid>
               </Grid>
-
+              <Box mt={3}>
+                <MuiPhone 
+                  error={formSubmitted && (!phone || phone.length < 10)} 
+                  value={phone} 
+                  onChange={(phone) => setPhone(phone)} 
+                />
+              </Box>
               <Box mt={3}>
                 <CommonTextField
                   placeholder="Email"
