@@ -9,6 +9,7 @@ import { z } from "zod";
 import { formErrorMessage } from "../../../utils/errorHandler";
 import { useAuthHook } from "../../../hooks/useAuth";
 import CommonSnackbar from "../../common/CommonSnackbar";
+import { useAuth } from "../../../store/AuthContext";
 
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -59,11 +60,12 @@ const AddContact = ({
       email: "",
     },
   });
+  const {userDetails} = useAuth();
 
   const onSubmit: SubmitHandler<ContactData> = async (data) => {
     setIsLoading(true);
     try {
-      await createNewContact(data);
+      await createNewContact({...data,user_id:userDetails?.user_id});
       setSnackbarOpen(true);
       setSnackbarSeverity("success");
       setSnackbarMessage("Contact created successfully!");

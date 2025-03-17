@@ -10,6 +10,7 @@ import {
 } from "../utils/Interfaces";
 import apiClient from "./apiClient";
 
+// Company details posting API
 export const postCompanyDetails = async (companyData: ICompanyDetails) => {
   try {
     const response = await apiClient.post("company", companyData);
@@ -19,6 +20,7 @@ export const postCompanyDetails = async (companyData: ICompanyDetails) => {
     throw error;
   }
 };
+// Posting the availability in general API
 export const postAvailabilityGeneral = async (
   availabilityData: IAvailabilityRequest
 ): Promise<any> => {
@@ -33,6 +35,7 @@ export const postAvailabilityGeneral = async (
     throw error;
   }
 };
+// Changing the availability in specific dates API
 export const postAvailabilitySpecific = async (
   availabilityData: IAvailabilitySpecific
 ): Promise<any> => {
@@ -47,6 +50,7 @@ export const postAvailabilitySpecific = async (
     throw error;
   }
 };
+// Changing the unavailability in specific dates API
 export const postUnAvailabilitySpecific = async (
   availabilityData: IAvailabilitySpecific
 ): Promise<any> => {
@@ -61,7 +65,7 @@ export const postUnAvailabilitySpecific = async (
     throw error;
   }
 };
-
+// Getting the company unique number API
 export const getCompanyUniqueNumber = async (uid: number) => {
   try {
     const response = await apiClient.get(`company/phone/${uid}`);
@@ -71,7 +75,7 @@ export const getCompanyUniqueNumber = async (uid: number) => {
     throw error;
   }
 };
-
+// Getting the availabilities API
 export const getAvailability = async (data: IGetAvailability) => {
   try {
     const resp = await apiClient.get(
@@ -83,7 +87,7 @@ export const getAvailability = async (data: IGetAvailability) => {
     throw error;
   }
 };
-
+// Getting the bookings API
 export const getBookings = async (bookings: TGetBooking) => {
   try {
     const resp = await apiClient.get(
@@ -95,7 +99,7 @@ export const getBookings = async (bookings: TGetBooking) => {
     throw error;
   }
 };
-
+// Updating a booking API
 export const updateBooking = async (booking: IUpdateBooking) => {
   try {
     const resp = await apiClient.post(`bookings/update`, booking);
@@ -105,7 +109,7 @@ export const updateBooking = async (booking: IUpdateBooking) => {
     throw error;
   }
 };
-
+// Creating a booking API
 export const createBooking = async (booking: IBooking) => {
   try {
     const resp = await apiClient.post(`booking`, booking);
@@ -115,7 +119,7 @@ export const createBooking = async (booking: IBooking) => {
     throw error;
   }
 };
-
+// Cancelling the booking API
 export const cancelBooking = async (bookingID: number) => {
   try {
     const bookingId = {
@@ -128,6 +132,8 @@ export const cancelBooking = async (bookingID: number) => {
     throw error;
   }
 };
+
+// Creating the new user API
 export const createUser = async (userData: IUser) => {
   try {
     const response = await apiClient.post("users/create", userData);

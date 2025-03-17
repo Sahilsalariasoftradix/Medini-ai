@@ -66,7 +66,7 @@ export interface IHeaderProps {
   pageName: string;
 }
 export interface INewContactData {
-  // user_id: number;
+  user_id: number;
   firstName: string;
   lastName: string;
   phone: string;
