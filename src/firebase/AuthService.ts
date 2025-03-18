@@ -338,7 +338,8 @@ export const resetPasswordWithEmail = async (
 
 //* Google sign-in function using Firebase Authentication
 export const signInWithGoogle = async (
-  setUserDetails: (details: any) => void
+  setUserDetails: (details: any) => void,
+  setLoading: (loading: boolean) => void
 ): Promise<string | void> => {
   try {
     const provider = new GoogleAuthProvider();
@@ -347,7 +348,7 @@ export const signInWithGoogle = async (
     const user = result.user;
 
     if (!user) throw new Error("Google sign-in failed");
-
+    setLoading(true);
     const userRef = doc(
       firebaseFirestore,
       EnFirebaseCollections.USERS,
