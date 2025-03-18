@@ -11,15 +11,13 @@ const GoogleSignInButton = () => {
   const [loading, setLoading] = useState(false);
   const { setUserDetails } = useAuth(); // ✅ Get setUserDetails from context
   const handleGoogleSignIn = async () => {
-    setLoading(true);
     try {
-      await signInWithGoogle(setUserDetails);
+      await signInWithGoogle(setUserDetails, setLoading);
       setTimeout(() => {
         navigate(routes.sidebar.bookings.link);
-      }, 2000);
+      }, 500);
     } catch (error: any) {
       console.error("Google Sign-In Failed:", error.message);
-      setLoading(false);
     }
   };
 
