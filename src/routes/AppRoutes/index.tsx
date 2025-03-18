@@ -21,6 +21,7 @@ import Booking from "../../pages/booking/Booking";
 import PrivacyPolicyPage from "../../pages/PrivacyPolicy";
 import NormalLayout from "../../layouts/NormalLayout";
 import TermsOfServicePage from "../../pages/TermsOfService";
+import Messages from "../../components/Messages";
 
 const AppRoutes: React.FC = () => {
   const { loading } = useAuth();
@@ -60,7 +61,8 @@ const AppRoutes: React.FC = () => {
         {/* Protected Routes (Only for Authenticated & Verified Users) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            <Route path={routes.dashboard.home} element={<Booking />} />
+          <Route path={routes.dashboard.home} element={<Booking />} />
+          <Route path={routes.sidebar.messages.link} element={<Messages />} />
             <Route path={routes.sidebar.schedule.link} element={<Schedule />} />
             <Route
               path={routes.sidebar.callCenter.link}

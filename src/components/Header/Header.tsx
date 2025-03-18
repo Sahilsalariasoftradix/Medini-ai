@@ -14,7 +14,8 @@ import { IHeaderProps } from "../../utils/Interfaces";
 import bell from "../../assets/icons/notifications.svg";
 import { useState } from "react";
 import down from "../../assets/icons/arrow-down.svg";
-import user from "../../assets/images/mediniuser.png";
+// import profile1 from "../../assets/images/profile-1.svg";
+import profile2 from "../../assets/images/profile-2.svg";
 import { useAuth } from "../../store/AuthContext";
 import { useLocation } from "react-router-dom";
 import { getPageNameFromPath } from "../../utils/common";
@@ -73,7 +74,7 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
                   width: 32,
                   height: 32,
                 }}
-                src={user}
+                src={profile2}
               />
               <Typography variant="bodyLargeExtraBold" color="secondary.main">
                 {userInfo ? userInfo.firstName : "Username"}

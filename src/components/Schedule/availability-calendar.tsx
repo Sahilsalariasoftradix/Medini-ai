@@ -201,7 +201,7 @@ export default function AvailabilityCalendar() {
   const [openEditAvailability, setOpenEditAvailability] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [checkedDays, setCheckedDays] = useState<string[]>([]);
-  const [weeklyAvailability, setWeeklyAvailability] = useState({});
+  const [weeklyAvailability, setWeeklyAvailability] = useState<any>({});
   const [transformedWeeklyAvailability, setTransformedWeeklyAvailability] =
     useState(
       mapAvailabilitiesToWeekly(availabilities, {
@@ -519,25 +519,37 @@ export default function AvailabilityCalendar() {
   const handleSaveAvailability = async () => {
     setLoading(true);
     try {
-      const formData = availabilityForm.getValues();
-
-      const formattedAvailabilities = checkedDays.map((day) => ({
-        day_of_week: dayMapping[day].toLowerCase(),
-        phone_start_time: formData.phone.from
-          ? formData.phone.from + ":00"
-          : null,
-        phone_end_time: formData.phone.to ? formData.phone.to + ":00" : null,
-        in_person_start_time: formData.in_person.from
-          ? formData.in_person.from + ":00"
-          : null,
-        in_person_end_time: formData.in_person.to
-          ? formData.in_person.to + ":00"
-          : null,
-        break_start_time: formData.break.from
-          ? formData.break.from + ":00"
-          : null,
-        break_end_time: formData.break.to ? formData.break.to + ":00" : null,
-      }));
+      const formattedAvailabilities = Object.keys(weeklyAvailability).map(
+        (day: string) => ({
+          day_of_week: day.toLowerCase(),
+          phone_start_time:
+            weeklyAvailability[day].phone && weeklyAvailability[day].phone.from
+              ? weeklyAvailability[day].phone.from
+              : null,
+          phone_end_time:
+            weeklyAvailability[day].phone && weeklyAvailability[day].phone.to
+              ? weeklyAvailability[day].phone.to
+              : null,
+          in_person_start_time:
+            weeklyAvailability[day].in_person &&
+            weeklyAvailability[day].in_person.from
+              ? weeklyAvailability[day].in_person.from
+              : null,
+          in_person_end_time:
+            weeklyAvailability[day].in_person &&
+            weeklyAvailability[day].in_person.to
+              ? weeklyAvailability[day].in_person.to
+              : null,
+          break_start_time:
+            weeklyAvailability[day].break && weeklyAvailability[day].break.from
+              ? weeklyAvailability[day].break.from
+              : null,
+          break_end_time:
+            weeklyAvailability[day].break && weeklyAvailability[day].break.to
+              ? weeklyAvailability[day].break.to
+              : null,
+        })
+      );
 
       if (
         formattedAvailabilities.length === 0 ||

@@ -196,13 +196,13 @@ const Sidebar = ({
               SidebarIcons.settings,
               "Settings",
               undefined,
-              routes.sidebar.settings.link
+              "#"
             )}
             {renderListItem(
               SidebarIcons.help,
               "Get Help",
               undefined,
-              routes.sidebar.help.link
+              "#"
             )}
             <Box display={"flex"} justifyContent={"space-between"} px={2}>
               <CommonLink to={externalLinks.termsOfService}>Terms</CommonLink>
