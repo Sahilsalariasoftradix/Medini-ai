@@ -21,8 +21,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
       name={name}
       control={control}
       render={({ field }) => (
-        <FormControl fullWidth error={!!errors[name]}>
-          <Select {...field} displayEmpty>
+        <FormControl fullWidth sx={{ maxHeight: "200px", overflow: "auto" }} error={!!errors[name]}>
+          <Select {...field} displayEmpty sx={{ maxHeight: "200px", overflow: "auto" }}>
             {placeholder && <MenuItem value="">{placeholder}</MenuItem>}
             {options.map((option) => (
               <MenuItem key={option.value} value={option.value}>

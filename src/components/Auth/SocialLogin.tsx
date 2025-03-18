@@ -4,18 +4,14 @@ import AppleLoginButton from "./AppleLoginButton";
 
 const isAppleDevice = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
 
-const SocialLogin = ({
-  setLoadingSocialLogin,
-}: {
-  setLoadingSocialLogin: (loading: boolean) => void;
-}) => {
+const SocialLogin = () => {
   return (
-    <Grid container spacing={2} my={3}>
-      <Grid size={{ xs: 12, md: isAppleDevice ? 6 : 12 }}>
-        <GoogleSignInButton setLoadingSocialLogin={setLoadingSocialLogin} />
+    <Grid container spacing={2} my={2} justifyContent={"center"}>
+      <Grid size={{ xs: 6 }}>
+        <GoogleSignInButton />
       </Grid>
       {isAppleDevice && (
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 6 }}>
           <AppleLoginButton />
         </Grid>
       )}

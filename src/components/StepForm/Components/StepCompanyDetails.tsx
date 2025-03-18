@@ -13,7 +13,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CommonButton from "../../common/CommonButton";
 import {
   getCurrentUserId,
-  getUserDetails,
 } from "../../../firebase/AuthService";
 import CustomSwitch from "../../common/CustomSwitch";
 import {
@@ -23,13 +22,13 @@ import {
 import CustomSelect from "../../common/CustomSelect";
 import {
   APPOINTMENT_OPTIONS,
-  CITY_OPTIONS,
   COUNTRY_OPTIONS,
 } from "../../../utils/options";
 import { useAuthHook } from "../../../hooks/useAuth";
+import { postCompanyDetails } from "../../../api/userApi";
 
 const CompanyDetails: React.FC = () => {
-  const { updateUserDetails, goToNextStep, setCompanyId } = useStepForm();
+  const { updateUserDetails, skipNextStep, setCompanyId } = useStepForm();
 
   const { isLoading, setIsLoading } = useAuthHook();
   // Validate hook
@@ -67,16 +66,15 @@ const CompanyDetails: React.FC = () => {
         in_person_appointments: data.in_person_appointments ?? false,
         max_appointment_time: Number(data.max_appointment_time),
       };
-
       const updatedDetails = { companyDetails: companyData };
-      const det = await getUserDetails(userId);
-
       // Send company details
-      // const response = await postCompanyDetails(companyData);
-      setCompanyId(det?.uuid);
+      const response = await postCompanyDetails(companyData);
+
+      setCompanyId(response.company?.id);
+      console.log(response.company?.id)
       // Step 3: Update context with new user details
       updateUserDetails(updatedDetails);
-      goToNextStep();
+      skipNextStep();
     } catch (error) {
       setIsLoading(false);
       console.error(errorSavingUserDetailsMessage, error);
@@ -85,7 +83,7 @@ const CompanyDetails: React.FC = () => {
 
   return (
     <StepFormLayout>
-      <Typography align="center" variant="h3">
+      <Typography align="center" variant="h3" sx={{ fontSize: { xs: 24, md: 28 } }}>
         Company Details
       </Typography>
       <Typography
@@ -98,7 +96,7 @@ const CompanyDetails: React.FC = () => {
       </Typography>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           <Grid size={12}>
             <Typography mb={1} variant="bodyLargeExtraBold" color="grey.600">
               Business Name
@@ -141,12 +139,11 @@ const CompanyDetails: React.FC = () => {
               City
             </Typography>
             {/* City */}
-            <CustomSelect
-              name="city"
-              control={control}
-              errors={errors}
-              placeholder="Select city"
-              options={CITY_OPTIONS}
+
+            <CommonTextField
+              placeholder="Enter City"
+              register={register("city")}
+              errorMessage={errors.city?.message}
             />
           </Grid>
           <Grid size={6}>
@@ -195,7 +192,7 @@ const CompanyDetails: React.FC = () => {
             />
           </Grid>
         </Grid>
-        <Box mt={4} justifyContent={"center"} display={"flex"}>
+        <Box mt={2} justifyContent={"center"} display={"flex"}>
           <CommonButton
             sx={{ width: "70%", p: 1.5 }}
             loading={isLoading}

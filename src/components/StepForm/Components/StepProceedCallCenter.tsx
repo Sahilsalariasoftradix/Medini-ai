@@ -8,7 +8,7 @@ const ProceedCallCenter = () => {
   const { goToNextStep } = useStepForm();
   return (
     <StepFormLayout>
-      <Typography align="center" variant="h3">
+      <Typography align="center" variant="h3" sx={{ fontSize: { xs: 24, md: 28 } }}>
         Call Center
       </Typography>
       <Typography
@@ -20,12 +20,12 @@ const ProceedCallCenter = () => {
         Add the people to contact for appointment bookings and cancellations in
         the Call Center
       </Typography>
-     <Box display={'flex'} justifyContent={'center'} my={5}>
+     <Box display={'flex'} justifyContent={'center'} my={1}>
      <Box
         component="img"
         sx={{
-          width: 388,
-          height: 276,
+          width: "95%",
+          height: "95%",
         }}
         alt="The house from the offer."
         src={img}

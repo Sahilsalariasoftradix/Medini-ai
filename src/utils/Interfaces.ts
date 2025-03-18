@@ -50,6 +50,7 @@ export interface IStepFormContextType {
   currentStep: number;
   userDetails: IUserDetails;
   goToNextStep: () => void;
+  skipNextStep: () => void;
   goToPreviousStep: () => void;
   updateUserDetails: (updates: Partial<IUserDetails>) => void;
   resetForm: () => void;

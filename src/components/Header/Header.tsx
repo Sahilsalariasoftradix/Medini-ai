@@ -95,12 +95,12 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
               slotProps={{
                 paper: {
                   elevation: 0,
-
                   sx: {
+                    py: 0,
                     px: 0,
                     overflow: "visible",
                     filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                    mt: 1.5,
+                    // mt: 1.5,
                     "& .MuiAvatar-root": {
                       width: 32,
                       height: 32,
@@ -125,18 +125,23 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
               transformOrigin={{ horizontal: "right", vertical: "top" }}
               anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
             >
-              <MenuItem onClick={() => (window.location.href = "/profile")}>
+              {/* <MenuItem onClick={() => (window.location.href = "/profile")}>
                 Profile
               </MenuItem>
               <MenuItem onClick={() => (window.location.href = "/profile")}>
                 Settings
-              </MenuItem>
+              </MenuItem> */}
               <MenuItem
                 onClick={() => {
                   // Handle logout
                   logout();
                 }}
-                sx={{ color: "error.main", gap: 2 }}
+                sx={{
+                  color: "error.main",
+                  bgcolor: "transparent",
+                  "&:hover": { bgcolor: "transparent" },
+                  "&:focus": { bgcolor: "transparent" },
+                }}
               >
                 Logout
               </MenuItem>

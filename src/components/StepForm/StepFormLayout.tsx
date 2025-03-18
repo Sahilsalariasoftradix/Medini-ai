@@ -20,7 +20,7 @@ const StepFormLayout: React.FC<StepFormLayoutProps> = ({
       minHeight="calc(100vh - 134px)"
       {...boxProps}
     >
-      <Box sx={{ p: { xs: "20px", md: "40px" }, m: { xs: 1, md: "auto" },...getMaxHeight(),overflow: "auto" }} className={`auth-form ${className}`}>
+      <Box sx={{ px: { xs: "20px", md: "40px" }, py: "20px", m: { xs: 1, md: "auto" },...getMaxHeight(),overflow: "auto" }} className={`auth-form ${className}`}>
         {children}
       </Box>
     </Box>

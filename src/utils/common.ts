@@ -13,7 +13,7 @@ export const getPageNameFromPath = (path: string) => {
 export const getMaxHeight = () => ({
   maxHeight: {
     xs: "calc(100vh - 200px)",
-    lg: "580px",
+    lg: "600px",
     xl: "100%",
   },
 });

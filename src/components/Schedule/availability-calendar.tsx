@@ -214,7 +214,7 @@ export default function AvailabilityCalendar() {
         sunday: "sunday",
       })
     );
-    const {userDetails} = useAuth()
+  const { userDetails } = useAuth();
   // Add this useEffect to update transformedWeeklyAvailability when availabilities changes
   useEffect(() => {
     setTransformedWeeklyAvailability(
@@ -258,7 +258,7 @@ export default function AvailabilityCalendar() {
     try {
       setLoading(true);
       const response = await getBookings({
-        user_id:userDetails?.user_id,
+        user_id: userDetails?.user_id,
         date: dayjs(today).format("YYYY-MM-DD"),
         range: EnAvailability.DAY,
       });
@@ -539,6 +539,24 @@ export default function AvailabilityCalendar() {
         break_end_time: formData.break.to ? formData.break.to + ":00" : null,
       }));
 
+      if (
+        formattedAvailabilities.length === 0 ||
+        !formattedAvailabilities.some(
+          (availability) =>
+            (availability.phone_start_time && availability.phone_end_time) ||
+            (availability.in_person_start_time &&
+              availability.in_person_end_time)
+        )
+      ) {
+        setSnackbar({
+          open: true,
+          message: "Please set availability for at least one day",
+          severity: "error",
+        });
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         user_id: userDetails?.user_id,
         availabilities: formattedAvailabilities,
@@ -640,8 +658,11 @@ export default function AvailabilityCalendar() {
                 startDate={startDate}
                 endDate={endDate}
                 onChange={(update) => {
-                  setDateRange(update);
-                  if (update[0] && update[1]) {
+                  const weekStart = dayjs(update[0]).startOf("week").toDate();
+                  const weekEnd = dayjs(update[0]).endOf("week").toDate();
+                  setToday(dayjs(update[0]));
+                  if (update[0]) {
+                    setDateRange([weekStart, weekEnd]);
                     setAnchorEl(null);
                   }
                 }}
@@ -676,7 +697,7 @@ export default function AvailabilityCalendar() {
                 <Grid
                   key={day.day}
                   sx={{
-                    opacity: day.availability.isAvailable ? 1 : 0.7,
+                    opacity: 1,
                     position: "relative",
                     cursor: "pointer",
                   }}

@@ -40,7 +40,7 @@ export function DayHeader({
       justifyContent={"space-between"}
       p={1}
       sx={{
-        opacity: isAvailable ? 1 : 0.7,
+        opacity: 1,
         backgroundColor: isToday ? "#358FF7" : isAvailable ? "#FFFFFF" : "grey.50",
         border: "1px solid #EDF2F7",
       }}

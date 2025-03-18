@@ -58,7 +58,6 @@ const LoginForm = () => {
 
     navigate,
   } = useAuthHook();
-  const [loadingSocialLogin, setLoadingSocialLogin] = useState(false);
 
   const onSubmit: SubmitHandler<SignInSchemaType> = async (data) => {
     try {
@@ -83,7 +82,7 @@ const LoginForm = () => {
       alignItems={"center"}
       minHeight={"calc(100vh - 134px)"}
     >
-      {loadingSocialLogin ? (
+      {false ? (
         <Box
           display={"flex"}
           flexDirection={"column"}
@@ -100,7 +99,8 @@ const LoginForm = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="form">
           <Box
             sx={{
-              p: "40px",
+              px: "40px",
+              py: "20px",
               m: "auto",
               ...getMaxHeight(),
               minWidth: { lg: "500px", md: "500px", sm: "500px", xs: "100%" },
@@ -108,7 +108,7 @@ const LoginForm = () => {
             }}
             className="auth-form"
           >
-            <Typography align="center" variant="h3">
+            <Typography align="center" variant="h3" sx={{ fontSize: { xs: "20px", md: "28px" } }}>
               {text.title}
             </Typography>
             <Typography
@@ -119,14 +119,14 @@ const LoginForm = () => {
             >
               {text.subtitle}
             </Typography>
-            <SocialLogin setLoadingSocialLogin={setLoadingSocialLogin} />
+            <SocialLogin />
             <Divider>
               <Typography variant="bodyLargeRegular" color="grey.600">
                 {text.orText}
               </Typography>
             </Divider>
             {/* Input fields */}
-            <Box my={4}>
+            <Box my={3}>
               <Box mt={3}>
                 <TextField
                   fullWidth
@@ -168,7 +168,7 @@ const LoginForm = () => {
               </Box>
             </Box>
             <Box
-              mt={2}
+              mt={1}
               sx={{ display: "flex" }}
               justifyContent={"space-between"}
               alignItems={"center"}
@@ -185,7 +185,7 @@ const LoginForm = () => {
                 {text.forgotPassword}
               </CommonLink>
             </Box>
-            <Box mt={3}>
+            <Box mt={2}>
               <CommonButton
                 loading={loading}
                 text={text.signInButton}
@@ -194,7 +194,7 @@ const LoginForm = () => {
               />
             </Box>
 
-            <Typography mt={4} align="center" variant="bodyLargeMedium">
+            <Typography mt={2} align="center" variant="bodyLargeMedium">
               {text.signupText}{" "}
               <CommonLink
                 to={routes.auth.signUp}

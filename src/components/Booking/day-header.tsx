@@ -251,12 +251,12 @@ export function DayHeader({
       case isOverlap(phoneStart, phoneEnd, inPersonStart, inPersonEnd):
         errorMessage = "Phone and In-person times cannot overlap.";
         break;
-      case isOverlap(phoneStart, phoneEnd, breakStart, breakEnd):
-        errorMessage = "Phone and Break times cannot overlap.";
-        break;
-      case isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd):
-        errorMessage = "In-person and Break times cannot overlap.";
-        break;
+      // case isOverlap(phoneStart, phoneEnd, breakStart, breakEnd):
+      //   errorMessage = "Phone and Break times cannot overlap.";
+      //   break;
+      // case isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd):
+      //   errorMessage = "In-person and Break times cannot overlap.";
+      //   break;
       default:
         break;
     }
