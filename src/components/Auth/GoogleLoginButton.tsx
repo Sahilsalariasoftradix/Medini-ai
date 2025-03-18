@@ -19,7 +19,6 @@ const GoogleSignInButton = () => {
       }, 2000);
     } catch (error: any) {
       console.error("Google Sign-In Failed:", error.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -29,24 +28,29 @@ const GoogleSignInButton = () => {
       <Button
         fullWidth
         variant="outlined"
-        startIcon={loading ? <></>  : GoogleIcon} // ✅ Ensure GoogleIcon is a React component
+        startIcon={loading ? <></> : GoogleIcon} // ✅ Ensure GoogleIcon is a React component
         onClick={handleGoogleSignIn} // ✅ Use the wrapped function
+        disabled={loading}
         sx={{
           py: 1.5,
         }}
       >
-        {loading ? <CircularProgress size={24}/> : <Typography
-          sx={{
-            clear: "both",
-            display: "inline-block",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-          }}
-          variant="bodyMediumMedium"
-        >
-          {text.googleSignInButton}
-        </Typography>}
+        {loading ? (
+          <CircularProgress size={24} />
+        ) : (
+          <Typography
+            sx={{
+              clear: "both",
+              display: "inline-block",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+            variant="bodyMediumMedium"
+          >
+            {text.googleSignInButton}
+          </Typography>
+        )}
       </Button>
     </>
   );
