@@ -95,6 +95,7 @@ export const createNewContact = async (
     // Check if the phone number already exists
     const phoneQuery = query(
       createContactRef,
+      where("user_id", "==", contactData?.user_id),
       where("phone", "==", contactData.phone)
     );
     const querySnapshot = await getDocs(phoneQuery);

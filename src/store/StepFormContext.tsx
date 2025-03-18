@@ -74,6 +74,11 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setCurrentStep((prev) => prev + 1);
   };
 
+  // Navigate to the next step
+  const skipNextStep = () => {
+    setCurrentStep((prev) => prev + 2);
+  };
+
   // Navigate to the previous step
   const goToPreviousStep = () => {
     setCurrentStep((prev) => (prev > 0 ? prev - 1 : 0));
@@ -111,6 +116,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
         currentStep,
         userDetails: userFormDetails,
         goToNextStep,
+        skipNextStep,
         goToPreviousStep,
         updateUserDetails,
         resetForm,

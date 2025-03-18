@@ -43,7 +43,6 @@ import "react-international-phone/style.css";
 import { MuiPhone } from "./CustomPhoneInput";
 
 const SignUpForm = () => {
-  const [loadingSocialLogin, setLoadingSocialLogin] = useState(false);
   const [phone, setPhone] = useState("");
   const [formSubmitted, setFormSubmitted] = useState(false);
   // Validate hook
@@ -132,7 +131,7 @@ const SignUpForm = () => {
       alignItems={"center"}
       minHeight={"calc(100vh - 134px)"}
     >
-      {loadingSocialLogin ? (
+      {false ? (
         <Box
           display={"flex"}
           flexDirection={"column"}
@@ -149,14 +148,15 @@ const SignUpForm = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="form">
           <Box
             sx={{
-              p: { xs: 3, md: "40px" },
+              px: { xs: 3, md: "40px" },
+              py: { xs: 3, md: "20px" },
               m: "auto",
               ...getMaxHeight(),
               overflowY: "auto",
             }}
             className="auth-form"
           >
-            <Typography align="center" variant="h3">
+            <Typography align="center" variant="h3" sx={{ fontSize: { xs: "20px", md: "28px" } }}>
               {text.signupPageText}
             </Typography>
             <Typography
@@ -167,7 +167,7 @@ const SignUpForm = () => {
             >
               {text.subtitle}
             </Typography>
-            <SocialLogin setLoadingSocialLogin={setLoadingSocialLogin} />
+            <SocialLogin />
             <Divider>
               <Typography variant="bodyLargeRegular" color="grey.600">
                 {text.orText}

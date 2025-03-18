@@ -28,7 +28,16 @@ const AppleLoginButton = () => {
       onClick={handleAppleSignIn}
       sx={{ py: 1.5 }}
     >
-      <Typography variant="bodyMediumMedium">
+      <Typography
+        variant="bodyMediumMedium"
+        sx={{
+          clear: "both",
+          display: "inline-block",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }}
+      >
         {text.appleSignInButton}
       </Typography>
     </Button>

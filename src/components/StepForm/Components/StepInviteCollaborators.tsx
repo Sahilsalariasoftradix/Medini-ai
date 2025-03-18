@@ -24,8 +24,7 @@ const InviteCollaborators: React.FC = () => {
     setSnackbarSeverity,
     snackbarOpen,
   } = useAuthHook();
-  const { userDetails, updateUserDetails, goToNextStep } =
-    useStepForm();
+  const { userDetails, updateUserDetails, goToNextStep } = useStepForm();
   // Validate hook
   const {
     register,
@@ -35,6 +34,10 @@ const InviteCollaborators: React.FC = () => {
   } = useForm<ResetPasswordSchemaType>({
     resolver: zodResolver(ResetPasswordSchema),
   });
+  // useEffect(() => {
+  //   goToNextStep();
+  // }, []);
+
   const onSubmit: SubmitHandler<ResetPasswordSchemaType> = async (data) => {
     if (data.email) {
       // Check if the email already exists in the collaborators list

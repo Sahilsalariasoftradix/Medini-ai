@@ -8,7 +8,7 @@ import AuthFlow from "../../layouts/AuthFlowLayout";
 import VerifyEmail from "../../pages/verification/verify-email";
 import SignUp from "../../pages/Auth/sign-up";
 import ResetPassword from "../../pages/Auth/reset-password";
-import { routes } from "../../utils/links";
+import { externalLinks, routes } from "../../utils/links";
 import NotFoundPage from "../../pages/NotFound";
 import StepForm from "../../components/StepForm/StepForm";
 import { useAuth } from "../../store/AuthContext";
@@ -18,6 +18,9 @@ import { Box, CircularProgress } from "@mui/material";
 import Schedule from "../../pages/schedule";
 import CallCenter from "../../pages/call-center/CallCenter";
 import Booking from "../../pages/booking/Booking";
+import PrivacyPolicyPage from "../../pages/PrivacyPolicy";
+import NormalLayout from "../../layouts/NormalLayout";
+import TermsOfServicePage from "../../pages/TermsOfService";
 
 const AppRoutes: React.FC = () => {
   const { loading } = useAuth();
@@ -69,6 +72,16 @@ const AppRoutes: React.FC = () => {
 
         {/* Catch-all route */}
         <Route path={routes.error.notFound} element={<NotFoundPage />} />
+        <Route element={<NormalLayout />}>
+          <Route
+            path={externalLinks.privacyPolicy}
+            element={<PrivacyPolicyPage />}
+          />
+          <Route
+            path={externalLinks.termsOfService}
+            element={<TermsOfServicePage />}
+          />
+        </Route>
       </Routes>
     </Router>
   );

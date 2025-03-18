@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../../utils/links";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
+import CommonLink from "../common/CommonLink";
 const AuthHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,17 +31,19 @@ const AuthHeader = () => {
           alignItems: "center",
         }}
       >
-        <Box
-          component="img"
-          sx={{
-            height: 39,
-            width: 221,
-            //   maxHeight: { xs: 39, md: 39 },
-            //   maxWidth: { xs: 350, md: 250 },
-          }}
-          alt="logo"
-          src={mainLogo}
-        />
+        <CommonLink to={"/"}>
+          <Box
+            component="img"
+            sx={{
+              height: 39,
+              width: 221,
+              //   maxHeight: { xs: 39, md: 39 },
+              //   maxWidth: { xs: 350, md: 250 },
+            }}
+            alt="logo"
+            src={mainLogo}
+          />
+        </CommonLink>
         {user && path != routes.auth.stepForm && (
           <>
             {user &&

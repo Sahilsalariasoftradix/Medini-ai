@@ -284,7 +284,7 @@ const TimeSlot = ({
     );
   };
   const isPastDate = isPastDateTime(date, time);
-  const {userDetails} = useAuth();
+  const { userDetails } = useAuth();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (disabled || isPastDate) {
       return;
@@ -673,16 +673,14 @@ export default function AvailabilityCalendar() {
     // setDays,
     handleNextWeek,
     handlePreviousWeek,
-    fetchInitialAvailability
+    fetchInitialAvailability,
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
-
-
-  const {userDetails} = useAuth();
+  const { userDetails } = useAuth();
   useEffect(() => {
     fetchInitialAvailability();
   }, [fetchInitialAvailability]);
@@ -694,7 +692,7 @@ export default function AvailabilityCalendar() {
     try {
       setLoading(true);
       const response = await getBookings({
-        user_id:userDetails?.user_id,
+        user_id: userDetails?.user_id,
         date: dayjs(startDate).format("YYYY-MM-DD"),
         range: EnAvailability.WEEK,
       });
@@ -766,8 +764,10 @@ export default function AvailabilityCalendar() {
               startDate={startDate}
               endDate={endDate}
               onChange={(update) => {
-                setDateRange(update);
-                if (update[0] && update[1]) {
+                const weekStart = dayjs(update[0]).startOf("week").toDate();
+                const weekEnd = dayjs(update[0]).endOf("week").toDate();
+                if (update[0]) {
+                  setDateRange([weekStart, weekEnd]);
                   setAnchorEl(null);
                 }
               }}

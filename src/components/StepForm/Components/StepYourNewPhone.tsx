@@ -1,4 +1,4 @@
-import  { useEffect } from "react";
+import { useEffect } from "react";
 import StepFormLayout from "../StepFormLayout";
 import { Box, Skeleton, Typography } from "@mui/material";
 import CommonButton from "../../common/CommonButton";
@@ -8,15 +8,15 @@ import { useAuth } from "../../../store/AuthContext";
 import useLoading from "../../../hooks/useLoading";
 
 const YourNewPhone = () => {
-  const { goToNextStep, setCompanyNumber, companyNumber } = useStepForm();
+  const { goToNextStep, setCompanyNumber, companyNumber,companyId } = useStepForm();
   const { loading, startLoading, stopLoading } = useLoading();
-  const { userDetails } = useAuth();
+  const { userDetails } = useAuth();  
 
   useEffect(() => {
     const fetchCompanyNumber = async () => {
       startLoading();
       try {
-        const resp = await getCompanyUniqueNumber(userDetails.uuid);
+        const resp = await getCompanyUniqueNumber(companyId!);
         setCompanyNumber(resp.phoneNumber);
       } catch (error) {
         console.error("Error fetching company number:", error);
@@ -26,24 +26,16 @@ const YourNewPhone = () => {
     };
 
     fetchCompanyNumber();
-  }, [userDetails.company_id]);
+  }, [userDetails, setCompanyNumber, userDetails?.company_id]);
 
   return (
     <StepFormLayout>
       <Typography align="center" variant="h3">
-        Your new phone #
-      </Typography>
-      <Typography
-        align="center"
-        variant="bodyLargeRegular"
-        sx={{ my: 1 }}
-        color="grey.600"
-      >
-        This is your new phone number for patient bookings.
+      This is your new phone #
       </Typography>
       {loading ? (
-        <Box display={'flex'} justifyContent={'center'} alignItems={'center'}>
-          <Skeleton variant="text" sx={{ fontSize: "2rem" }} width={'50%'} />
+        <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
+          <Skeleton variant="text" sx={{ fontSize: "2rem" }} width={"50%"} />
         </Box>
       ) : (
         <Typography align="center" variant="h3">
@@ -56,12 +48,13 @@ const YourNewPhone = () => {
         sx={{ my: 1 }}
         color="grey.600"
       >
+        This is your new phone number for patient bookings. 
         Share this with your patients to start receiving calls.
       </Typography>
 
       <form>
         <Box mt={0}>
-          <Box justifyContent={"center"} display={"flex"} mt={4}></Box>
+          <Box justifyContent={"center"} display={"flex"} mt={2}></Box>
           <CommonButton
             sx={{ p: 1.5, mt: 2 }}
             text={"Continue"}

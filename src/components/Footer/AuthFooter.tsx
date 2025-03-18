@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { staticText } from "../../utils/staticText";
 import CommonLink from "../common/CommonLink";
 import { externalLinks } from "../../utils/links";
@@ -15,9 +15,9 @@ const AuthFooter = () => {
       <CommonLink to={externalLinks.privacyPolicy} variant="bodyLargeSemiBold">
         {text.privacyPolicyLink}
       </CommonLink>
-      <CommonLink to={"#"} variant="bodyLargeSemiBold">
+      <Typography variant="bodyLargeSemiBold" sx={{ color: "#358FF7", cursor: "pointer" }}>
         {text.copyright} {new Date().getFullYear()}
-      </CommonLink>
+      </Typography>
     </Box>
   );
 };

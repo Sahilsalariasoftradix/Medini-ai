@@ -93,7 +93,7 @@ const ProceedAvailability = () => {
     message: "",
     severity: "error",
   });
-  
+
   // Update the weeklyAvailability state with unique keys
   const [weeklyAvailability, setWeeklyAvailability] = useState<{
     [key: string]: IDayAvailability;
@@ -211,17 +211,28 @@ const ProceedAvailability = () => {
           break_end_time: slots.break?.to ? `${slots.break.to}:00` : null,
         }));
 
-      if (availabilities.length === 0) {
+      if (
+        availabilities.length === 0 ||
+        !availabilities.some(
+          (availability) =>
+            (availability.phone_start_time && availability.phone_end_time) ||
+            (availability.in_person_start_time &&
+              availability.in_person_end_time)
+        )
+      ) {
         setSnackbar({
           open: true,
           message: "Please set availability for at least one day",
           severity: "error",
         });
+        setIsLoading(false);
         return;
       }
+
       // Step 1: Get the current user ID
       const userId = getCurrentUserId();
       if (!userId) {
+        setIsLoading(false);
         throw new Error(userNotSignedInErrorMessage);
       }
 
@@ -287,9 +298,9 @@ const ProceedAvailability = () => {
     const timeSlots = [
       ...(hasPhone ? [{ type: "phone", times: values.phone }] : []),
       ...(hasInPerson ? [{ type: "in_person", times: values.in_person }] : []),
-      ...(values.break.from && values.break.to
-        ? [{ type: "break", times: values.break }]
-        : []),
+      // ...(values.break.from && values.break.to
+      //   ? [{ type: "break", times: values.break }]
+      //   : []),
     ];
 
     // Check if end time is after start time for each slot
@@ -400,7 +411,11 @@ const ProceedAvailability = () => {
 
   return (
     <StepFormLayout>
-      <Typography align="center" variant="h3">
+      <Typography
+        align="center"
+        variant="h3"
+        sx={{ fontSize: { xs: 24, md: 28 } }}
+      >
         Set your availability
       </Typography>
       <Typography

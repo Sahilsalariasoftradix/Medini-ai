@@ -33,8 +33,8 @@ export const routes = {
 
 // External Links
 export const externalLinks = {
-  privacyPolicy: "https://www.example.com/privacy-policy",
-  termsOfService: "https://www.example.com/terms-of-service",
+  privacyPolicy: "/privacy-policy",
+  termsOfService: "/terms-of-service",
 };
 
 // Exports all links as a single object for easy import

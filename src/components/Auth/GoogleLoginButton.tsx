@@ -1,16 +1,17 @@
-import { Button, Typography } from "@mui/material";
+import { Button, CircularProgress, Typography } from "@mui/material";
 import { signInWithGoogle } from "../../firebase/AuthService";
 import { useAuthHook } from "../../hooks/useAuth";
 import { useAuth } from "../../store/AuthContext";
 import { routes } from "../../utils/links";
 import { GoogleIcon } from "../../utils/Icons";
+import { useState } from "react";
 
-
-const GoogleSignInButton: React.FC<{setLoadingSocialLogin: (loading: boolean) => void}> = ({setLoadingSocialLogin}) => {
+const GoogleSignInButton = () => {
   const { text, navigate } = useAuthHook();
+  const [loading, setLoading] = useState(false);
   const { setUserDetails } = useAuth(); // ✅ Get setUserDetails from context
   const handleGoogleSignIn = async () => {
-    setLoadingSocialLogin(true);
+    setLoading(true);
     try {
       await signInWithGoogle(setUserDetails);
       setTimeout(() => {
@@ -19,7 +20,7 @@ const GoogleSignInButton: React.FC<{setLoadingSocialLogin: (loading: boolean) =>
     } catch (error: any) {
       console.error("Google Sign-In Failed:", error.message);
     } finally {
-      setLoadingSocialLogin(false);
+      setLoading(false);
     }
   };
 
@@ -28,23 +29,24 @@ const GoogleSignInButton: React.FC<{setLoadingSocialLogin: (loading: boolean) =>
       <Button
         fullWidth
         variant="outlined"
-        startIcon={GoogleIcon} // ✅ Ensure GoogleIcon is a React component
+        startIcon={loading ? <></>  : GoogleIcon} // ✅ Ensure GoogleIcon is a React component
         onClick={handleGoogleSignIn} // ✅ Use the wrapped function
         sx={{
           py: 1.5,
         }}
       >
-        <Typography
+        {loading ? <CircularProgress size={24}/> : <Typography
           sx={{
             clear: "both",
             display: "inline-block",
             overflow: "hidden",
             whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
           }}
           variant="bodyMediumMedium"
         >
           {text.googleSignInButton}
-        </Typography>
+        </Typography>}
       </Button>
     </>
   );

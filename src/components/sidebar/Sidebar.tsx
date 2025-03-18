@@ -9,8 +9,9 @@ import {
 } from "@mui/material";
 import { SidebarIcons } from "../../utils/Icons";
 import { Link } from "react-router-dom";
-import { routes } from "../../utils/links";
+import { externalLinks, routes } from "../../utils/links";
 import { overRideSvgColor } from "../../utils/filters";
+import CommonLink from "../common/CommonLink";
 export const drawerWidth = 240;
 const Sidebar = ({
   open,
@@ -203,11 +204,12 @@ const Sidebar = ({
               undefined,
               routes.sidebar.help.link
             )}
-            <ListItem sx={listItemStyles}>
-              <ListItemText primary="Terms" />
+            <Box display={"flex"} justifyContent={"space-between"} px={2}>
+              <CommonLink to={externalLinks.termsOfService}>Terms</CommonLink>
               |
-              <ListItemText primary="Privacy" />
-            </ListItem>
+              <CommonLink to={externalLinks.privacyPolicy}>Privacy</CommonLink>
+            </Box>
+            
           </Box>
         </Box>
       </List>

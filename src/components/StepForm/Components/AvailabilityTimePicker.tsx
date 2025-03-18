@@ -32,7 +32,7 @@ const AvailabilityTimePicker = ({
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
-                field.onChange(newValue?.format("HH:mm") || "");
+                field.onChange(newValue?.format("HH:mm") &&  newValue?.format("HH:mm") !== "Invalid Date" ? newValue?.format("HH:mm") : "");
               }}
               format="HH:mm"
               slotProps={{

@@ -9,7 +9,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import StepFormLayout from "../StepFormLayout";
 
 const NameYourCalendar: React.FC = () => {
-  const {  updateUserDetails, goToNextStep } =
+  const {  updateUserDetails, skipNextStep } =
     useStepForm();
   // Validate hook
   const {
@@ -21,7 +21,7 @@ const NameYourCalendar: React.FC = () => {
   });
   const onSubmit: SubmitHandler<CalenderNameSchemaType> = async (data) => {
     updateUserDetails({ calendarName: data.calenderName });
-    goToNextStep();
+    skipNextStep();
   };
 
   return (
