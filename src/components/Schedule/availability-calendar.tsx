@@ -4,7 +4,7 @@ import {
   IconButton,
   Typography,
   Popover,
-  Switch,
+  
   Tooltip,
   CircularProgress,
   Menu,
@@ -54,7 +54,7 @@ import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
 import { menuItemHoverStyle } from "../Booking/day-header";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
-import CustomSwitch from "../common/CustomSwitch";
+
 import ConfirmAppointments from "./Form/ConfirmAppointments";
 
 dayjs.extend(isSameOrBefore);
