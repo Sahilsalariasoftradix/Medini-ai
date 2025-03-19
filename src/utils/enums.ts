@@ -84,6 +84,13 @@ export enum EnCallPurposeOptions {
   REQUESTINFO = "Request Info",
   INFORMPATIENT = "Inform Patient",
 }
+export enum EnCallPurposeOptionsValues {
+  CANCEL = "CANCEL_APPOINTMENT",
+  BOOK = "BOOK_APPOINTMENT",
+  RESCHEDULE = "RESCHEDULE_APPOINTMENT",
+  REQUESTINFO = "REQUEST_INFO",
+  INFORMPATIENT = "INFORM_PATIENT",
+}
 export enum EnUserCreationStatus {
   SUCCESS = "User created successfully",
   FAILED = "User creation failed",

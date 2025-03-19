@@ -22,7 +22,7 @@ const AvailabilityTimePicker = ({
       </Typography>
 
       <Controller
-           //@ts-ignore
+        //@ts-ignore
         name={name}
         control={availabilityForm.control}
         render={({ field, fieldState }) => (
@@ -32,7 +32,26 @@ const AvailabilityTimePicker = ({
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
-                field.onChange(newValue?.format("HH:mm") &&  newValue?.format("HH:mm") !== "Invalid Date" ? newValue?.format("HH:mm") : "");
+                name;
+                if (
+                  newValue?.format("HH:mm") &&
+                  newValue?.format("HH:mm") !== "Invalid Date"
+                ) {
+                  field.onChange(newValue?.format("HH:mm"));
+                } else {
+                  field.onChange("");
+                  if (name.includes("from")) {
+                    availabilityForm.setValue(
+                      name.replace("from", "to") as any,
+                      ""
+                    );
+                  } else {
+                    availabilityForm.setValue(
+                      name.replace("to", "from") as any,
+                      ""
+                    );
+                  }
+                }
               }}
               format="HH:mm"
               slotProps={{

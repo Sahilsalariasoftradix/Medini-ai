@@ -252,10 +252,37 @@ export interface IDayAvailability {
 }
 
 export type IGetContacts = IContact[];
-export interface IUser{
-first_name:string;
-last_name:string;
-email:string;
-phone:string;
-password:string;
+export interface IUser {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+export interface ICall {
+  to: string;
+  from: string;
+  agenda: string; // BOOK_APPOINTMENT, CANCEL_APPOINTMENT, RESCHEDULE_APPOINTMENT, INFORM_PATIENT
+  customer_name: string;
+  // # request_info
+  call_reason?: string;
+  // # book_appointment
+  appointment_reason?: string;
+  is_in_person?: boolean;
+  book_from_date?: string;
+  book_till_date?: string;
+  appointment_length?: number;
+  // # cancel_appointment
+  booking_id_to_cancel?: number;
+  reason_for_cancellation?: string;
+  // # reschedule_appointment
+  reschedule_appointment_reason?: string;
+  reschedule_is_in_person?: boolean;
+  reschedule_book_from_date?: string;
+  reschedule_book_till_date?: string;
+  reschedule_appointment_length?: number;
+  booking_id_to_reschedule?: number;
+  // # inform_patient
+  info_to_patient?: string;
 }

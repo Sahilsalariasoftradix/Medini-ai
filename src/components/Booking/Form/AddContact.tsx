@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material";
-import React from "react";
+import React, { useState } from "react";
 import CommonDialog from "../../common/CommonDialog";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,15 +10,11 @@ import { formErrorMessage } from "../../../utils/errorHandler";
 import { useAuthHook } from "../../../hooks/useAuth";
 import CommonSnackbar from "../../common/CommonSnackbar";
 import { useAuth } from "../../../store/AuthContext";
+import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
 
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  phone: z
-    .string()
-    .min(10, "Phone number must be at least 10 digits long")
-    .regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
-    .nonempty("Phone number is required"),
   email: z
     .string()
     .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
@@ -56,15 +52,25 @@ const AddContact = ({
     defaultValues: {
       firstName: "",
       lastName: "",
-      phone: "",
       email: "",
     },
   });
-  const {userDetails} = useAuth();
+  const { userDetails } = useAuth();
+  const [phone, setPhone] = useState("");
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
   const onSubmit: SubmitHandler<ContactData> = async (data) => {
+    setFormSubmitted(true);
+    if (phone.length < 10) {
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Please enter a valid phone number");
+      setSnackbarOpen(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await createNewContact({...data, user_id: userDetails?.user_id});
+      await createNewContact({ ...data, user_id: userDetails?.user_id, phone });
       setSnackbarOpen(true);
       setSnackbarSeverity("success");
       setSnackbarMessage("Contact created successfully!");
@@ -76,11 +82,15 @@ const AddContact = ({
       }, 500);
       fetchContacts();
     } catch (error: any) {
-      setSnackbarMessage('Phone number already exists. Please use a different number.');
+      setSnackbarMessage(
+        "Phone number already exists. Please use a different number."
+      );
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       console.error("Error submitting form:", error);
       setIsLoading(false);
+    } finally {
+      setFormSubmitted(false);
     }
   };
 
@@ -151,17 +161,10 @@ const AddContact = ({
         <Typography variant="bodyMediumExtraBold" color="grey.600">
           Phone
         </Typography>
-        <Controller
-          name="phone"
-          control={control}
-          render={({ field }) => (
-            <CommonTextField
-              error={!!contactErrors.phone}
-              helperText={contactErrors.phone?.message}
-              {...field}
-              fullWidth
-            />
-          )}
+        <MuiPhone
+          error={formSubmitted && (!phone || phone.length < 10)}
+          value={phone}
+          onChange={(phone) => setPhone(phone)}
         />
         {/* Snackbar */}
         <CommonSnackbar
