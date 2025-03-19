@@ -359,9 +359,11 @@ export function DayHeader({
   const AvailabilityTimePicker = ({
     label,
     name,
+    autoFocus = false,
   }: {
     label: string;
     name: `${string}.${string}`;
+    autoFocus?: boolean;
   }) => (
     <Box>
       <Typography variant="bodyMediumExtraBold" color="grey.600" mb={1}>
@@ -375,13 +377,11 @@ export function DayHeader({
         render={({ field, fieldState }) => (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimePicker
-  
+              autoFocus={autoFocus}
               ampm={false}
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
-           
-                name;
                 if (
                   newValue?.format("HH:mm") &&
                   newValue?.format("HH:mm") !== "Invalid Date"
@@ -512,7 +512,11 @@ export function DayHeader({
                     </Typography>
                   </Box>
                   <Box display="flex" mt={1} gap={3}>
-                    <AvailabilityTimePicker label="From" name={`${key}.from`} />
+                    <AvailabilityTimePicker 
+                      label="From" 
+                      name={`${key}.from`} 
+                      autoFocus={key === "in_person"}
+                    />
                     <AvailabilityTimePicker label="To" name={`${key}.to`} />
                   </Box>
                 </Box>
