@@ -34,33 +34,27 @@ export const appointmentSchema = z.object({
   reason: z.enum(Object.values(EnCancelAppointment) as [string, ...string[]]),
 });
 
-export const availabilitySchema = z
-  .object({
-    isAvailable: z.boolean(),
-    phone: z.object({
-      from: z.string().min(1, "Start time is required"),
-      to: z.string().min(1, "End time is required"),
-    }).partial(), // Make fields optional by default
-    in_person: z.object({
-      from: z.string().min(1, "Start time is required"),
-      to: z.string().min(1, "End time is required"),
-    }).partial(), // Make fields optional by default
-    break: z.object({
+export const availabilitySchema = z.object({
+  isAvailable: z.boolean(),
+  phone: z
+    .object({
       from: z.string(),
       to: z.string(),
-    }).partial(),
-  })
-  .refine(
-    (data) =>
-      (data.phone.from && data.phone.to) ||
-      (data.in_person.from && data.in_person.to),
-    {
-      message: "At least one booking type (phone or in-person) is required.",
-      path: ["phone"], // or ["in_person"] to show the error there
-    }
-  );
+    })
+,
+  in_person: z
+    .object({
+      from: z.string(),
+      to: z.string(),
+    }),
 
-
+  break: z
+    .object({
+      from: z.string(),
+      to: z.string(),
+    })
+    .optional(),
+});
 
 export type AppointmentFormData = z.infer<typeof appointmentSchema>;
 export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
@@ -79,6 +73,8 @@ export function DayHeader({
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const { refreshAvailability } = useAvailability();
+  const isPastDays = dayjs().isSameOrBefore(dayjs().date(date), "day");
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -131,7 +127,20 @@ export function DayHeader({
                 .join(":")
             : "",
         },
-        break: { from: "", to: "" },
+        break: {
+          from: selectedAvailability?.break_start_time
+            ? selectedAvailability.break_start_time
+                .split(":")
+                .slice(0, 2)
+                .join(":")
+            : "",
+          to: selectedAvailability?.break_end_time
+            ? selectedAvailability.break_end_time
+                .split(":")
+                .slice(0, 2)
+                .join(":")
+            : "",
+        },
       });
     }, 0);
   };
@@ -214,81 +223,106 @@ export function DayHeader({
     setOpenModal(false);
   };
 
+  const { userDetails } = useAuth();
 
-  const {userDetails} = useAuth();
   const handleAvailabilitySubmit = async (data: AvailabilityFormData) => {
     setLoading(true);
-    // Convert string times to dayjs objects for comparison
-    const phoneStart = dayjs(data.phone.from, "HH:mm");
-    const phoneEnd = dayjs(data.phone.to, "HH:mm");
-    const inPersonStart = dayjs(data.in_person.from, "HH:mm");
-    const inPersonEnd = dayjs(data.in_person.to, "HH:mm");
-    const breakStart = dayjs(data.break.from, "HH:mm");
-    const breakEnd = dayjs(data.break.to, "HH:mm");
-
-    // Function to check if two time ranges overlap
-    const isOverlap = (
-      start1: dayjs.Dayjs,
-      end1: dayjs.Dayjs,
-      start2: dayjs.Dayjs,
-      end2: dayjs.Dayjs
-    ) => {
-      return start1.isBefore(end2) && start2.isBefore(end1);
-    };
-
-    let errorMessage = "";
-
-    switch (true) {
-      case phoneStart.isAfter(phoneEnd):
-        errorMessage = "Phone start time cannot be after end time.";
-        break;
-      case inPersonStart.isAfter(inPersonEnd):
-        errorMessage = "In-person start time cannot be after end time.";
-        break;
-      case breakStart.isAfter(breakEnd):
-        errorMessage = "Break start time cannot be after end time.";
-        break;
-      case isOverlap(phoneStart, phoneEnd, inPersonStart, inPersonEnd):
-        errorMessage = "Phone and In-person times cannot overlap.";
-        break;
-      // case isOverlap(phoneStart, phoneEnd, breakStart, breakEnd):
-      //   errorMessage = "Phone and Break times cannot overlap.";
-      //   break;
-      // case isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd):
-      //   errorMessage = "In-person and Break times cannot overlap.";
-      //   break;
-      default:
-        break;
-    }
-
-    if (errorMessage) {
-      setSnackbar({ open: true, message: errorMessage, severity: "error" });
-      setLoading(false);
-      console.log(errorMessage);
-      return;
-    }
 
     try {
+      // Error validation setup
+      let hasError = false;
+      let errorMessage = "";
+
+      // Validate at least one booking type has times set
+      const hasPhoneTimes = data.phone?.from && data.phone?.to;
+      const hasInPersonTimes = data.in_person?.from && data.in_person?.to;
+      
+      if (!hasPhoneTimes && !hasInPersonTimes) {
+        hasError = true;
+        errorMessage = "Please set times for at least one booking type";
+      }
+
+      // Convert string times to Day.js objects
+      const phoneStart = hasPhoneTimes ? dayjs(data.phone.from, "HH:mm") : null;
+      const phoneEnd = hasPhoneTimes ? dayjs(data.phone.to, "HH:mm") : null;
+      const inPersonStart = hasInPersonTimes ? dayjs(data.in_person.from, "HH:mm") : null;
+      const inPersonEnd = hasInPersonTimes ? dayjs(data.in_person.to, "HH:mm") : null;
+      const breakStart = data.break?.from ? dayjs(data.break.from, "HH:mm") : null;
+      const breakEnd = data.break?.to ? dayjs(data.break.to, "HH:mm") : null;
+
+      // Function to check time overlap
+      const isOverlap = (
+        start1: dayjs.Dayjs | null,
+        end1: dayjs.Dayjs | null,
+        start2: dayjs.Dayjs | null,
+        end2: dayjs.Dayjs | null
+      ) => {
+        if (!start1 || !end1 || !start2 || !end2) return false;
+        return start1.isBefore(end2) && start2.isBefore(end1);
+      };
+
+      // Check for invalid time ranges
+      if (phoneStart && phoneEnd && phoneStart.isAfter(phoneEnd)) {
+        hasError = true;
+        errorMessage = "Phone start time cannot be after end time";
+      } else if (inPersonStart && inPersonEnd && inPersonStart.isAfter(inPersonEnd)) {
+        hasError = true;
+        errorMessage = "In-person start time cannot be after end time";
+      } else if (breakStart && breakEnd && breakStart.isAfter(breakEnd)) {
+        hasError = true;
+        errorMessage = "Break start time cannot be after end time";
+      } else if (
+        phoneStart &&
+        phoneEnd &&
+        inPersonStart &&
+        inPersonEnd &&
+        isOverlap(phoneStart, phoneEnd, inPersonStart, inPersonEnd)
+      ) {
+        hasError = true;
+        errorMessage = "Phone and In-person times cannot overlap";
+      }
+      
+      // Check if break times overlap with either phone or in-person
+      if (!hasError && breakStart && breakEnd) {
+        if (phoneStart && phoneEnd && isOverlap(phoneStart, phoneEnd, breakStart, breakEnd)) {
+          hasError = true;
+          errorMessage = "Break times cannot overlap with Phone times";
+        } else if (inPersonStart && inPersonEnd && isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd)) {
+          hasError = true;
+          errorMessage = "Break times cannot overlap with In-person times";
+        }
+      }
+
+      // If there is an error, show it and stop submission
+      if (hasError) {
+        setSnackbar({ 
+          open: true, 
+          message: errorMessage, 
+          severity: "error" 
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Only proceed if validation passes
       const payload: IAvailabilityPayload = {
         user_id: userDetails?.user_id,
         date: dayjs().set("date", date).format("YYYY-MM-DD"),
-        phone_start_time: `${data.phone.from}:00`,
-        phone_end_time: `${data.phone.to}:00`,
-        in_person_start_time: `${data.in_person.from}:00`,
-        in_person_end_time: `${data.in_person.to}:00`,
-        // break_start_time: `${data.break.from}:00`,
-        // break_end_time: `${data.break.to}:00`,
+        phone_start_time: data.phone?.from ? `${data.phone.from}:00` : null,
+        phone_end_time: data.phone?.to ? `${data.phone.to}:00` : null,
+        in_person_start_time: data.in_person?.from ? `${data.in_person.from}:00` : null,
+        in_person_end_time: data.in_person?.to ? `${data.in_person.to}:00` : null,
+        break_start_time: data.break?.from ? `${data.break.from}:00` : null,
+        break_end_time: data.break?.to ? `${data.break.to}:00` : null,
       };
 
       const response = await postAvailabilitySpecific(payload);
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
 
       await refreshAvailability();
 
       setSnackbar({
         open: true,
-        message: response?.message,
+        message: response?.message || "Availability updated successfully",
         severity: "success",
       });
       setIsAvailabilityModalOpen(false);
@@ -303,6 +337,8 @@ export function DayHeader({
       setLoading(false);
     }
   };
+  
+  
 
   // Closing snackbar
   const handleSnackbarClose = () => {
@@ -333,9 +369,14 @@ export function DayHeader({
               ampm={false}
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
-              onChange={(newValue) =>
-                field.onChange(newValue?.format("HH:mm") || "")
-              }
+              onChange={(newValue) => {
+                field.onChange(
+                  newValue?.format("HH:mm") &&
+                    newValue?.format("HH:mm") !== "Invalid Date"
+                    ? newValue?.format("HH:mm")
+                    : ""
+                );
+              }}
               format="HH:mm"
               slotProps={{
                 textField: {
@@ -388,26 +429,28 @@ export function DayHeader({
           {date}
         </Typography>
       </Box>
-      <Box
-        id="day-menu-button"
-        aria-controls={open ? "day-menu" : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? "true" : undefined}
-        component="img"
-        sx={{
-          p: 0,
-          cursor: "pointer",
-          filter:
-            isToday && !open
-              ? overRideSvgColor.white
-              : open
-              ? overRideSvgColor.blue
-              : "blue",
-        }}
-        alt="More."
-        src={MoreVertIcon}
-        onClick={handleClick}
-      />
+      {isPastDays && (
+        <Box
+          id="day-menu-button"
+          aria-controls={open ? "day-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? "true" : undefined}
+          component="img"
+          sx={{
+            p: 0,
+            cursor: "pointer",
+            filter:
+              isToday && !open
+                ? overRideSvgColor.white
+                : open
+                ? overRideSvgColor.blue
+                : "blue",
+          }}
+          alt="More."
+          src={MoreVertIcon}
+          onClick={handleClick}
+        />
+      )}
 
       {isAvailabilityModalOpen && (
         <CommonDialog
@@ -423,31 +466,33 @@ export function DayHeader({
         >
           <Divider sx={{ my: 2 }} />
           <Box sx={{ mt: 2 }}>
-            {["in_person", "phone"].map((key) => (
-              <Box key={key} mt={3}>
-                <Box display="flex" gap={1} alignItems="center">
-                  <Box
-                    component="img"
-                    sx={{ height: 21, width: 21 }}
-                    //@ts-ignore
-                    alt={availabilityIcons[key]}
-                    //@ts-ignore
-                    src={availabilityIcons[key]}
-                  />
-                  <Typography variant="bodyMediumExtraBold">
-                    {key === "in_person"
-                      ? "In Person"
-                      : key === "phone"
-                      ? "Calls Only"
-                      : "Break"}
-                  </Typography>
+            {["in_person", "phone", "break"].map((key) => {
+              return (
+                <Box key={key} mt={3}>
+                  <Box display="flex" gap={1} alignItems="center">
+                    <Box
+                      component="img"
+                      sx={{ height: 21, width: 21 }}
+                      //@ts-ignore
+                      alt={availabilityIcons[key]}
+                      //@ts-ignore
+                      src={availabilityIcons[key]}
+                    />
+                    <Typography variant="bodyMediumExtraBold">
+                      {key === "in_person"
+                        ? "In Person"
+                        : key === "phone"
+                        ? "Calls Only"
+                        : "Break"}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" mt={1} gap={3}>
+                    <AvailabilityTimePicker label="From" name={`${key}.from`} />
+                    <AvailabilityTimePicker label="To" name={`${key}.to`} />
+                  </Box>
                 </Box>
-                <Box display="flex" mt={1} gap={3}>
-                  <AvailabilityTimePicker label="From" name={`${key}.from`} />
-                  <AvailabilityTimePicker label="To" name={`${key}.to`} />
-                </Box>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
           {/* Snackbar */}
           <CommonSnackbar

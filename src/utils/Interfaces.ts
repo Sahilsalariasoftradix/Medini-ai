@@ -147,6 +147,8 @@ export interface IAvailabilityPayload {
 export interface IDayAvailability {
   date: string;
   phone_start_time: string | null;
+  break_start_time: string | null;
+  break_end_time: string | null;
   phone_end_time: string | null;
   in_person_start_time: string | null;
   in_person_end_time: string | null;

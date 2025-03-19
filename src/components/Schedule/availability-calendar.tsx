@@ -90,33 +90,12 @@ const dayMapping: { [key: string]: string } = {
 // Add this helper function near the top of the file
 const checkAvailabilityOverlap = (
   phone: { from: string; to: string },
-  inPerson: { from: string; to: string },
-  breakTime: { from: string; to: string }
+  inPerson: { from: string; to: string }
 ) => {
   const phoneStart = dayjs(`2024-01-01 ${phone.from}`);
   const phoneEnd = dayjs(`2024-01-01 ${phone.to}`);
   const inPersonStart = dayjs(`2024-01-01 ${inPerson.from}`);
   const inPersonEnd = dayjs(`2024-01-01 ${inPerson.to}`);
-  const breakStart = dayjs(`2024-01-01 ${breakTime.from}`);
-  const breakEnd = dayjs(`2024-01-01 ${breakTime.to}`);
-
-  // Check if break time overlaps with phone availability
-  const breakOverlapsPhone =
-    (breakStart.isValid() &&
-      phoneStart.isValid() &&
-      (breakStart.isBetween(phoneStart, phoneEnd) ||
-        breakEnd.isBetween(phoneStart, phoneEnd))) ||
-    phoneStart.isBetween(breakStart, breakEnd) ||
-    phoneEnd.isBetween(breakStart, breakEnd);
-
-  // Check if break time overlaps with in-person availability
-  const breakOverlapsInPerson =
-    (breakStart.isValid() &&
-      inPersonStart.isValid() &&
-      (breakStart.isBetween(inPersonStart, inPersonEnd) ||
-        breakEnd.isBetween(inPersonStart, inPersonEnd))) ||
-    inPersonStart.isBetween(breakStart, breakEnd) ||
-    inPersonEnd.isBetween(breakStart, breakEnd);
 
   // Check if phone and in-person times overlap
   const phoneOverlapsInPerson =
@@ -128,13 +107,8 @@ const checkAvailabilityOverlap = (
       inPersonEnd.isBetween(phoneStart, phoneEnd));
 
   return {
-    hasOverlap:
-      breakOverlapsPhone || breakOverlapsInPerson || phoneOverlapsInPerson,
-    message: breakOverlapsPhone
-      ? "Break time overlaps with Phone availability"
-      : breakOverlapsInPerson
-      ? "Break time overlaps with In Person availability"
-      : phoneOverlapsInPerson
+    hasOverlap: phoneOverlapsInPerson,
+    message: phoneOverlapsInPerson
       ? "Phone and In Person availability times overlap"
       : "",
   };
@@ -480,8 +454,7 @@ export default function AvailabilityCalendar() {
       // Check for overlapping times
       const { hasOverlap, message } = checkAvailabilityOverlap(
         data.phone,
-        data.in_person,
-        data.break
+        data.in_person
       );
 
       if (hasOverlap) {
