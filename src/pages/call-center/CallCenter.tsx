@@ -32,8 +32,8 @@ import { Chip, Pagination, Select, TextField } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { overRideSvgColor } from "../../utils/filters";
 import CommonDialog from "../../components/common/CommonDialog";
-import { IFilm, IGetContacts } from "../../utils/Interfaces";
-import {  getContactsByUserId } from "../../firebase/AuthService";
+import { ICall, IFilm, IGetContacts } from "../../utils/Interfaces";
+import { getContactsByUserId } from "../../firebase/AuthService";
 import { Controller, useForm } from "react-hook-form";
 import SearchInput from "../../components/common/SearchInput";
 import { sleep } from "../../components/Booking/availability-calendar";
@@ -43,8 +43,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import addIcon from "../../assets/icons/add-icn.svg";
 import AddContact from "../../components/Booking/Form/AddContact";
 import CustomSelect from "../../components/common/CustomSelect";
-import { EnCallPurposeOptions } from "../../utils/enums";
+
+import {
+  EnCallPurposeOptions,
+  EnCallPurposeOptionsValues,
+} from "../../utils/enums";
 import { useAuth } from "../../store/AuthContext";
+import CommonSnackbar from "../../components/common/CommonSnackbar";
+import { createCall, getCompanyUniqueNumber } from "../../api/userApi";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
 interface Data {
   id: number;
   contact: string;
@@ -910,33 +920,47 @@ const ActionMenu = ({ row }: { row: Data }) => {
 
 // Update the schema to include the new fields
 const addCallSchema = z.object({
-  contact: z.object({
-    title: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-    email: z.string(),
-    phone: z.string(),
-  }),
-  callPurpose: z.string().optional(),
-  appointmentReason: z.string().optional(),
-  inPersonOnly: z.boolean().default(false),
-  bookingStartDate: z.string().default("Today"),
-  bookingEndDate: z.string().default("2 months"),
-  appointmentLength: z.string().default("15 minutes"),
+  contact: z
+    .object({
+      title: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      email: z.string(),
+      phone: z.string(),
+    })
+    .required(),
+  callPurpose: z
+    .string({ message: "Call Purpose is required" })
+    .min(1, { message: "Call Purpose is required" }),
+  appointmentReason: z
+    .string({ message: "Reason is required" })
+    .min(1, { message: "Reason is required" }),
+  inPersonOnly: z.boolean().optional(),
+  bookingStartDate: z.string().optional(),
+  bookingEndDate: z.string().optional(),
+  appointmentLength: z.string().optional(),
+  appointmentId: z.string().optional(),
 });
 
 type AddCallSchema = z.infer<typeof addCallSchema>;
 
 const callPurposeOptions = [
-  { label: EnCallPurposeOptions.CANCEL, value: EnCallPurposeOptions.CANCEL },
-  { label: EnCallPurposeOptions.BOOK, value: EnCallPurposeOptions.BOOK },
-  {
-    label: EnCallPurposeOptions.RESCHEDULE,
-    value: EnCallPurposeOptions.RESCHEDULE,
-  },
   {
     label: EnCallPurposeOptions.REQUESTINFO,
-    value: EnCallPurposeOptions.REQUESTINFO,
+    value: EnCallPurposeOptionsValues.REQUESTINFO,
+  },
+  { label: EnCallPurposeOptions.BOOK, value: EnCallPurposeOptionsValues.BOOK },
+  {
+    label: EnCallPurposeOptions.CANCEL,
+    value: EnCallPurposeOptionsValues.CANCEL,
+  },
+  {
+    label: EnCallPurposeOptions.RESCHEDULE,
+    value: EnCallPurposeOptionsValues.RESCHEDULE,
+  },
+  {
+    label: EnCallPurposeOptions.INFORMPATIENT,
+    value: EnCallPurposeOptionsValues.INFORMPATIENT,
   },
 ];
 const CallCenter = () => {
@@ -951,31 +975,39 @@ const CallCenter = () => {
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [openAddContact, setOpenAddContact] = useState(false);
+  const [companyPhone, setCompanyPhone] = useState("");
   //@ts-ignore
   const [isEditing, setIsEditing] = useState(false);
   //@ts-ignore
   const [options, setOptions] = useState<readonly IFilm[]>([]);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "error",
+  });
   const {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
     reset,
+    watch,
   } = useForm<AddCallSchema>({
     resolver: zodResolver(addCallSchema),
     defaultValues: {
-      contact: {
-        title: "",
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-      },
+      contact: {},
       callPurpose: "",
       appointmentReason: "",
+      appointmentId: "",
       inPersonOnly: false,
-      bookingStartDate: "Today",
-      bookingEndDate: "2 months",
-      appointmentLength: "15 minutes",
+      bookingStartDate: "",
+      bookingEndDate: "",
+      appointmentLength: "15",
     },
   });
 
@@ -992,20 +1024,27 @@ const CallCenter = () => {
     email: contact.email,
     phone: contact.phone,
   }));
+  const callPurpose = watch("callPurpose");
 
   const handleClose = () => {
     setOpenContactSearch(false);
     setOptions([]);
   };
-  const {userDetails} = useAuth();
+  const { userDetails } = useAuth();
 
   const fetchContacts = async () => {
     const contactList = await getContactsByUserId(userDetails?.user_id);
     setContacts(contactList);
   };
 
+  const fetchCompanyPhone = async () => {
+    const companyPhone = await getCompanyUniqueNumber(userDetails?.company_id);
+    setCompanyPhone(companyPhone?.phoneNumber);
+  };
+
   useEffect(() => {
     fetchContacts();
+    fetchCompanyPhone();
   }, []);
 
   useEffect(() => {
@@ -1013,6 +1052,8 @@ const CallCenter = () => {
     const currentValue = control._formValues?.contact;
     if (currentValue && Object.keys(currentValue).length > 0) {
       setSelectedContact(currentValue);
+    } else {
+      setSelectedContact(null);
     }
   }, [control._formValues?.contact]);
   const handleOpen = () => {
@@ -1095,11 +1136,139 @@ const CallCenter = () => {
     [order, orderBy, page, rowsPerPage]
   );
 
-  const onSubmit = (data: AddCallSchema) => {
-    console.log("Form data:", data);
-    // Handle form submission
-    setOpenAddCallDetails(false);
-    reset();
+  const onSubmit = async (data: AddCallSchema) => {
+    const callData: ICall = {
+      to: data.contact.phone,
+      from: companyPhone,
+      agenda: data.callPurpose,
+      customer_name: data.contact.title,
+    };
+    clearErrors("bookingStartDate");
+    clearErrors("bookingEndDate");
+    clearErrors("appointmentLength");
+    let error = false;
+
+    if (
+      [
+        EnCallPurposeOptionsValues.BOOK,
+        EnCallPurposeOptionsValues.RESCHEDULE,
+      ].includes(data.callPurpose as EnCallPurposeOptionsValues)
+    ) {
+      if (!(data.bookingStartDate && data.bookingStartDate.length > 0)) {
+        error = true;
+        setError("bookingStartDate", {
+          type: "required",
+          message: "From date is required",
+        });
+      }
+      if (!(data.bookingEndDate && data.bookingEndDate.length > 0)) {
+        error = true;
+        setError("bookingEndDate", {
+          type: "required",
+          message: "Not Later Than date is required",
+        });
+      }
+      if (
+        data.bookingStartDate &&
+        data.bookingEndDate &&
+        new Date(data.bookingStartDate) > new Date(data.bookingEndDate)
+      ) {
+        error = true;
+        setError("bookingEndDate", {
+          type: "required",
+          message: "Not Later Than date should be greater than From date",
+        });
+      }
+      if (!(data.appointmentLength && data.appointmentLength.length > 0)) {
+        error = true;
+        setError("appointmentLength", {
+          type: "required",
+          message: "Length is required",
+        });
+      }
+    }
+
+    if (
+      [
+        EnCallPurposeOptionsValues.CANCEL,
+        EnCallPurposeOptionsValues.RESCHEDULE,
+      ].includes(data.callPurpose as EnCallPurposeOptionsValues)
+    ) {
+      if (!(data.appointmentId && data.appointmentId.length > 0)) {
+        error = true;
+        setError("appointmentId", {
+          type: "required",
+          message: "Appointment ID is required",
+        });
+      }
+    }
+
+    if (error) {
+      return;
+    }
+
+    switch (data.callPurpose) {
+      case EnCallPurposeOptionsValues.REQUESTINFO:
+        callData.call_reason = data.appointmentReason;
+        break;
+      case EnCallPurposeOptionsValues.BOOK:
+        callData.appointment_reason = data.appointmentReason;
+        callData.is_in_person = data.inPersonOnly;
+        callData.book_from_date = data.bookingStartDate;
+        callData.book_till_date = data.bookingEndDate;
+        callData.appointment_length = data.appointmentLength
+          ? parseInt(data.appointmentLength)
+          : undefined;
+        break;
+      case EnCallPurposeOptionsValues.CANCEL:
+        callData.booking_id_to_cancel = data.appointmentId
+          ? parseInt(data.appointmentId)
+          : undefined;
+        callData.reason_for_cancellation = data.appointmentReason;
+        break;
+      case EnCallPurposeOptionsValues.RESCHEDULE:
+        callData.reschedule_appointment_reason = data.appointmentReason;
+        callData.reschedule_is_in_person = data.inPersonOnly;
+        callData.reschedule_book_from_date = data.bookingStartDate;
+        callData.reschedule_book_till_date = data.bookingEndDate;
+        callData.booking_id_to_reschedule = data.appointmentId
+          ? parseInt(data.appointmentId)
+          : undefined;
+        callData.reschedule_appointment_length = data.appointmentLength
+          ? parseInt(data.appointmentLength)
+          : undefined;
+        break;
+      case EnCallPurposeOptionsValues.INFORMPATIENT:
+        callData.info_to_patient = data.appointmentReason;
+        break;
+    }
+    setLoading({ ...loading, data: true });
+    try {
+      const response = await createCall(callData);
+      if (response && response.success) {
+        setOpenAddCallDetails(false);
+        reset();
+        setSnackbar({
+          open: true,
+          message: "Call created successfully",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "Unable to create call record",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Unable to create call record",
+        severity: "error",
+      });
+    } finally {
+      setLoading({ ...loading, data: false });
+    }
   };
 
   return (
@@ -1124,7 +1293,10 @@ const CallCenter = () => {
             variant="contained"
             startIcon={<img src={add} alt="add" />}
             text="Add New Call"
-            onClick={() => setOpenAddCallDetails(true)}
+            onClick={() => {
+              setOpenAddCallDetails(true);
+              setSelectedContact(null);
+            }}
             sx={{ py: "11px", px: "20px" }}
           />
           <CommonButton
@@ -1369,11 +1541,55 @@ const CallCenter = () => {
           placeholder="Call Purpose"
         />
 
+        {/* Appointment ID field */}
+        {[
+          EnCallPurposeOptionsValues.CANCEL,
+          EnCallPurposeOptionsValues.RESCHEDULE,
+        ].includes(callPurpose as EnCallPurposeOptionsValues) && (
+          <Box mt={2}>
+            <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+              Appointment to{" "}
+              {callPurpose === EnCallPurposeOptionsValues.RESCHEDULE
+                ? "reschedule"
+                : "cancel"}
+            </Typography>
+
+            <Controller
+              name="appointmentId"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  multiline
+                  rows={1}
+                  placeholder="Enter Appointment ID"
+                  error={!!errors.appointmentId}
+                  helperText={errors.appointmentId?.message}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                />
+              )}
+            />
+          </Box>
+        )}
+
         {/* Add Reason for appointment field */}
         <Box mt={2}>
           <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
-            Reason for appointment
+            Reason for{" "}
+            {callPurpose === EnCallPurposeOptionsValues.BOOK
+              ? "appointment"
+              : callPurpose === EnCallPurposeOptionsValues.RESCHEDULE
+              ? "reschedule"
+              : callPurpose === EnCallPurposeOptionsValues.CANCEL
+              ? "cancellation"
+              : "call"}
           </Typography>
+          
           <Controller
             name="appointmentReason"
             control={control}
@@ -1396,141 +1612,167 @@ const CallCenter = () => {
           />
         </Box>
 
-        {/* Add In Person Only toggle */}
-        <Box mt={2}>
-          <Typography variant="bodyMediumMedium" mb={1}>
-            In Person Only?
-          </Typography>
-          <Box display="flex" gap={4}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Controller
-                name="inPersonOnly"
-                control={control}
-                render={({ field }) => (
-                  <RoundCheckbox
-                    checked={field.value === true}
-                    onChange={() => field.onChange(true)}
-                    label=""
+        {[
+          EnCallPurposeOptionsValues.BOOK,
+          EnCallPurposeOptionsValues.RESCHEDULE,
+        ].includes(callPurpose as EnCallPurposeOptionsValues) && (
+          <>
+            {/* Add In Person Only toggle */}
+            <Box mt={2}>
+              <Typography variant="bodyMediumMedium" mb={1}>
+                In Person Only?
+              </Typography>
+              <Box display="flex" gap={4}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Controller
+                    name="inPersonOnly"
+                    control={control}
+                    render={({ field }) => (
+                      <RoundCheckbox
+                        checked={field.value === true}
+                        onChange={() => field.onChange(true)}
+                        label=""
+                      />
+                    )}
                   />
-                )}
-              />
-              <Typography variant="bodyMediumMedium">Yes</Typography>
-            </Box>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Controller
-                name="inPersonOnly"
-                control={control}
-                render={({ field }) => (
-                  <RoundCheckbox
-                    checked={field.value === false}
-                    onChange={() => field.onChange(false)}
-                    label=""
+                  <Typography variant="bodyMediumMedium">Yes</Typography>
+                </Box>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Controller
+                    name="inPersonOnly"
+                    control={control}
+                    render={({ field }) => (
+                      <RoundCheckbox
+                        checked={field.value === false}
+                        onChange={() => field.onChange(false)}
+                        label=""
+                      />
+                    )}
                   />
-                )}
-              />
-              <Typography variant="bodyMediumMedium">No</Typography>
+                  <Typography variant="bodyMediumMedium">No</Typography>
+                </Box>
+              </Box>
             </Box>
-          </Box>
-        </Box>
 
-        {/* Add Book Between section */}
-        <Typography variant="bodyMediumMedium" mt={3} mb={1}>
-          Book Between
-        </Typography>
-
-        {/* From date */}
-        <Box mt={2}>
-          <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
-            From
-          </Typography>
-          <CustomSelect
-            name="bookingStartDate"
-            control={control}
-            errors={errors}
-            options={[
-              { label: "Today", value: "Today" },
-              { label: "Tomorrow", value: "Tomorrow" },
-              { label: "Next week", value: "Next week" },
-            ]}
-          />
-        </Box>
-
-        {/* Not Later Than */}
-        <Box mt={2}>
-          <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
-            Not Later Than
-          </Typography>
-          <Box display="flex" gap={2}>
-            <CustomSelect
-              name="bookingEndDate"
-              control={control}
-              errors={errors}
-              options={[
-                { label: "1 week from now", value: "1 week" },
-                { label: "2 weeks from now", value: "2 weeks" },
-                { label: "3 weeks from now", value: "3 weeks" },
-                { label: "1 month from now", value: "1 month" },
-                { label: "2 months from now", value: "2 months" },
-                { label: "3 months from now", value: "3 months" },
-                { label: "1 year from now", value: "1 year" },
-                { label: "2 years from now", value: "2 years" },
-                { label: "3 years from now", value: "3 years" },
-              ]}
-            />
-            <Typography
-              variant="bodySmallMedium"
-              color="grey.600"
-              alignSelf="center"
-            >
-              from Jan 11
+            {/* Add Book Between section */}
+            <Typography variant="bodyMediumMedium" mt={3} mb={1}>
+              Book Between
             </Typography>
-          </Box>
-        </Box>
 
-        {/* Appointment Length */}
-        <Box mt={2}>
-          <Typography
-            variant="bodySmallMedium"
-            color="grey.600"
-            mb={1}
-            display="flex"
-            alignItems="center"
-            gap={1}
-          >
-            Length
-            <Box
-              component="span"
-              sx={{
-                width: 16,
-                height: 16,
-                borderRadius: "50%",
-                border: "1px solid #E2E8F0",
-                display: "inline-flex",
-                justifyContent: "center",
-                alignItems: "center",
-                fontSize: "10px",
-                color: "grey.500",
-              }}
-            >
-              i
+            {/* From date */}
+            <Box mt={2}>
+              <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+                From
+              </Typography>
+              <Controller
+                name="bookingStartDate"
+                control={control}
+                render={({ field: { onChange, value, ...field } }) => (
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      {...field}
+                      sx={{
+                        width: "100%",
+                      }}
+                      value={value ? dayjs(value) : null}
+                      onChange={(newValue) => {
+                        onChange(
+                          newValue ? newValue.format("YYYY-MM-DD") : null
+                        );
+                      }}
+                      minDate={dayjs()}
+                      slotProps={{
+                        textField: {
+                          error: !!errors.bookingStartDate,
+                          helperText: errors.bookingStartDate?.message,
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )}
+              />
             </Box>
-          </Typography>
-          <CustomSelect
-            name="appointmentLength"
-            control={control}
-            errors={errors}
-            options={[
-              { label: "15 minutes", value: "15 minutes" },
-              { label: "30 minutes", value: "30 minutes" },
-              { label: "45 minutes", value: "45 minutes" },
-              { label: "1 hour", value: "1 hour" },
-              { label: "1 hour 15 minutes", value: "1 hour 15 minutes" },
-              { label: "1 hour 30 minutes", value: "1 hour 30 minutes" },
-              { label: "1 hour 45 minutes", value: "1 hour 45 minutes" },
-              { label: "2 hours", value: "2 hours" },
-            ]}
-          />
-        </Box>
+
+            {/* Not Later Than */}
+            <Box mt={2}>
+              <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+                Not Later Than
+              </Typography>
+              <Controller
+                name="bookingEndDate"
+                control={control}
+                render={({ field: { onChange, value, ...field } }) => (
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      {...field}
+                      sx={{
+                        width: "100%",
+                      }}
+                      minDate={dayjs()}
+                      value={value ? dayjs(value) : null}
+                      onChange={(newValue) => {
+                        onChange(
+                          newValue ? newValue.format("YYYY-MM-DD") : null
+                        );
+                      }}
+                      slotProps={{
+                        textField: {
+                          error: !!errors.bookingEndDate,
+                          helperText: errors.bookingEndDate?.message,
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )}
+              />
+            </Box>
+
+            {/* Appointment Length */}
+            <Box mt={2}>
+              <Typography
+                variant="bodySmallMedium"
+                color="grey.600"
+                mb={1}
+                display="flex"
+                alignItems="center"
+                gap={1}
+              >
+                Length
+                <Box
+                  component="span"
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    border: "1px solid #E2E8F0",
+                    display: "inline-flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    fontSize: "10px",
+                    color: "grey.500",
+                  }}
+                >
+                  i
+                </Box>
+              </Typography>
+              <CustomSelect
+                name="appointmentLength"
+                control={control}
+                errors={errors}
+                options={[
+                  { label: "15 minutes", value: "15" },
+                  { label: "30 minutes", value: "30" },
+                  { label: "45 minutes", value: "45" },
+                  { label: "1 hour", value: "60" },
+                  { label: "1 hour 15 minutes", value: "75" },
+                  { label: "1 hour 30 minutes", value: "90" },
+                  { label: "1 hour 45 minutes", value: "105" },
+                  { label: "2 hours", value: "120" },
+                ]}
+              />
+            </Box>
+          </>
+        )}
 
         {!isEditing && (
           <AddContact
@@ -1540,6 +1782,15 @@ const CallCenter = () => {
           />
         )}
       </CommonDialog>
+
+      <CommonSnackbar
+        open={snackbar.open}
+        onClose={() =>
+          setSnackbar({ message: "", severity: "error", open: false })
+        }
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
     </Box>
   );
 };

@@ -174,7 +174,7 @@ const SignUpForm = () => {
               </Typography>
             </Divider>
             {/* Input fields */}
-            <Box my={4}>
+            <Box my={2}>
               <Grid container spacing={2}>
                 <Grid size={6}>
                   <CommonTextField
@@ -193,14 +193,14 @@ const SignUpForm = () => {
                   />
                 </Grid>
               </Grid>
-              <Box mt={3}>
+              <Box mt={2}>
                 <MuiPhone 
                   error={formSubmitted && (!phone || phone.length < 10)} 
                   value={phone} 
                   onChange={(phone) => setPhone(phone)} 
                 />
               </Box>
-              <Box mt={3}>
+              <Box mt={2}>
                 <CommonTextField
                   placeholder="Email"
                   register={register("email")}

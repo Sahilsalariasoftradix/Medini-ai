@@ -79,15 +79,16 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
 
   // Get valid time ranges
   const phoneRange =
-    dayAvailability.phone_start_time && dayAvailability.phone_start_time !== "00:00:00"
+    dayAvailability.phone_start_time && dayAvailability.phone_start_time !== ""
       ? {
           start: timeToMinutes(dayAvailability.phone_start_time),
           end: timeToMinutes(dayAvailability.phone_end_time),
         }
+
       : null;
 
   const inPersonRange =
-    dayAvailability.in_person_start_time && dayAvailability.in_person_start_time !== "00:00:00"
+    dayAvailability.in_person_start_time && dayAvailability.in_person_start_time !== ""
       ? {
           start: timeToMinutes(dayAvailability.in_person_start_time),
           end: timeToMinutes(dayAvailability.in_person_end_time),
@@ -96,7 +97,7 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
 
   // Get break time range
   const breakRange =
-    dayAvailability.break_start_time && dayAvailability.break_start_time !== "00:00:00"
+    dayAvailability.break_start_time && dayAvailability.break_start_time !== ""
       ? {
           start: timeToMinutes(dayAvailability.break_start_time),
           end: timeToMinutes(dayAvailability.break_end_time),

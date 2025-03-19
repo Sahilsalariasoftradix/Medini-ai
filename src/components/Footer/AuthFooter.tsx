@@ -15,7 +15,7 @@ const AuthFooter = () => {
       <CommonLink to={externalLinks.privacyPolicy} variant="bodyLargeSemiBold">
         {text.privacyPolicyLink}
       </CommonLink>
-      <Typography variant="bodyLargeSemiBold" sx={{ color: "#358FF7", cursor: "pointer" }}>
+      <Typography variant="bodyLargeSemiBold" sx={{ color: "#358FF7" }}>
         {text.copyright} {new Date().getFullYear()}
       </Typography>
     </Box>

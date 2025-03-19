@@ -54,6 +54,8 @@ import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
 import { menuItemHoverStyle } from "../Booking/day-header";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
+import CustomSwitch from "../common/CustomSwitch";
+import ConfirmAppointments from "./Form/ConfirmAppointments";
 
 dayjs.extend(isSameOrBefore);
 
@@ -175,6 +177,7 @@ export default function AvailabilityCalendar() {
   const [openEditAvailability, setOpenEditAvailability] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [checkedDays, setCheckedDays] = useState<string[]>([]);
+
   const [weeklyAvailability, setWeeklyAvailability] = useState<any>({});
   const [transformedWeeklyAvailability, setTransformedWeeklyAvailability] =
     useState(
@@ -949,51 +952,8 @@ export default function AvailabilityCalendar() {
           }}
         >
           <Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="bodyLargeMedium"
-                sx={{ fontWeight: "800", fontSize: "14px", lineHeight: "21px" }}
-              >
-                Confirm Appointments
-              </Typography>
-              <Switch />
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography
-                sx={{
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "12px",
-                  width: "72px",
-                  height: "42px",
-                  padding: "16px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  lineHeight: "21px",
-                  color: "#A0AEC0",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "start",
-                }}
-              >
-                2
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  lineHeight: "21px",
-                  color: "#1A202C",
-                }}
-              >
-                Days in advance
-              </Typography>
-            </Box>
+            <ConfirmAppointments />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}></Box>
           </Box>
         </Paper>
         <Paper elevation={1} sx={{ p: 2 }}>
@@ -1084,7 +1044,11 @@ export default function AvailabilityCalendar() {
               >
                 <CommonButton
                   variant="outlined"
-                  onClick={() => setOpenEditAvailability(false)}
+                  onClick={() => {
+                    setOpenEditAvailability(false);
+                    reset();
+                    
+                  }}
                   text="Cancel"
                   sx={{
                     borderColor: "grey.200",

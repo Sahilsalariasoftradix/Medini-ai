@@ -2,6 +2,7 @@ import {
   IAvailabilityRequest,
   IAvailabilitySpecific,
   IBooking,
+  ICall,
   ICompanyDetails,
   IGetAvailability,
   IUpdateBooking,
@@ -141,5 +142,16 @@ export const createUser = async (userData: IUser) => {
   } catch (error: any) {
     console.error("Error creating user:", error);
     throw new Error(error.response?.data?.error || "User creation failed.");
+  }
+};
+
+// Company details posting API
+export const createCall = async (callData: ICall) => {
+  try {
+    const response = await apiClient.post("outbound-call-grok", callData);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting company details:", error);
+    throw error;
   }
 };

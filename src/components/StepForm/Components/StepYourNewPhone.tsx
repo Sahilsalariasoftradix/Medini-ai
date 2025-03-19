@@ -6,6 +6,7 @@ import { useStepForm } from "../../../store/StepFormContext";
 import { getCompanyUniqueNumber } from "../../../api/userApi";
 import { useAuth } from "../../../store/AuthContext";
 import useLoading from "../../../hooks/useLoading";
+import { formatPhoneNumber } from "../../../utils/common";
 
 const YourNewPhone = () => {
   const { goToNextStep, setCompanyNumber, companyNumber,companyId } = useStepForm();
@@ -17,7 +18,7 @@ const YourNewPhone = () => {
       startLoading();
       try {
         const resp = await getCompanyUniqueNumber(companyId!);
-        setCompanyNumber(resp.phoneNumber);
+        setCompanyNumber(formatPhoneNumber(resp.phoneNumber));
       } catch (error) {
         console.error("Error fetching company number:", error);
       } finally {

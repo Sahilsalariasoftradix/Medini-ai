@@ -119,13 +119,8 @@ const CompanyDetails: React.FC = () => {
             />
           </Grid>
           <Grid size={6}>
-            <Typography
-              mb={1}
-              noWrap
-              variant="bodyLargeExtraBold"
-              color="grey.600"
-            >
-              Apartment, suite, or etc.
+          <Typography mb={1} variant="bodyLargeExtraBold" color="grey.600">
+              Address
             </Typography>
             <CommonTextField
               placeholder="Line 1"
@@ -134,8 +129,14 @@ const CompanyDetails: React.FC = () => {
             />
           </Grid>
           <Grid size={6}>
-            <Typography mb={1} variant="bodyLargeExtraBold" color="grey.600">
-              Address
+            
+            <Typography
+              mb={1}
+              noWrap
+              variant="bodyLargeExtraBold"
+              color="grey.600"
+            >
+              Apartment, suite, or etc.
             </Typography>
             <CommonTextField
               placeholder="Line 2"
