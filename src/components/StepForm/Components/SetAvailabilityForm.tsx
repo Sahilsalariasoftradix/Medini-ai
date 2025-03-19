@@ -251,11 +251,13 @@ const SetAvailabilityForm = ({
                 <Box display="flex" mt={1} gap={3}>
                   <AvailabilityTimePicker
                     availabilityForm={availabilityForm}
+                    autoFocus={key === "in_person"}
                     label="From"
                     name={`${key}.from`}
                   />
                   <AvailabilityTimePicker
                     availabilityForm={availabilityForm}
+                    autoFocus={key === "in_person"}
                     label="To"
                     name={`${key}.to`}
                   />

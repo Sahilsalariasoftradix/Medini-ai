@@ -10,10 +10,12 @@ const AvailabilityTimePicker = ({
   label,
   name,
   availabilityForm,
+  autoFocus = false,
 }: {
   label: string;
   name: `${string}.${string}`;
   availabilityForm: UseFormReturn<AvailabilityFormData>;
+  autoFocus?: boolean;
 }) => {
   return (
     <Box>
@@ -29,10 +31,11 @@ const AvailabilityTimePicker = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimePicker
               ampm={false}
+              autoFocus={autoFocus}
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
-                name;
+                // name;
                 if (
                   newValue?.format("HH:mm") &&
                   newValue?.format("HH:mm") !== "Invalid Date"
