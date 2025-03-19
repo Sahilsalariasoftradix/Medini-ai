@@ -82,3 +82,14 @@ export const mapAvailabilitiesToWeekly = (availabilities: any[], dayMapping: any
 
   return weeklyAvailability;
 };
+export function formatPhoneNumber(number:string) {
+  // Remove all non-numeric characters
+  const cleaned = number.replace(/\D/g, '');
+
+  // Ensure it has the correct length (10 digits for US numbers)
+  if (cleaned.length === 11) {
+      return `+1 (${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  } else {
+      return 'Invalid number';
+  }
+}

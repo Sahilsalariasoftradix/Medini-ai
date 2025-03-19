@@ -54,6 +54,8 @@ import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
 import { menuItemHoverStyle } from "../Booking/day-header";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
+import CustomSwitch from "../common/CustomSwitch";
+import ConfirmAppointments from "./Form/ConfirmAppointments";
 
 dayjs.extend(isSameOrBefore);
 
@@ -175,6 +177,7 @@ export default function AvailabilityCalendar() {
   const [openEditAvailability, setOpenEditAvailability] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [checkedDays, setCheckedDays] = useState<string[]>([]);
+
   const [weeklyAvailability, setWeeklyAvailability] = useState<any>({});
   const [transformedWeeklyAvailability, setTransformedWeeklyAvailability] =
     useState(
@@ -949,12 +952,13 @@ export default function AvailabilityCalendar() {
           }}
         >
           <Box>
-            <Box
+            {/* <Box
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
+              mb={2}
             >
               <Typography
                 variant="bodyLargeMedium"
@@ -962,10 +966,11 @@ export default function AvailabilityCalendar() {
               >
                 Confirm Appointments
               </Typography>
-              <Switch />
-            </Box>
+              <CustomSwitch name="isConfirmed" control={control} />
+            </Box> */}
+            <ConfirmAppointments />
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography
+              {/* <Typography
                 sx={{
                   border: "1px solid #E2E8F0",
                   borderRadius: "12px",
@@ -982,8 +987,8 @@ export default function AvailabilityCalendar() {
                 }}
               >
                 2
-              </Typography>
-              <Typography
+              </Typography> */}
+              {/* <Typography
                 sx={{
                   fontSize: "14px",
                   fontWeight: "500",
@@ -992,7 +997,7 @@ export default function AvailabilityCalendar() {
                 }}
               >
                 Days in advance
-              </Typography>
+              </Typography> */}
             </Box>
           </Box>
         </Paper>

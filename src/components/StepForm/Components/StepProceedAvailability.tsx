@@ -256,8 +256,19 @@ const ProceedAvailability = () => {
       // Step 2: Update Firestore with the new status
       await updateUserDetailsInFirestore(userId, {
         onboardingStatus: updatedStatus, // Use updatedStatus directly
+        confirmAppointments: {
+          isConfirmed: false,
+          days: 2,
+        },
       });
-      setUserDetails({ ...userDetails, onboardingStatus: updatedStatus });
+      setUserDetails({
+        ...userDetails,
+        onboardingStatus: updatedStatus,
+        confirmAppointments: {
+          isConfirmed: false,
+          days: 2,
+        },
+      });
       resetForm();
       // Create the final payload
       const payload = {

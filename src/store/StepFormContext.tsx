@@ -15,11 +15,8 @@ export const CompanyDetailsSchema = z.object({
     .max(50, "Office name can be up to 50 characters"),
   address_line_one: z
     .string()
-    .min(8, "Apartment name should be at least 8 characters")
     .max(50, "Apartment name can be up to 50 characters"),
-  address_line_two: z
-    .string()
-   .optional(),
+  address_line_two: z.string().optional(),
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
   in_person_appointments: z.boolean().optional(),
@@ -56,6 +53,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       in_person_appointments: false,
       max_appointment_time: null!,
     },
+  
     handleBookings: null,
   });
   const { user, loading, userDetails } = useAuth();
@@ -122,7 +120,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setCompanyId,
         companyId,
         companyNumber,
-        setCompanyNumber
+        setCompanyNumber,
       }}
     >
       {children}
