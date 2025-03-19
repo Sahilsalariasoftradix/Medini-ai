@@ -73,7 +73,7 @@ const SignUpForm = () => {
   // Form submission handler
   const onSubmit: SubmitHandler<SignUpSchemaType> = async (data) => {
     setFormSubmitted(true);
-    if ( phone.length < 10) {
+    if ( phone.length < 12) {
       setSnackbarSeverity("error");
       setSnackbarMessage("Please enter a valid phone number");
       setSnackbarOpen(true);
@@ -195,7 +195,7 @@ const SignUpForm = () => {
               </Grid>
               <Box mt={2}>
                 <MuiPhone 
-                  error={formSubmitted && (!phone || phone.length < 10)} 
+                  error={formSubmitted && (!phone || phone.length < 12)} 
                   value={phone} 
                   onChange={(phone) => setPhone(phone)} 
                 />

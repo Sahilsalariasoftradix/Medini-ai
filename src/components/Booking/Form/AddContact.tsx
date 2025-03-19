@@ -162,7 +162,7 @@ const AddContact = ({
           Phone
         </Typography>
         <MuiPhone
-          error={formSubmitted && (!phone || phone.length < 10)}
+          error={formSubmitted && (!phone || phone.length < 12)}
           value={phone}
           onChange={(phone) => setPhone(phone)}
         />
