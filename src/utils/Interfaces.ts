@@ -137,12 +137,12 @@ export interface IAvailabilitySpecific {
 export interface IAvailabilityPayload {
   user_id: number;
   date: string;
-  phone_start_time: string;
-  phone_end_time: string;
-  in_person_start_time: string;
-  in_person_end_time: string;
-  break_start_time?: string;
-  break_end_time?: string;
+  phone_start_time: string | null;
+  phone_end_time: string | null;
+  in_person_start_time: string | null;
+  in_person_end_time: string | null;
+  break_start_time?: string | null;
+  break_end_time?: string | null;
 }
 export interface IDayAvailability {
   date: string;

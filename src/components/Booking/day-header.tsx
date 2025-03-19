@@ -282,16 +282,16 @@ export function DayHeader({
         errorMessage = "Phone and In-person times cannot overlap";
       }
       
-      // Check if break times overlap with either phone or in-person
-      if (!hasError && breakStart && breakEnd) {
-        if (phoneStart && phoneEnd && isOverlap(phoneStart, phoneEnd, breakStart, breakEnd)) {
-          hasError = true;
-          errorMessage = "Break times cannot overlap with Phone times";
-        } else if (inPersonStart && inPersonEnd && isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd)) {
-          hasError = true;
-          errorMessage = "Break times cannot overlap with In-person times";
-        }
-      }
+      // // Check if break times overlap with either phone or in-person
+      // if (!hasError && breakStart && breakEnd) {
+      //   if (phoneStart && phoneEnd && isOverlap(phoneStart, phoneEnd, breakStart, breakEnd)) {
+      //     hasError = true;
+      //     errorMessage = "Break times cannot overlap with Phone times";
+      //   } else if (inPersonStart && inPersonEnd && isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd)) {
+      //     hasError = true;
+      //     errorMessage = "Break times cannot overlap with In-person times";
+      //   }
+      // }
 
       // If there is an error, show it and stop submission
       if (hasError) {
@@ -315,7 +315,7 @@ export function DayHeader({
         break_start_time: data.break?.from ? `${data.break.from}:00` : null,
         break_end_time: data.break?.to ? `${data.break.to}:00` : null,
       };
-
+      //@ts-ignore
       const response = await postAvailabilitySpecific(payload);
 
       await refreshAvailability();

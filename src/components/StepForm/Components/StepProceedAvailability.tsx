@@ -104,6 +104,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
     TUE: {
       date: "",
@@ -111,6 +113,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
     WED: {
       date: "",
@@ -118,6 +122,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
     THU: {
       date: "",
@@ -125,6 +131,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
     FRI: {
       date: "",
@@ -132,6 +140,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
     SAT: {
       date: "",
@@ -139,6 +149,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
     SUN: {
       date: "",
@@ -146,6 +158,8 @@ const ProceedAvailability = () => {
       phone_end_time: "",
       in_person_start_time: "",
       in_person_end_time: "",
+      break_start_time: "",
+      break_end_time: "",
     },
   });
   console.log(weeklyAvailability);

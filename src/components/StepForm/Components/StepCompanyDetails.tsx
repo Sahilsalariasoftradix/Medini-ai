@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CommonButton from "../../common/CommonButton";
 import {
   getCurrentUserId,
+  updateUserDetailsInFirestore,
 } from "../../../firebase/AuthService";
 import CustomSwitch from "../../common/CustomSwitch";
 import {
@@ -20,12 +21,10 @@ import {
   userNotSignedInErrorMessage,
 } from "../../../utils/errorHandler";
 import CustomSelect from "../../common/CustomSelect";
-import {
-  APPOINTMENT_OPTIONS,
-  COUNTRY_OPTIONS,
-} from "../../../utils/options";
+import { APPOINTMENT_OPTIONS, COUNTRY_OPTIONS } from "../../../utils/options";
 import { useAuthHook } from "../../../hooks/useAuth";
 import { postCompanyDetails } from "../../../api/userApi";
+import { EnOnboardingStatus } from "../../../utils/enums";
 
 const CompanyDetails: React.FC = () => {
   const { updateUserDetails, skipNextStep, setCompanyId } = useStepForm();
@@ -60,7 +59,7 @@ const CompanyDetails: React.FC = () => {
       const companyData = {
         company_name: data.company_name,
         address_line_one: data.address_line_one,
-        address_line_two: data.address_line_two,
+        address_line_two: data.address_line_two!,
         city: data.city,
         country: data.country,
         in_person_appointments: data.in_person_appointments ?? false,
@@ -69,10 +68,17 @@ const CompanyDetails: React.FC = () => {
       const updatedDetails = { companyDetails: companyData };
       // Send company details
       const response = await postCompanyDetails(companyData);
+      await updateUserDetailsInFirestore(userId, {
+        onboardingStatus: EnOnboardingStatus.STATUS_1, // Use updatedStatus directly
+      });
 
       setCompanyId(response.company?.id);
-      console.log(response.company?.id)
+      updateUserDetails({
+        ...updatedDetails,
+        onboardingStatus: EnOnboardingStatus.STATUS_1,
+      });
       // Step 3: Update context with new user details
+
       updateUserDetails(updatedDetails);
       skipNextStep();
     } catch (error) {
@@ -83,7 +89,11 @@ const CompanyDetails: React.FC = () => {
 
   return (
     <StepFormLayout>
-      <Typography align="center" variant="h3" sx={{ fontSize: { xs: 24, md: 28 } }}>
+      <Typography
+        align="center"
+        variant="h3"
+        sx={{ fontSize: { xs: 24, md: 28 } }}
+      >
         Company Details
       </Typography>
       <Typography
