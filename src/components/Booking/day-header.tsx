@@ -382,25 +382,14 @@ export function DayHeader({
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
+                // name;
                 if (
                   newValue?.format("HH:mm") &&
                   newValue?.format("HH:mm") !== "Invalid Date"
                 ) {
                   field.onChange(newValue?.format("HH:mm"));
-                } else {
-                  field.onChange("");
-                  if (name.includes("from")) {
-                    availabilityForm.setValue(
-                      name.replace("from", "to") as any,
-                      ""
-                    );
-                  } else {
-                    availabilityForm.setValue(
-                      name.replace("to", "from") as any,
-                      ""
-                    );
-                  }
-                }
+                } 
+               
               }}
               format="HH:mm"
               slotProps={{

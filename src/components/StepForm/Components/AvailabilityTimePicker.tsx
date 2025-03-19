@@ -41,20 +41,8 @@ const AvailabilityTimePicker = ({
                   newValue?.format("HH:mm") !== "Invalid Date"
                 ) {
                   field.onChange(newValue?.format("HH:mm"));
-                } else {
-                  field.onChange("");
-                  if (name.includes("from")) {
-                    availabilityForm.setValue(
-                      name.replace("from", "to") as any,
-                      ""
-                    );
-                  } else {
-                    availabilityForm.setValue(
-                      name.replace("to", "from") as any,
-                      ""
-                    );
-                  }
-                }
+                } 
+               
               }}
               format="HH:mm"
               slotProps={{
