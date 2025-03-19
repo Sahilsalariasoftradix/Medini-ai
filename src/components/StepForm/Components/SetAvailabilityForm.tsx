@@ -257,7 +257,7 @@ const SetAvailabilityForm = ({
                   />
                   <AvailabilityTimePicker
                     availabilityForm={availabilityForm}
-                    autoFocus={key === "in_person"}
+                    // autoFocus={key === "in_person"}
                     label="To"
                     name={`${key}.to`}
                   />
