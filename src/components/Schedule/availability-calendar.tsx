@@ -952,53 +952,8 @@ export default function AvailabilityCalendar() {
           }}
         >
           <Box>
-            {/* <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-              mb={2}
-            >
-              <Typography
-                variant="bodyLargeMedium"
-                sx={{ fontWeight: "800", fontSize: "14px", lineHeight: "21px" }}
-              >
-                Confirm Appointments
-              </Typography>
-              <CustomSwitch name="isConfirmed" control={control} />
-            </Box> */}
             <ConfirmAppointments />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {/* <Typography
-                sx={{
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "12px",
-                  width: "72px",
-                  height: "42px",
-                  padding: "16px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  lineHeight: "21px",
-                  color: "#A0AEC0",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "start",
-                }}
-              >
-                2
-              </Typography> */}
-              {/* <Typography
-                sx={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  lineHeight: "21px",
-                  color: "#1A202C",
-                }}
-              >
-                Days in advance
-              </Typography> */}
-            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}></Box>
           </Box>
         </Paper>
         <Paper elevation={1} sx={{ p: 2 }}>
@@ -1089,7 +1044,11 @@ export default function AvailabilityCalendar() {
               >
                 <CommonButton
                   variant="outlined"
-                  onClick={() => setOpenEditAvailability(false)}
+                  onClick={() => {
+                    setOpenEditAvailability(false);
+                    reset();
+                    
+                  }}
                   text="Cancel"
                   sx={{
                     borderColor: "grey.200",

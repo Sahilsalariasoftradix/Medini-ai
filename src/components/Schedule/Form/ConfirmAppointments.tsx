@@ -73,7 +73,7 @@ const ConfirmAppointments = () => {
       });
       setSnackbar({
         open: true,
-        message: "Confirm Appointments updated successfully",
+        message: "Appointments confirmed successfully",
         severity: "success",
       });
       setIsEditMode(false);

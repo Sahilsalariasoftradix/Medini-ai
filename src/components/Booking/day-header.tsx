@@ -36,17 +36,14 @@ export const appointmentSchema = z.object({
 
 export const availabilitySchema = z.object({
   isAvailable: z.boolean(),
-  phone: z
-    .object({
-      from: z.string(),
-      to: z.string(),
-    })
-,
-  in_person: z
-    .object({
-      from: z.string(),
-      to: z.string(),
-    }),
+  phone: z.object({
+    from: z.string(),
+    to: z.string(),
+  }),
+  in_person: z.object({
+    from: z.string(),
+    to: z.string(),
+  }),
 
   break: z
     .object({
@@ -236,7 +233,7 @@ export function DayHeader({
       // Validate at least one booking type has times set
       const hasPhoneTimes = data.phone?.from && data.phone?.to;
       const hasInPersonTimes = data.in_person?.from && data.in_person?.to;
-      
+
       if (!hasPhoneTimes && !hasInPersonTimes) {
         hasError = true;
         errorMessage = "Please set times for at least one booking type";
@@ -245,9 +242,15 @@ export function DayHeader({
       // Convert string times to Day.js objects
       const phoneStart = hasPhoneTimes ? dayjs(data.phone.from, "HH:mm") : null;
       const phoneEnd = hasPhoneTimes ? dayjs(data.phone.to, "HH:mm") : null;
-      const inPersonStart = hasInPersonTimes ? dayjs(data.in_person.from, "HH:mm") : null;
-      const inPersonEnd = hasInPersonTimes ? dayjs(data.in_person.to, "HH:mm") : null;
-      const breakStart = data.break?.from ? dayjs(data.break.from, "HH:mm") : null;
+      const inPersonStart = hasInPersonTimes
+        ? dayjs(data.in_person.from, "HH:mm")
+        : null;
+      const inPersonEnd = hasInPersonTimes
+        ? dayjs(data.in_person.to, "HH:mm")
+        : null;
+      const breakStart = data.break?.from
+        ? dayjs(data.break.from, "HH:mm")
+        : null;
       const breakEnd = data.break?.to ? dayjs(data.break.to, "HH:mm") : null;
 
       // Function to check time overlap
@@ -265,7 +268,11 @@ export function DayHeader({
       if (phoneStart && phoneEnd && phoneStart.isAfter(phoneEnd)) {
         hasError = true;
         errorMessage = "Phone start time cannot be after end time";
-      } else if (inPersonStart && inPersonEnd && inPersonStart.isAfter(inPersonEnd)) {
+      } else if (
+        inPersonStart &&
+        inPersonEnd &&
+        inPersonStart.isAfter(inPersonEnd)
+      ) {
         hasError = true;
         errorMessage = "In-person start time cannot be after end time";
       } else if (breakStart && breakEnd && breakStart.isAfter(breakEnd)) {
@@ -281,7 +288,7 @@ export function DayHeader({
         hasError = true;
         errorMessage = "Phone and In-person times cannot overlap";
       }
-      
+
       // // Check if break times overlap with either phone or in-person
       // if (!hasError && breakStart && breakEnd) {
       //   if (phoneStart && phoneEnd && isOverlap(phoneStart, phoneEnd, breakStart, breakEnd)) {
@@ -295,10 +302,10 @@ export function DayHeader({
 
       // If there is an error, show it and stop submission
       if (hasError) {
-        setSnackbar({ 
-          open: true, 
-          message: errorMessage, 
-          severity: "error" 
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: "error",
         });
         setLoading(false);
         return;
@@ -310,8 +317,12 @@ export function DayHeader({
         date: dayjs().set("date", date).format("YYYY-MM-DD"),
         phone_start_time: data.phone?.from ? `${data.phone.from}:00` : null,
         phone_end_time: data.phone?.to ? `${data.phone.to}:00` : null,
-        in_person_start_time: data.in_person?.from ? `${data.in_person.from}:00` : null,
-        in_person_end_time: data.in_person?.to ? `${data.in_person.to}:00` : null,
+        in_person_start_time: data.in_person?.from
+          ? `${data.in_person.from}:00`
+          : null,
+        in_person_end_time: data.in_person?.to
+          ? `${data.in_person.to}:00`
+          : null,
         break_start_time: data.break?.from ? `${data.break.from}:00` : null,
         break_end_time: data.break?.to ? `${data.break.to}:00` : null,
       };
@@ -337,8 +348,6 @@ export function DayHeader({
       setLoading(false);
     }
   };
-  
-  
 
   // Closing snackbar
   const handleSnackbarClose = () => {
@@ -366,16 +375,32 @@ export function DayHeader({
         render={({ field, fieldState }) => (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimePicker
+  
               ampm={false}
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
-                field.onChange(
+           
+                name;
+                if (
                   newValue?.format("HH:mm") &&
-                    newValue?.format("HH:mm") !== "Invalid Date"
-                    ? newValue?.format("HH:mm")
-                    : ""
-                );
+                  newValue?.format("HH:mm") !== "Invalid Date"
+                ) {
+                  field.onChange(newValue?.format("HH:mm"));
+                } else {
+                  field.onChange("");
+                  if (name.includes("from")) {
+                    availabilityForm.setValue(
+                      name.replace("from", "to") as any,
+                      ""
+                    );
+                  } else {
+                    availabilityForm.setValue(
+                      name.replace("to", "from") as any,
+                      ""
+                    );
+                  }
+                }
               }}
               format="HH:mm"
               slotProps={{

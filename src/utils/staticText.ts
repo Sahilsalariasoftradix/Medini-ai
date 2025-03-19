@@ -1,7 +1,7 @@
 export const staticText = {
   auth: {
     title: "Sign in to Medini",
-    subtitle: "Something short and sweet",
+    subtitle: "Your highly intelligent AI assistant",
     emailPlaceholder: "username@Medini.ai",
     googleSignInButton: "Sign In with Google",
     appleSignInButton: "Sign In with Apple",
@@ -14,9 +14,9 @@ export const staticText = {
     signupLink: "Sign Up",
     privacyPolicyLink: "Privacy Policy",
     copyright: "Copyright",
-    rightPanelHeading: "Something Short and..",
+    rightPanelHeading: "Working for you 24/7",
     rightPanelText:
-      "ipsum crack later keep asserts as place seat model. Anomaliesanomalies place marketing backwards social needle job q1 dear.Centric shift due.",
+      "The AI assistant that will answer calls to book your appointments any time of the day and call your clients for you with just the swipe of a mouse!",
     signupPageText: "Sign up for an account",
     privacyPolicyText: "By creating an account, you agreeing to our  ",
     ElectronicsPolicyText: "Electronics Communication Policy.",
