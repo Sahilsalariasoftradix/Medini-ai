@@ -74,7 +74,9 @@ export const mapAvailabilitiesToWeekly = (availabilities: any[], dayMapping: any
         availability.in_person_start_time && availability.in_person_end_time
           ? { from: availability.in_person_start_time, to: availability.in_person_end_time }
           : null,
-      break: null, // No break data available
+      break:  availability.break_start_time && availability.break_end_time
+      ? { from: availability.break_start_time, to: availability.break_end_time }
+      : null, // No break data available
     };
   });
 

@@ -681,9 +681,11 @@ export default function AvailabilityCalendar() {
   const [loading, setLoading] = useState(false);
 
   const { userDetails } = useAuth();
+
   useEffect(() => {
     fetchInitialAvailability();
   }, [fetchInitialAvailability]);
+  
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
   }, [startDate, endDate]);

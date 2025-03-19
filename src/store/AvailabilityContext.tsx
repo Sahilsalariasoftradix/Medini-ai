@@ -94,6 +94,15 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
         }
       : null;
 
+  // Get break time range
+  const breakRange =
+    dayAvailability.break_start_time && dayAvailability.break_start_time !== "00:00:00"
+      ? {
+          start: timeToMinutes(dayAvailability.break_start_time),
+          end: timeToMinutes(dayAvailability.break_end_time),
+        }
+      : null;
+
   // If no valid ranges, return all slots as unavailable
   if (!phoneRange && !inPersonRange) {
     return generateTimeSlots();
@@ -136,6 +145,12 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
           currentTimeMinutes <= inPersonRange.end - 15
         : false;
 
+      // Check if this slot is within break time
+      const isWithinBreak = breakRange
+        ? currentTimeMinutes >= breakRange.start &&
+          currentTimeMinutes < breakRange.end
+        : false;
+
       const isWithinAvailability =
         isWithinPhoneAvailability || isWithinInPersonAvailability;
 
@@ -145,7 +160,7 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
       slots.push({
         time: currentTime,
         status: EnBookings.Available,
-        isDisabled: !isWithinAvailability || !hasEnoughTimeUntilEnd,
+        isDisabled: !isWithinAvailability || !hasEnoughTimeUntilEnd || isWithinBreak,
       });
     }
   }

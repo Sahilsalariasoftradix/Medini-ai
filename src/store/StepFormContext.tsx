@@ -19,8 +19,7 @@ export const CompanyDetailsSchema = z.object({
     .max(50, "Apartment name can be up to 50 characters"),
   address_line_two: z
     .string()
-    .min(8, "Address should be at least 8 characters")
-    .max(50, "Address can be up to 50 characters"),
+   .optional(),
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
   in_person_appointments: z.boolean().optional(),
