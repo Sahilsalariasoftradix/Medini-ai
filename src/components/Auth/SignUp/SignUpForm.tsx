@@ -33,7 +33,11 @@ import {
 } from "../../../utils/errorHandler";
 import Grid from "@mui/material/Grid2";
 import { getMaxHeight } from "../../../utils/common";
-import { Visibility, VisibilityOff } from "../../../utils/Icons";
+import {
+  VerificationIcon,
+  Visibility,
+  VisibilityOff,
+} from "../../../utils/Icons";
 import SocialLogin from "../SocialLogin";
 import { useState } from "react";
 import { IUser } from "../../../utils/Interfaces";
@@ -41,10 +45,13 @@ import { createUser } from "../../../api/userApi";
 import { EnUserCreationStatus } from "../../../utils/enums";
 import "react-international-phone/style.css";
 import { MuiPhone } from "./CustomPhoneInput";
+import CommonDialog from "../../common/CommonDialog";
 
 const SignUpForm = () => {
   const [phone, setPhone] = useState("");
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [openConfirmationModal, setOpenConfirmationModal] =
+    useState<boolean>(false);
   // Validate hook
   const {
     register,
@@ -73,13 +80,13 @@ const SignUpForm = () => {
   // Form submission handler
   const onSubmit: SubmitHandler<SignUpSchemaType> = async (data) => {
     setFormSubmitted(true);
-    if ( phone.length < 12) {
+    if (phone.length < 12) {
       setSnackbarSeverity("error");
       setSnackbarMessage("Please enter a valid phone number");
       setSnackbarOpen(true);
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const userData: IUser = {
@@ -97,7 +104,6 @@ const SignUpForm = () => {
         responseData &&
         responseData.message === EnUserCreationStatus.SUCCESS
       ) {
-     
         const successMessage = await signUpWithEmail(
           data.email,
           data.password,
@@ -110,9 +116,10 @@ const SignUpForm = () => {
         setSnackbarOpen(true);
         reset();
         setIsLoading(false);
-        setTimeout(() => {
-          navigate(routes.auth.signIn);
-        }, 2000);
+        setOpenConfirmationModal(true);
+        // setTimeout(() => {
+        //   navigate(routes.auth.signIn);
+        // }, 2000);
       } else {
         throw new Error("Failed to create user.");
       }
@@ -156,7 +163,11 @@ const SignUpForm = () => {
             }}
             className="auth-form"
           >
-            <Typography align="center" variant="h3" sx={{ fontSize: { xs: "20px", md: "28px" } }}>
+            <Typography
+              align="center"
+              variant="h3"
+              sx={{ fontSize: { xs: "20px", md: "28px" } }}
+            >
               {text.signupPageText}
             </Typography>
             <Typography
@@ -194,10 +205,10 @@ const SignUpForm = () => {
                 </Grid>
               </Grid>
               <Box mt={2}>
-                <MuiPhone 
-                  error={formSubmitted && (!phone || phone.length < 12)} 
-                  value={phone} 
-                  onChange={(phone) => setPhone(phone)} 
+                <MuiPhone
+                  error={formSubmitted && (!phone || phone.length < 12)}
+                  value={phone}
+                  onChange={(phone) => setPhone(phone)}
                 />
               </Box>
               <Box mt={2}>
@@ -279,6 +290,43 @@ const SignUpForm = () => {
               </CommonLink>
             </Typography>
           </Box>
+          <CommonDialog
+            open={openConfirmationModal}
+            hideCloseIcon
+            confirmButtonType="primary"
+            confirmText="Ok"
+            onConfirm={() => {
+              setOpenConfirmationModal(false);
+              navigate(routes.auth.signIn);
+            }}
+            cancelText=""
+            onClose={() => {}}
+          >
+            <Box
+              display={"flex"}
+              justifyContent={"center"}
+              alignItems={"center"}
+            >
+              <VerificationIcon />
+            </Box>
+            <Typography
+              mt={2}
+              textAlign={"center"}
+              variant="bodyXLargeExtraBold"
+              sx={{ fontSize: "20px" }}
+            >
+              Verification Link Sent
+            </Typography>
+            <Typography
+              mt={1}
+              textAlign={"center"}
+              variant="bodyLargeMedium"
+              color="grey.600"
+            >
+              We’ve sent a verification link to your email. Please check your
+              inbox .
+            </Typography>
+          </CommonDialog>
         </form>
       )}
       {/* Snackbar */}

@@ -21,8 +21,8 @@ import isBetween from "dayjs/plugin/isBetween";
 import { postAvailabilityGeneral } from "../../../api/userApi";
 import CommonSnackbar from "../../common/CommonSnackbar";
 import { useForm } from "react-hook-form";
-import { AvailabilityFormData } from "../../Booking/day-header";
-import { formatType } from "../../../utils/common";
+
+import { AvailabilityFormData, formatType } from "../../../utils/common";
 import SetAvailabilityForm from "./SetAvailabilityForm";
 import { IDayAvailability, ITimeSlot } from "../../../utils/Interfaces";
 

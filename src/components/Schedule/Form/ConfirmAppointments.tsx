@@ -35,6 +35,7 @@ const ConfirmAppointments = () => {
     message: "",
     severity: "success" as AlertProps["severity"],
   });
+
   const {
     control,
     handleSubmit,
@@ -50,7 +51,10 @@ const ConfirmAppointments = () => {
     mode: "onChange",
   });
   useEffect(() => {
-    if (userDetails?.confirmAppointments?.isConfirmed === false) {
+    if (
+      userDetails?.confirmAppointments?.isConfirmed === false ||
+      userDetails?.confirmAppointments?.isConfirmed === undefined
+    ) {
       setDisableInput(true);
     } else {
       setDisableInput(false);

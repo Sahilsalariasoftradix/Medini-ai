@@ -537,7 +537,7 @@ const TimeSlot = ({
           setIsEditing(false);
         }}
         confirmButtonType="primary"
-        title={isEditing ? "Edit Appointment" : "New Appointment"}
+        title={isEditing ? "Edit Appointment " : "New Appointment"}
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
@@ -685,7 +685,7 @@ export default function AvailabilityCalendar() {
   useEffect(() => {
     fetchInitialAvailability();
   }, [fetchInitialAvailability]);
-  
+
   useEffect(() => {
     generateDaysFromRange(startDate, endDate);
   }, [startDate, endDate]);
@@ -832,111 +832,154 @@ export default function AvailabilityCalendar() {
                 },
               }}
             >
-              {days.map((day, dayIndex) => (
-                <Grid
-                  size={"grow"}
-                  key={day.day}
-                  sx={{
-                    opacity: day.availability.isAvailable ? 1 : 0.7,
-                    position: "relative",
-                  }}
-                >
-                  <DayHeader
-                    isToday={day.date == Number(Today)}
-                    day={day.day}
-                    date={day.date}
-                    onEditAvailability={() => handleEditAvailability(day.day)}
-                    onClearDay={() => handleClearDay(day.day)}
-                    isAvailable={day.availability.isAvailable}
-                  />
-
-                  {loading ? (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        p: 3,
-                        height: "calc(100vh - 260px)",
-                        alignItems: "center",
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ) : (
-                    <Box
-                      sx={{
-                        height: "calc(100% - 59px)",
-                        border: "1px solid #EDF2F7",
-                        borderRadius: 1,
-                        overflow: "hidden",
-                        backgroundColor: "white",
-                        position: "relative",
-                      }}
-                    >
-                      {!day.availability.isAvailable && (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: "grey.300",
-                            opacity: 0.7,
-                            zIndex: 1,
-                          }}
-                        />
+              {days.map((day, dayIndex) => {
+                console.log(day,'day')
+                return (
+                  <Grid
+                    size={"grow"}
+                    key={day.day}
+                    sx={{
+                      opacity: day.availability.isAvailable ? 1 : 0.7,
+                      position: "relative",
+                    }}
+                  >
+                    <DayHeader
+                      isToday={day.date == Number(Today)}
+                      day={day.day}
+                      date={day.fullDate}
+                      onEditAvailability={() => handleEditAvailability(day.day)}
+                      onClearDay={() => handleClearDay(day.day)}
+                      isAvailable={day.availability.isAvailable}
+                      isBeforeToday={dayjs(day.fullDate).isBefore(
+                        dayjs(),
+                        "day"
                       )}
-                      <TimeLabels />
-                      <>
-                        {(() => {
-                          const hourRange = getAvailableHourRange(days);
-                          return Array.from(
-                            { length: hourRange.end - hourRange.start },
-                            (_, hourIndex) => (
-                              <Box
-                                key={hourIndex}
-                                sx={{
-                                  height: "60px",
-                                  borderBottom: "1px solid #EDF2F7",
-                                  display: "grid",
-                                  gridTemplateColumns: "repeat(4, 1fr)",
-                                }}
-                              >
-                                {Array.from(
-                                  { length: 4 },
-                                  (_, quarterIndex) => {
-                                    const currentHour =
-                                      hourRange.start + hourIndex;
-                                    // Find the slot with matching time
-                                    const slot = day.availability.slots.find(
-                                      (s) =>
-                                        s.time.startsWith(
-                                          `${currentHour
-                                            .toString()
-                                            .padStart(2, "0")}:${(
-                                            quarterIndex * 15
-                                          )
-                                            .toString()
-                                            .padStart(2, "0")}`
-                                        )
-                                    );
+                    />
 
-                                    if (!slot) {
-                                      // Return disabled slot if no matching slot found
+                    {loading ? (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          p: 3,
+                          height: "calc(100vh - 260px)",
+                          alignItems: "center",
+                        }}
+                      >
+                        <CircularProgress />
+                      </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          height: "calc(100% - 59px)",
+                          border: "1px solid #EDF2F7",
+                          borderRadius: 1,
+                          overflow: "hidden",
+                          backgroundColor: "white",
+                          position: "relative",
+                        }}
+                      >
+                        {!day.availability.isAvailable && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: "grey.300",
+                              opacity: 0.7,
+                              zIndex: 1,
+                            }}
+                          />
+                        )}
+                        <TimeLabels />
+                        <>
+                          {(() => {
+                            const hourRange = getAvailableHourRange(days);
+                            return Array.from(
+                              { length: hourRange.end - hourRange.start },
+                              (_, hourIndex) => (
+                                <Box
+                                  key={hourIndex}
+                                  sx={{
+                                    height: "60px",
+                                    borderBottom: "1px solid #EDF2F7",
+                                    display: "grid",
+                                    gridTemplateColumns: "repeat(4, 1fr)",
+                                  }}
+                                >
+                                  {Array.from(
+                                    { length: 4 },
+                                    (_, quarterIndex) => {
+                                      const currentHour =
+                                        hourRange.start + hourIndex;
+                                      // Find the slot with matching time
+                                      const slot = day.availability.slots.find(
+                                        (s) =>
+                                          s.time.startsWith(
+                                            `${currentHour
+                                              .toString()
+                                              .padStart(2, "0")}:${(
+                                              quarterIndex * 15
+                                            )
+                                              .toString()
+                                              .padStart(2, "0")}`
+                                          )
+                                      );
+
+                                      if (!slot) {
+                                        // Return disabled slot if no matching slot found
+                                        return (
+                                          <TimeSlot
+                                            key={quarterIndex}
+                                            onChange={() => {}}
+                                            status={EnBookings.Available}
+                                            disabled={true}
+                                            time={`${currentHour
+                                              .toString()
+                                              .padStart(2, "0")}:${(
+                                              quarterIndex * 15
+                                            )
+                                              .toString()
+                                              .padStart(2, "0")}`}
+                                            date={dayjs(startDate)
+                                              .add(dayIndex, "day")
+                                              .toDate()}
+                                            availableDates={days
+                                              .filter(
+                                                (d) =>
+                                                  d.availability.isAvailable
+                                              )
+                                              .map((d) =>
+                                                dayjs(startDate)
+                                                  .add(days.indexOf(d), "day")
+                                                  .toDate()
+                                              )}
+                                            bookings={bookings}
+                                            fetchBookings={fetchBookings}
+                                          />
+                                        );
+                                      }
+
                                       return (
                                         <TimeSlot
                                           key={quarterIndex}
-                                          onChange={() => {}}
-                                          status={EnBookings.Available}
-                                          disabled={true}
-                                          time={`${currentHour
-                                            .toString()
-                                            .padStart(2, "0")}:${(
-                                            quarterIndex * 15
-                                          )
-                                            .toString()
-                                            .padStart(2, "0")}`}
+                                          onChange={(newStatus) =>
+                                            updateSlotStatus(
+                                              dayIndex,
+                                              day.availability.slots.indexOf(
+                                                slot
+                                              ),
+                                              newStatus
+                                            )
+                                          }
+                                          status={slot.status}
+                                          disabled={
+                                            !day.availability.isAvailable ||
+                                            slot.isDisabled
+                                          }
+                                          time={slot.time}
                                           date={dayjs(startDate)
                                             .add(dayIndex, "day")
                                             .toDate()}
@@ -954,52 +997,17 @@ export default function AvailabilityCalendar() {
                                         />
                                       );
                                     }
-
-                                    return (
-                                      <TimeSlot
-                                        key={quarterIndex}
-                                        onChange={(newStatus) =>
-                                          updateSlotStatus(
-                                            dayIndex,
-                                            day.availability.slots.indexOf(
-                                              slot
-                                            ),
-                                            newStatus
-                                          )
-                                        }
-                                        status={slot.status}
-                                        disabled={
-                                          !day.availability.isAvailable ||
-                                          slot.isDisabled
-                                        }
-                                        time={slot.time}
-                                        date={dayjs(startDate)
-                                          .add(dayIndex, "day")
-                                          .toDate()}
-                                        availableDates={days
-                                          .filter(
-                                            (d) => d.availability.isAvailable
-                                          )
-                                          .map((d) =>
-                                            dayjs(startDate)
-                                              .add(days.indexOf(d), "day")
-                                              .toDate()
-                                          )}
-                                        bookings={bookings}
-                                        fetchBookings={fetchBookings}
-                                      />
-                                    );
-                                  }
-                                )}
-                              </Box>
-                            )
-                          );
-                        })()}
-                      </>
-                    </Box>
-                  )}
-                </Grid>
-              ))}
+                                  )}
+                                </Box>
+                              )
+                            );
+                          })()}
+                        </>
+                      </Box>
+                    )}
+                  </Grid>
+                );
+              })}
             </Grid>
           </Box>
         </Box>
@@ -1019,30 +1027,41 @@ export default function AvailabilityCalendar() {
             </Typography>
           </Box>
 
-          {days.map((day) => (
-            <Grid size={"grow"} key={day.day}>
-              <StatusTotals
-                counts={{
-                  active:
-                    day.appointments?.filter(
-                      (apt) => Number(apt.status) === EnBookings.Active
-                    ).length || 0,
-                  cancelled:
-                    day.appointments?.filter(
-                      (apt) => Number(apt.status) === EnBookings.Cancel
-                    ).length || 0,
-                  unconfirmed:
-                    day.appointments?.filter(
-                      (apt) => Number(apt.status) === EnBookings.Unconfirmed
-                    ).length || 0,
-                  available:
-                    day.availability.slots.filter(
-                      (slot) => slot.status === EnBookings.Available
-                    ).length || 0,
-                }}
-              />
-            </Grid>
-          ))}
+          {days.map((day) => {
+            // Calculate status counts from the bookings data for this specific day
+            const dayBookings = bookings.filter(
+              (booking) =>
+                dayjs(booking.date).format("YYYY-MM-DD") ===
+                dayjs(startDate)
+                  .add(days.indexOf(day), "day")
+                  .format("YYYY-MM-DD")
+            );
+
+            const statusCounts = {
+              active: dayBookings.filter(
+                (booking) =>
+                  mapApiStatusToEnum(booking.status) === EnBookings.Active
+              ).length,
+              cancelled: dayBookings.filter(
+                (booking) =>
+                  mapApiStatusToEnum(booking.status) === EnBookings.Cancel
+              ).length,
+              unconfirmed: dayBookings.filter(
+                (booking) =>
+                  mapApiStatusToEnum(booking.status) === EnBookings.Unconfirmed
+              ).length,
+              available: day.availability.slots.filter(
+                (slot) =>
+                  slot.status === EnBookings.Available && !slot.isDisabled
+              ).length,
+            };
+
+            return (
+              <Grid size={"grow"} key={day.day}>
+                <StatusTotals counts={statusCounts} />
+              </Grid>
+            );
+          })}
         </Grid>
       </Paper>
     </Box>

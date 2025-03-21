@@ -24,6 +24,7 @@ import googleIcon from "../assets/icons/google-icon.svg";
 import appleIcon from "../assets/icons/apple-icon.svg";
 import hidden from "../assets/icons/eye-off.svg";
 import visibile from "../assets/icons/eye-on.svg";
+import verification from "../assets/icons/verification.svg";
 
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
@@ -73,4 +74,7 @@ export const VisibilityOff = <img alt="edit" src={hidden} />;
 export const Visibility = <img alt="edit" src={visibile} />;
 export const InPersonIcon = () => (
   <img src={editAvailabilityIcons.clock} alt="icon" />
+);
+export const VerificationIcon = () => (
+  <img src={verification} alt="icon" />
 );

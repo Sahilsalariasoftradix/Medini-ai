@@ -61,7 +61,7 @@ const AddContact = ({
 
   const onSubmit: SubmitHandler<ContactData> = async (data) => {
     setFormSubmitted(true);
-    if (phone.length < 10) {
+    if (phone.length < 12) {
       setSnackbarSeverity("error");
       setSnackbarMessage("Please enter a valid phone number");
       setSnackbarOpen(true);

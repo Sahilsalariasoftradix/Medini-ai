@@ -105,9 +105,9 @@ export const updateBooking = async (booking: IUpdateBooking) => {
   try {
     const resp = await apiClient.post(`bookings/update`, booking);
     return resp.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw error;
+    throw new Error(error.response?.data?.error || "Booking update failed.");
   }
 };
 // Creating a booking API
@@ -115,9 +115,9 @@ export const createBooking = async (booking: IBooking) => {
   try {
     const resp = await apiClient.post(`booking`, booking);
     return resp.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw error;
+    throw new Error(error.response?.data?.error || "Booking creation failed.");
   }
 };
 // Cancelling the booking API
