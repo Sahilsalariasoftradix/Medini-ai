@@ -305,6 +305,16 @@ export const signInWithEmail = async (
     const successMessage = staticText.firestore.successLoggedInMessage; // Custom success message
     return successMessage; // Return the success message after successful login
   } catch (error: any) {
+    // / If it's an unverified email error, pass it through directly
+    if (error.message === emailNotVerifiedMessage) {
+      throw error;
+    }
+
+
+
+
+
+
     // Step 5: Handle errors and log them for debugging
     const errorMessage = getAuthErrorMessage(error.code); // Map the Firebase error code to a user-friendly message
     console.error(errorMessage); // Log the error message to the console for debugging

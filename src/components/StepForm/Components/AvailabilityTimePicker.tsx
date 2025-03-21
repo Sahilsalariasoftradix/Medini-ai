@@ -1,10 +1,11 @@
 import { Controller, UseFormReturn } from "react-hook-form";
-import { AvailabilityFormData } from "../../Booking/day-header";
+
 import { Box, Typography } from "@mui/material";
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { InPersonIcon } from "../../../utils/Icons";
 import dayjs from "dayjs";
+import { AvailabilityFormData } from "../../../utils/common";
 
 const AvailabilityTimePicker = ({
   label,
@@ -35,14 +36,14 @@ const AvailabilityTimePicker = ({
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
-                // name;
                 if (
                   newValue?.format("HH:mm") &&
                   newValue?.format("HH:mm") !== "Invalid Date"
                 ) {
                   field.onChange(newValue?.format("HH:mm"));
-                } 
-               
+                } else {
+                  field.onChange("");
+                }
               }}
               format="HH:mm"
               slotProps={{
@@ -50,6 +51,25 @@ const AvailabilityTimePicker = ({
                   placeholder: label === "From" ? "Start time" : "End time",
                   error: !!fieldState.error,
                   helperText: fieldState.error?.message,
+                  onKeyDown: (e) => {
+                    if (e.key === "Backspace") {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      field.onChange("");
+                      if (name.includes("to")) {
+                        availabilityForm.setValue(
+                          name.replace("to", "from") as any,
+                          ""
+                        );
+                      } else {
+                        availabilityForm.setValue(
+                          name.replace("from", "to") as any,
+                          ""
+                        );
+                      }
+                    }
+                  },
+
                   sx: {
                     "& .MuiInputBase-input": {
                       fontSize: "12px",

@@ -155,11 +155,12 @@ export interface IDayAvailability {
 }
 export interface IDayHeaderProps {
   day: string;
-  date: number;
+  date: any;
   onEditAvailability: () => void;
   onClearDay: () => void;
   isAvailable: boolean;
   isToday: boolean;
+  isBeforeToday?: boolean;
 }
 export interface ISchedule {
   day_of_week: string;

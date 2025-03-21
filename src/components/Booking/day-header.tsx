@@ -6,55 +6,19 @@ import { overRideSvgColor } from "../../utils/filters";
 import CommonDialog from "../common/CommonDialog";
 import { Controller, useForm } from "react-hook-form";
 import CommonTextField from "../common/CommonTextField";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EnCancelAppointment } from "../../utils/enums";
-import { useState } from "react";
-import { availabilityIcons, InPersonIcon } from "../../utils/Icons";
-import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { availabilityIcons } from "../../utils/Icons";
 import dayjs from "dayjs";
-import {
-  postAvailabilitySpecific,
-  postUnAvailabilitySpecific,
-} from "../../api/userApi";
-import { IAvailabilityPayload, IDayHeaderProps } from "../../utils/Interfaces";
-import { useAvailability } from "../../store/AvailabilityContext";
+import { IDayHeaderProps } from "../../utils/Interfaces";
 import CommonSnackbar from "../common/CommonSnackbar";
-import { useAuth } from "../../store/AuthContext";
-
-export const menuItemHoverStyle = {
-  "&:hover": {
-    filter: overRideSvgColor.blue,
-  },
-  gap: 1,
-};
-
-export const appointmentSchema = z.object({
-  reason: z.enum(Object.values(EnCancelAppointment) as [string, ...string[]]),
-});
-
-export const availabilitySchema = z.object({
-  isAvailable: z.boolean(),
-  phone: z.object({
-    from: z.string(),
-    to: z.string(),
-  }),
-  in_person: z.object({
-    from: z.string(),
-    to: z.string(),
-  }),
-
-  break: z
-    .object({
-      from: z.string(),
-      to: z.string(),
-    })
-    .optional(),
-});
-
-export type AppointmentFormData = z.infer<typeof appointmentSchema>;
-export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
+import AvailabilityTimePicker from "../StepForm/Components/AvailabilityTimePicker";
+import { useEditAvailability } from "../../hooks/useEditAvailability";
+import {
+  AppointmentFormData,
+  appointmentSchema,
+  menuItemHoverStyle,
+} from "../../utils/common";
 
 export function DayHeader({
   day,
@@ -63,119 +27,30 @@ export function DayHeader({
   onClearDay,
   isAvailable,
   isToday,
+  isBeforeToday,
 }: IDayHeaderProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const [openModal, setOpenModal] = useState(false);
-  const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const { refreshAvailability } = useAvailability();
-  const isPastDays = dayjs().isSameOrBefore(dayjs().date(date), "day");
 
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "error",
-  });
-  const [clearAvailabilityModal, setClearAvailabilityModal] = useState(false);
+  const {
+    anchorEl,
+    open,
+    openModal,
+    isAvailabilityModalOpen,
+    loading,
+    setIsAvailabilityModalOpen,
+    setClearAvailabilityModal,
+    handleAvailabilitySubmit,
+    handleClearAvailability,
+    handleEditAvailability,
+    handleClick,
+    handleClose,
+    availabilityForm,
+    snackbar,
+    handleSnackbarClose,
+    setOpenModal,
+    clearAvailabilityModal,
+    onSubmit,
+  } = useEditAvailability();
 
-  const handleEditAvailability = () => {
-    const selectedAvailability = availabilities.find(
-      //@ts-ignore
-      (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
-    );
-
-    // First set the modal to open
-    setIsAvailabilityModalOpen(true);
-
-    // Then reset the form with a slight delay to ensure the modal is rendered
-    setTimeout(() => {
-      availabilityForm.reset({
-        isAvailable: true,
-        in_person: {
-          from: selectedAvailability?.in_person_start_time
-            ? selectedAvailability.in_person_start_time
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "",
-          to: selectedAvailability?.in_person_end_time
-            ? selectedAvailability.in_person_end_time
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "",
-        },
-        phone: {
-          from: selectedAvailability?.phone_start_time
-            ? selectedAvailability.phone_start_time
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "",
-          to: selectedAvailability?.phone_end_time
-            ? selectedAvailability.phone_end_time
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "",
-        },
-        break: {
-          from: selectedAvailability?.break_start_time
-            ? selectedAvailability.break_start_time
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "",
-          to: selectedAvailability?.break_end_time
-            ? selectedAvailability.break_end_time
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "",
-        },
-      });
-    }, 0);
-  };
-  const handleClearAvailability = async () => {
-    setLoading(true);
-    try {
-      const selectedAvailability = availabilities.find(
-        //@ts-ignore
-        (avail) => avail.date === dayjs().set("date", date).format("YYYY-MM-DD")
-      );
-
-      await postUnAvailabilitySpecific({
-        user_id: userDetails?.user_id,
-        date: dayjs().set("date", date).format("YYYY-MM-DD"),
-        phone_start_time: selectedAvailability?.phone_start_time,
-        phone_end_time: selectedAvailability?.phone_end_time,
-        in_person_start_time: selectedAvailability?.in_person_start_time,
-        in_person_end_time: selectedAvailability?.in_person_end_time,
-      });
-
-      setSnackbar({
-        open: true,
-        message: "Availability cleared successfully",
-        severity: "success",
-      });
-      await refreshAvailability();
-    } catch (error) {
-      console.log(error, "error");
-      setSnackbar({
-        open: true,
-        message: "Failed to clear availability",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-      setClearAvailabilityModal(false);
-    }
-  };
   const {
     control,
     handleSubmit,
@@ -186,238 +61,20 @@ export function DayHeader({
       reason: EnCancelAppointment.DoctorSick,
     },
   });
-  const { availabilities } = useAvailability();
-  const availabilityForm = useForm<AvailabilityFormData>({
-    resolver: zodResolver(availabilitySchema),
-    defaultValues: {
-      isAvailable: false,
-      phone: { from: "", to: "" },
-      in_person: { from: "", to: "" },
-      break: { from: "", to: "" },
-    },
-  });
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  // Parse the full date string to get the day number
+  const dayNumber = dayjs(date).format('D');
 
   const handleMenuItemClick = (action: () => void) => {
     if (action === onClearDay) {
       setClearAvailabilityModal(true);
     } else if (action === onEditAvailability) {
-      handleEditAvailability();
+      handleEditAvailability(date);
     } else {
       action();
     }
     handleClose();
   };
-
-  const onSubmit = () => {
-    setOpenModal(false);
-  };
-
-  const { userDetails } = useAuth();
-
-  const handleAvailabilitySubmit = async (data: AvailabilityFormData) => {
-    setLoading(true);
-
-    try {
-      // Error validation setup
-      let hasError = false;
-      let errorMessage = "";
-
-      // Validate at least one booking type has times set
-      const hasPhoneTimes = data.phone?.from && data.phone?.to;
-      const hasInPersonTimes = data.in_person?.from && data.in_person?.to;
-
-      if (!hasPhoneTimes && !hasInPersonTimes) {
-        hasError = true;
-        errorMessage = "Please set times for at least one booking type";
-      }
-
-      // Convert string times to Day.js objects
-      const phoneStart = hasPhoneTimes ? dayjs(data.phone.from, "HH:mm") : null;
-      const phoneEnd = hasPhoneTimes ? dayjs(data.phone.to, "HH:mm") : null;
-      const inPersonStart = hasInPersonTimes
-        ? dayjs(data.in_person.from, "HH:mm")
-        : null;
-      const inPersonEnd = hasInPersonTimes
-        ? dayjs(data.in_person.to, "HH:mm")
-        : null;
-      const breakStart = data.break?.from
-        ? dayjs(data.break.from, "HH:mm")
-        : null;
-      const breakEnd = data.break?.to ? dayjs(data.break.to, "HH:mm") : null;
-
-      // Function to check time overlap
-      const isOverlap = (
-        start1: dayjs.Dayjs | null,
-        end1: dayjs.Dayjs | null,
-        start2: dayjs.Dayjs | null,
-        end2: dayjs.Dayjs | null
-      ) => {
-        if (!start1 || !end1 || !start2 || !end2) return false;
-        return start1.isBefore(end2) && start2.isBefore(end1);
-      };
-
-      // Check for invalid time ranges
-      if (phoneStart && phoneEnd && phoneStart.isAfter(phoneEnd)) {
-        hasError = true;
-        errorMessage = "Phone start time cannot be after end time";
-      } else if (
-        inPersonStart &&
-        inPersonEnd &&
-        inPersonStart.isAfter(inPersonEnd)
-      ) {
-        hasError = true;
-        errorMessage = "In-person start time cannot be after end time";
-      } else if (breakStart && breakEnd && breakStart.isAfter(breakEnd)) {
-        hasError = true;
-        errorMessage = "Break start time cannot be after end time";
-      } else if (
-        phoneStart &&
-        phoneEnd &&
-        inPersonStart &&
-        inPersonEnd &&
-        isOverlap(phoneStart, phoneEnd, inPersonStart, inPersonEnd)
-      ) {
-        hasError = true;
-        errorMessage = "Phone and In-person times cannot overlap";
-      }
-
-      // // Check if break times overlap with either phone or in-person
-      // if (!hasError && breakStart && breakEnd) {
-      //   if (phoneStart && phoneEnd && isOverlap(phoneStart, phoneEnd, breakStart, breakEnd)) {
-      //     hasError = true;
-      //     errorMessage = "Break times cannot overlap with Phone times";
-      //   } else if (inPersonStart && inPersonEnd && isOverlap(inPersonStart, inPersonEnd, breakStart, breakEnd)) {
-      //     hasError = true;
-      //     errorMessage = "Break times cannot overlap with In-person times";
-      //   }
-      // }
-
-      // If there is an error, show it and stop submission
-      if (hasError) {
-        setSnackbar({
-          open: true,
-          message: errorMessage,
-          severity: "error",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Only proceed if validation passes
-      const payload: IAvailabilityPayload = {
-        user_id: userDetails?.user_id,
-        date: dayjs().set("date", date).format("YYYY-MM-DD"),
-        phone_start_time: data.phone?.from ? `${data.phone.from}:00` : null,
-        phone_end_time: data.phone?.to ? `${data.phone.to}:00` : null,
-        in_person_start_time: data.in_person?.from
-          ? `${data.in_person.from}:00`
-          : null,
-        in_person_end_time: data.in_person?.to
-          ? `${data.in_person.to}:00`
-          : null,
-        break_start_time: data.break?.from ? `${data.break.from}:00` : null,
-        break_end_time: data.break?.to ? `${data.break.to}:00` : null,
-      };
-      //@ts-ignore
-      const response = await postAvailabilitySpecific(payload);
-
-      await refreshAvailability();
-
-      setSnackbar({
-        open: true,
-        message: response?.message || "Availability updated successfully",
-        severity: "success",
-      });
-      setIsAvailabilityModalOpen(false);
-    } catch (error) {
-      console.error("Error setting availability:", error);
-      setSnackbar({
-        open: true,
-        message: "Failed to set availability. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Closing snackbar
-  const handleSnackbarClose = () => {
-    setSnackbar((prevSnackbar) => ({
-      ...prevSnackbar,
-      open: false,
-    }));
-  };
-  const AvailabilityTimePicker = ({
-    label,
-    name,
-    autoFocus = false,
-  }: {
-    label: string;
-    name: `${string}.${string}`;
-    autoFocus?: boolean;
-  }) => (
-    <Box>
-      <Typography variant="bodyMediumExtraBold" color="grey.600" mb={1}>
-        {label}
-      </Typography>
-
-      <Controller
-        //@ts-ignore
-        name={name}
-        control={availabilityForm.control}
-        render={({ field, fieldState }) => (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <TimePicker
-              autoFocus={autoFocus}
-              ampm={false}
-              //@ts-ignore
-              value={field.value ? dayjs(field.value, "HH:mm") : null}
-              onChange={(newValue) => {
-                // name;
-                if (
-                  newValue?.format("HH:mm") &&
-                  newValue?.format("HH:mm") !== "Invalid Date"
-                ) {
-                  field.onChange(newValue?.format("HH:mm"));
-                } 
-               
-              }}
-              format="HH:mm"
-              slotProps={{
-                textField: {
-                  placeholder: label === "From" ? "Start time" : "End time",
-                  error: !!fieldState.error,
-                  helperText: fieldState.error?.message,
-                  sx: {
-                    "& .MuiInputBase-input": {
-                      fontSize: "12px",
-                    },
-                    "& .MuiInputBase-input::placeholder": {
-                      fontSize: "12px",
-                    },
-                  },
-                },
-                actionBar: {
-                  actions: ["accept"],
-                },
-              }}
-              slots={{ openPickerIcon: InPersonIcon }}
-            />
-          </LocalizationProvider>
-        )}
-      />
-    </Box>
-  );
-
   return (
     <Box
       display={"flex"}
@@ -440,10 +97,10 @@ export function DayHeader({
           variant="bodyMediumExtraBold"
           color={isToday ? "additional.white" : "grey.600"}
         >
-          {date}
+          {dayNumber}
         </Typography>
       </Box>
-      {isPastDays && (
+      {!isBeforeToday && (
         <Box
           id="day-menu-button"
           aria-controls={open ? "day-menu" : undefined}
@@ -470,10 +127,12 @@ export function DayHeader({
         <CommonDialog
           open={isAvailabilityModalOpen}
           onClose={() => setIsAvailabilityModalOpen(false)}
-          title="Edit Availability"
+          title={`Edit Availability for ${dayjs(date).format("MMMM DD")}`}
           cancelText="Cancel"
           confirmText="Mark Available"
-          onConfirm={availabilityForm.handleSubmit(handleAvailabilitySubmit)}
+          onConfirm={() =>
+            availabilityForm.handleSubmit(handleAvailabilitySubmit)(date as any)
+          }
           confirmButtonType={"primary"}
           loading={loading}
           disabled={loading}
@@ -501,12 +160,17 @@ export function DayHeader({
                     </Typography>
                   </Box>
                   <Box display="flex" mt={1} gap={3}>
-                    <AvailabilityTimePicker 
-                      label="From" 
-                      name={`${key}.from`} 
+                    <AvailabilityTimePicker
+                      availabilityForm={availabilityForm}
+                      label="From"
+                      name={`${key}.from`}
                       autoFocus={key === "in_person"}
                     />
-                    <AvailabilityTimePicker label="To" name={`${key}.to`} />
+                    <AvailabilityTimePicker
+                      availabilityForm={availabilityForm}
+                      label="To"
+                      name={`${key}.to`}
+                    />
                   </Box>
                 </Box>
               );
@@ -573,7 +237,7 @@ export function DayHeader({
         title="Clear Availability"
         confirmText="Clear"
         cancelText="Cancel"
-        onConfirm={handleClearAvailability}
+        onConfirm={() => handleClearAvailability(date)}
         confirmButtonType="error"
         loading={loading}
         disabled={loading}

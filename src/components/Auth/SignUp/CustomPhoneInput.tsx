@@ -20,7 +20,7 @@ import {
 export interface MUIPhoneProps extends BaseTextFieldProps {
   value: string;
   onChange: (phone: string) => void;
-  error:any
+  error:any;
 }
 
 export const MuiPhone: React.FC<MUIPhoneProps> = ({
@@ -38,7 +38,7 @@ export const MuiPhone: React.FC<MUIPhoneProps> = ({
         onChange(data.phone);
       },
     });
-console.log(restProps.helperText)
+
   return (
     <TextField
       variant="outlined"

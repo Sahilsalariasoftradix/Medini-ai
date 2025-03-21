@@ -78,16 +78,18 @@ const CommonDialog: React.FC<CommonDialogProps> = ({
       <DialogContent sx={{ p: 0 }}>{children}</DialogContent>
 
       <DialogActions sx={{ mt: 2 }}>
-        <CommonButton
-          sx={{ width: "50%" }}
-          text={cancelText}
-          variant="containedSecondary"
-          onClick={onClose}
-        />
+        {cancelText && (
+          <CommonButton
+            sx={{ width: "50%" }}
+            text={cancelText}
+            variant="containedSecondary"
+            onClick={onClose}
+          />
+        )}
         {onConfirm && (
           <CommonButton
             color={confirmButtonType ? confirmButtonType : "inherit"}
-            sx={{ width: "50%" }}
+            sx={{ width:cancelText? "50%":'100%' }}
             text={confirmText}
             onClick={onConfirm}
             loading={loading}

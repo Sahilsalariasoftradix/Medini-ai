@@ -48,9 +48,12 @@ import {
 import CommonTextField from "../common/CommonTextField";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { StatusIcon } from "../Booking/status-icon";
-import { isPastDateTime, mapAvailabilitiesToWeekly } from "../../utils/common";
+import {
+  isPastDateTime,
+  mapAvailabilitiesToWeekly,
+  menuItemHoverStyle,
+} from "../../utils/common";
 import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
-import { menuItemHoverStyle } from "../Booking/day-header";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
 import ConfirmAppointments from "./Form/ConfirmAppointments";
@@ -346,6 +349,11 @@ export default function AvailabilityCalendar() {
       setOpenDialog(false);
       reset();
     } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message,
+        severity: "error",
+      });
       console.error("Failed to create appointment:", error);
     } finally {
       setLoading(false);
@@ -688,15 +696,17 @@ export default function AvailabilityCalendar() {
                     cursor: "pointer",
                   }}
                   flexGrow={1}
-                  onClick={() => setToday(dayjs(day.fullDate))}
+                  // onClick={() => setToday(dayjs(day.fullDate))}
                 >
                   <DayHeader
                     isToday={day.fullDate == dayjs(today).format("YYYY-MM-DD")}
                     day={day.day}
-                    date={day.date}
+                    date={day.fullDate}
                     onEditAvailability={() => handleEditAvailability(day.day)}
                     onClearDay={() => handleClearDay(day.day)}
                     isAvailable={day.availability.isAvailable}
+                    onClickOnDay={() => setToday(dayjs(day.fullDate))}
+                    isBeforeToday={dayjs(day.fullDate).isBefore(dayjs(), "day")}
                   />
                 </Grid>
               ))}
@@ -748,17 +758,109 @@ export default function AvailabilityCalendar() {
                         >
                           {(booking || !hour.isDisabled) && (
                             <>
-                              <StatusIcon
-                                status={
-                                  booking && booking.status
-                                    ? booking.status === "active"
-                                      ? 1
-                                      : booking.status === "cancelled"
-                                      ? 2
-                                      : 3
-                                    : 0
-                                }
-                              />
+                              <Box
+                                sx={{
+                                  cursor: isPastDateTime(
+                                    dayjs(today).toDate(),
+                                    hour.time
+                                  )
+                                    ? "not-allowed"
+                                    : "pointer",
+                                  opacity: isPastDateTime(
+                                    dayjs(today).toDate(),
+                                    hour.time
+                                  )
+                                    ? 0.6
+                                    : 1,
+                                }}
+                                onClick={(e) => {
+                                  if (
+                                    isPastDateTime(
+                                      dayjs(today).toDate(),
+                                      hour.time
+                                    )
+                                  ) {
+                                    return; // Prevent click action if it's a past date/time
+                                  }
+
+                                  // Always set isEditing based on whether we're editing an existing booking
+                                  setIsEditing(booking?.status === "active");
+
+                                  if (booking?.status === "active") {
+                                    setMenuAnchorEl(e.currentTarget);
+                                    setAppointmentId(
+                                      booking.booking_id.toString()
+                                    );
+
+                                    reset({
+                                      contact: {
+                                        firstName: booking.first_name,
+                                        lastName: booking.last_name,
+                                        email: booking.email,
+                                        phone: booking.phone,
+                                        title: booking.phone || "",
+                                      },
+                                      date: dayjs(booking.date).toDate(), // Ensure date is a Date object
+                                      startTime: booking.start_time.substring(
+                                        0,
+                                        5
+                                      ),
+                                      length: dayjs(
+                                        booking.end_time,
+                                        "HH:mm:ss"
+                                      )
+                                        .diff(
+                                          dayjs(booking.start_time, "HH:mm:ss"),
+                                          "minute"
+                                        )
+                                        .toString(),
+                                      appointmentType: "inPerson",
+                                      reasonForCall: booking.details,
+                                    });
+                                  } else {
+                                    // For cancelled bookings or empty slots
+                                    if (
+                                      isPastDateTime(
+                                        dayjs(today).toDate(),
+                                        hour.time
+                                      )
+                                    ) {
+                                      setOpenDialog(false);
+                                    } else {
+                                      setOpenDialog(true);
+                                      setAppointmentId(null);
+
+                                      // Ensure we're setting the correct date (today) and time (from hour)
+                                      reset({
+                                        contact: {
+                                          firstName: "",
+                                          lastName: "",
+                                          email: "",
+                                          phone: "",
+                                          title: "",
+                                        },
+                                        date: dayjs(today).toDate(), // Ensure date is a Date object
+                                        startTime: hour.time,
+                                        length: "15",
+                                        appointmentType: "inPerson",
+                                        reasonForCall: "",
+                                      });
+                                    }
+                                  }
+                                }}
+                              >
+                                <StatusIcon
+                                  status={
+                                    booking && booking.status
+                                      ? booking.status === "active"
+                                        ? 1
+                                        : booking.status === "cancelled"
+                                        ? 2
+                                        : 3
+                                      : 0
+                                  }
+                                />
+                              </Box>
                               <BookingTypeIcon
                                 bookingType={booking ? "phone" : ""}
                               />
@@ -831,6 +933,26 @@ export default function AvailabilityCalendar() {
                                     }
                                   } else {
                                     return;
+                                  }
+                                  if (booking?.status === "cancelled") {
+                                    if (
+                                      isPastDateTime(
+                                        dayjs(today).toDate(),
+                                        hour.time
+                                      )
+                                    ) {
+                                      setOpenDialog(false);
+                                    } else {
+                                      setOpenDialog(true);
+                                    }
+                                    setAppointmentId(null);
+                                    reset({
+                                      date: dayjs(today),
+                                      startTime: hour.time,
+                                      length: "15",
+                                      appointmentType: "inPerson",
+                                      reasonForCall: "",
+                                    });
                                   }
                                 }}
                               >
@@ -1044,8 +1166,28 @@ export default function AvailabilityCalendar() {
                   variant="outlined"
                   onClick={() => {
                     setOpenEditAvailability(false);
-                    reset();
-                    
+                    setCheckedDays([]);
+                    setRepeat(false);
+                    setAvailable(true);
+                    // Reset availability data to original server values
+                    setWeeklyAvailability({ ...transformedWeeklyAvailability });
+                    setTransformedWeeklyAvailability(
+                      mapAvailabilitiesToWeekly(availabilities, {
+                        monday: "monday",
+                        tuesday: "tuesday",
+                        wednesday: "wednesday",
+                        thursday: "thursday",
+                        friday: "friday",
+                        saturday: "saturday",
+                        sunday: "sunday",
+                      })
+                    );
+                    // Reset the availability form
+                    availabilityForm.reset({
+                      phone: { from: "", to: "" },
+                      in_person: { from: "", to: "" },
+                      break: { from: "", to: "" },
+                    });
                   }}
                   text="Cancel"
                   sx={{

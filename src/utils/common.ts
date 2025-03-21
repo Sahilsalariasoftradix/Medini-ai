@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
-import { EnBookings } from "./enums";
+import { EnBookings, EnCancelAppointment } from "./enums";
+import { overRideSvgColor } from "./filters";
+import { z } from "zod";
 
 // Function to get pathname for page
 export const getPageNameFromPath = (path: string) => {
@@ -94,3 +96,36 @@ export function formatPhoneNumber(number:string) {
       return 'Invalid number';
   }
 }
+
+export const menuItemHoverStyle = {
+  "&:hover": {
+    filter: overRideSvgColor.blue,
+  },
+  gap: 1,
+};
+
+export const appointmentSchema = z.object({
+  reason: z.enum(Object.values(EnCancelAppointment) as [string, ...string[]]),
+});
+
+export const availabilitySchema = z.object({
+  isAvailable: z.boolean(),
+  phone: z.object({
+    from: z.string(),
+    to: z.string(),
+  }),
+  in_person: z.object({
+    from: z.string(),
+    to: z.string(),
+  }),
+
+  break: z
+    .object({
+      from: z.string(),
+      to: z.string(),
+    })
+    .optional(),
+});
+
+export type AppointmentFormData = z.infer<typeof appointmentSchema>;
+export type AvailabilityFormData = z.infer<typeof availabilitySchema>;

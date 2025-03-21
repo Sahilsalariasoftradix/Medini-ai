@@ -54,6 +54,7 @@ import { createCall, getCompanyUniqueNumber } from "../../api/userApi";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import CustomSwitch from "../../components/common/CustomSwitch";
 
 interface Data {
   id: number;
@@ -1271,6 +1272,8 @@ const CallCenter = () => {
     }
   };
 
+  const [pendingCalls, setPendingCalls] = useState(false);
+
   return (
     <Box sx={{ px: "12px" }}>
       <Box
@@ -1278,11 +1281,28 @@ const CallCenter = () => {
         alignItems={"center"}
         justifyContent={"space-between"}
       >
+        <Box display={"flex"} alignItems={"center"} gap={2}>
+
         <CommonTextField
           startIcon={<img src={searchIcon} alt="down" />}
           placeholder="Search Calls"
           sx={{ maxWidth: "300px", "& .MuiInputBase-input": { py: "11px" } }}
         />
+        <Box display={"flex"} alignItems={"center"} gap={2} minWidth={"300px"}>
+          <Typography variant="bodyMediumMedium" color="grey.600" mr={2.5}>
+            Pending Calls
+          </Typography>
+          <CustomSwitch
+            name="pendingCalls"
+            checked={pendingCalls}
+            onChange={(e) => setPendingCalls(e.target.checked)}
+          />
+          <Typography variant="bodyMediumMedium" color="grey.600">
+            Completed Calls
+          </Typography>
+          {/* <CustomSwitch name="completedCalls" /> */}
+        </Box>
+        </Box>
         <Box
           display={"flex"}
           alignItems={"center"}
@@ -1589,7 +1609,7 @@ const CallCenter = () => {
               ? "cancellation"
               : "call"}
           </Typography>
-          
+
           <Controller
             name="appointmentReason"
             control={control}
