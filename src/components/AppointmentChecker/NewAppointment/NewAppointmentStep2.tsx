@@ -49,7 +49,7 @@ const NewAppointmentStep2 = () => {
   
   // Initialize react-hook-form with controller for complex inputs
   const {
-    register,
+    // register,
     handleSubmit,
     control,
     formState: { errors },

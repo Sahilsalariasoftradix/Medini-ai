@@ -112,7 +112,7 @@ function OTP({
   };
 
   const handleClick = (
-    event: React.MouseEvent<HTMLInputElement, MouseEvent>,
+    // event: React.MouseEvent<HTMLInputElement, MouseEvent>,
     currentIndex: number
   ) => {
     selectInput(currentIndex);
@@ -173,6 +173,7 @@ function OTP({
                   handleChange(event, index),
                 onClick: (
                   event: React.MouseEvent<HTMLInputElement, MouseEvent>
+                  //@ts-ignore
                 ) => handleClick(event, index),
                 onPaste: (event: React.ClipboardEvent<HTMLInputElement>) =>
                   handlePaste(event, index),

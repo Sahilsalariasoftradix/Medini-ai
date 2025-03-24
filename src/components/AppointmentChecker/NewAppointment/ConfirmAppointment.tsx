@@ -70,10 +70,11 @@ const ConfirmAppointment = () => {
   const formattedDate = newAppointmentData?.date
     ? format(new Date(newAppointmentData.date), "MMMM dd, yyyy")
     : "Not selected";
+    
 
-  const formattedTime = newAppointmentData?.time
-    ? format(new Date(newAppointmentData.time), "h:mm a")
-    : "Not selected";
+  // const formattedTime = newAppointmentData?.time
+  //   ? format(new Date(newAppointmentData.time), "h:mm a")
+  //   : "Not selected";
 
   return (
     <Box>
