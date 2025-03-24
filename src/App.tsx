@@ -2,16 +2,19 @@ import AppRoutes from "./routes/AppRoutes";
 import { AuthProvider } from "./store/AuthContext";
 import { StepFormProvider } from "./store/StepFormContext";
 import { AvailabilityProvider } from "./store/AvailabilityContext";
+import { AppointmentCheckerProvider } from "./store/AppointmentCheckerContext";
 
 function App() {
   return (
-    <AuthProvider>
-      <AvailabilityProvider>
-        <StepFormProvider>
-          <AppRoutes />
-        </StepFormProvider>
-      </AvailabilityProvider>
-    </AuthProvider>
+    <AppointmentCheckerProvider>
+      <AuthProvider>
+        <AvailabilityProvider>
+          <StepFormProvider>
+            <AppRoutes />
+          </StepFormProvider>
+        </AvailabilityProvider>
+      </AuthProvider>
+    </AppointmentCheckerProvider>
   );
 }
 

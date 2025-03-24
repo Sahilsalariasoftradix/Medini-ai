@@ -22,6 +22,7 @@ import PrivacyPolicyPage from "../../pages/PrivacyPolicy";
 import NormalLayout from "../../layouts/NormalLayout";
 import TermsOfServicePage from "../../pages/TermsOfService";
 import Messages from "../../components/Messages";
+import AppointmentChecker from "../../components/AppointmentChecker/AppointmentChecker";
 
 const AppRoutes: React.FC = () => {
   const { loading } = useAuth();
@@ -40,6 +41,13 @@ const AppRoutes: React.FC = () => {
   return (
     <Router>
       <Routes>
+        {/* Appointment Checker Layout */}
+  
+          <Route
+            path={routes.appointmentChecker.stepForm}
+            element={<AppointmentChecker />}
+          />
+
         {/* Authflow Layout */}
         <Route element={<AuthFlow />}>
           <Route path={routes.auth.verifyEmail} element={<VerifyEmail />} />
@@ -61,8 +69,8 @@ const AppRoutes: React.FC = () => {
         {/* Protected Routes (Only for Authenticated & Verified Users) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-          <Route path={routes.dashboard.home} element={<Booking />} />
-          <Route path={routes.sidebar.messages.link} element={<Messages />} />
+            <Route path={routes.dashboard.home} element={<Booking />} />
+            <Route path={routes.sidebar.messages.link} element={<Messages />} />
             <Route path={routes.sidebar.schedule.link} element={<Schedule />} />
             <Route
               path={routes.sidebar.callCenter.link}

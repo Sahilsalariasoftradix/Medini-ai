@@ -16,7 +16,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { datePickerIcons } from "../../../utils/Icons";
 import { useAuth } from "../../../store/AuthContext";
 
-const calenderIcon = () => <img src={datePickerIcons.calendar} alt="" />;
+export const calenderIcon = () => <img src={datePickerIcons.calendar} alt="" />;
 const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
   control,
   errors,

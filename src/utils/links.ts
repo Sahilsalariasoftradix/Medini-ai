@@ -1,5 +1,8 @@
 // Internal Links (routes)
 export const routes = {
+  appointmentChecker: {
+    stepForm: "/user-booking",
+  },
   auth: {
     signIn: "/auth/sign-in",
     signUp: "/auth/sign-up",

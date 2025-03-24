@@ -1025,6 +1025,7 @@ const CallCenter = () => {
     email: contact.email,
     phone: contact.phone,
   }));
+  
   const callPurpose = watch("callPurpose");
 
   const handleClose = () => {
@@ -1139,6 +1140,7 @@ const CallCenter = () => {
 
   const onSubmit = async (data: AddCallSchema) => {
     const callData: ICall = {
+      user_id: userDetails?.user_id,
       to: data.contact.phone,
       from: companyPhone,
       agenda: data.callPurpose,
@@ -1232,7 +1234,7 @@ const CallCenter = () => {
         callData.reschedule_is_in_person = data.inPersonOnly;
         callData.reschedule_book_from_date = data.bookingStartDate;
         callData.reschedule_book_till_date = data.bookingEndDate;
-        callData.booking_id_to_reschedule = data.appointmentId
+        callData.reschedule_booking_id = data.appointmentId
           ? parseInt(data.appointmentId)
           : undefined;
         callData.reschedule_appointment_length = data.appointmentLength

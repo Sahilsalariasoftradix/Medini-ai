@@ -207,6 +207,7 @@ export default function AvailabilityCalendar() {
       })
     );
   }, [availabilities]);
+  
 
   const availabilityForm = useForm({
     defaultValues: {

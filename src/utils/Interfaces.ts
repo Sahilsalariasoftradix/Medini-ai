@@ -262,6 +262,7 @@ export interface IUser {
 }
 
 export interface ICall {
+  user_id: number;
   to: string;
   from: string;
   agenda: string; // BOOK_APPOINTMENT, CANCEL_APPOINTMENT, RESCHEDULE_APPOINTMENT, INFORM_PATIENT
@@ -283,7 +284,7 @@ export interface ICall {
   reschedule_book_from_date?: string;
   reschedule_book_till_date?: string;
   reschedule_appointment_length?: number;
-  booking_id_to_reschedule?: number;
+  reschedule_booking_id?: number;
   // # inform_patient
   info_to_patient?: string;
 }
