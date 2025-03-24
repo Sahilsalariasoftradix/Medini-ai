@@ -33,6 +33,15 @@ export type CalenderNameSchemaType = z.infer<typeof CalenderNameSchema>;
 // Type declaration for schema
 export type CompanyDetailsSchemaType = z.infer<typeof CompanyDetailsSchema>;
 
+export const ExistingAppointmentSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone number is required"),
+});
+
+export type ExistingAppointmentSchemaType = z.infer<typeof ExistingAppointmentSchema>;
+
+
+
 export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {

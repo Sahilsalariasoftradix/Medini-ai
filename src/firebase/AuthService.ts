@@ -176,13 +176,18 @@ export const getReasons = async () => {
   }
 };
 //* Function to fetch all contacts from the Firestore 'contacts' collection
-export const getContactsByUserId = async (userId: string): Promise<IContact[]> => {
+export const getContactsByUserId = async (
+  userId: string
+): Promise<IContact[]> => {
   const db = getFirestore();
   const contactsCollection = collection(db, EnFirebaseCollections.CONTACTS);
 
   try {
     // Query Firestore to filter contacts by user_id
-    const contactsQuery = query(contactsCollection, where("user_id", "==", userId));
+    const contactsQuery = query(
+      contactsCollection,
+      where("user_id", "==", userId)
+    );
     const snapshot = await getDocs(contactsQuery);
 
     // Map through the documents and return the filtered contacts
@@ -239,13 +244,11 @@ export const signUpWithEmail = async (
 
     // Step 2: Generate auto-incrementing `prop` ID using a Firestore transaction
 
-   
-
     // Step 3: Save user details in Firestore
     const userData = {
       id: user.uid,
       // uuid: newPropId, // Auto-incremented ID
-      user_id:user_id,
+      user_id: user_id,
       email: user.email,
       firstName,
       lastName,
@@ -305,15 +308,9 @@ export const signInWithEmail = async (
     const successMessage = staticText.firestore.successLoggedInMessage; // Custom success message
     return successMessage; // Return the success message after successful login
   } catch (error: any) {
-    // / If it's an unverified email error, pass it through directly
     if (error.message === emailNotVerifiedMessage) {
       throw error;
     }
-
-
-
-
-
 
     // Step 5: Handle errors and log them for debugging
     const errorMessage = getAuthErrorMessage(error.code); // Map the Firebase error code to a user-friendly message

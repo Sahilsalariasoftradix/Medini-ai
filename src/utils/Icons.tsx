@@ -25,7 +25,7 @@ import appleIcon from "../assets/icons/apple-icon.svg";
 import hidden from "../assets/icons/eye-off.svg";
 import visibile from "../assets/icons/eye-on.svg";
 import verification from "../assets/icons/verification.svg";
-
+import editForm from "../assets/icons/edit-form.svg";
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
 } = {
@@ -77,4 +77,7 @@ export const InPersonIcon = () => (
 );
 export const VerificationIcon = () => (
   <img src={verification} alt="icon" />
+);
+export const EditFormIcon = () => (
+  <img src={editForm} alt="icon" />
 );

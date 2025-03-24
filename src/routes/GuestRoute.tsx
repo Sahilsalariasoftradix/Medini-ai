@@ -12,16 +12,17 @@ const GuestRoute = () => {
     return <PageLoader />;
   }
 
- // if user is not onboarded, redirect to onboarding page ONLY if verified
- if (
-  user &&
-  userDetails?.verified && // Only redirect verified users
-  ((location.pathname === "/login" && userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_0) ||
-  userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_0 ||
-  userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_1)
-) {
-  return <Navigate to={routes.auth.stepForm} replace />;
-}
+  // if user is not onboarded, redirect to onboarding page ONLY if verified
+  if (
+    user && 
+    userDetails?.verified && // Only redirect verified users
+    ((location.pathname === "/login" && userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_0) ||
+    userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_0 ||
+    userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_1)
+  ) {
+    return <Navigate to={routes.auth.stepForm} replace />;
+  }
+  
   // Only redirect if user is fully authenticated and onboarded
   if (user && userDetails?.onboardingStatus === EnOnboardingStatus.STATUS_2) {
     return <Navigate to={routes.sidebar.bookings.link} replace />;
