@@ -153,9 +153,6 @@ function OTP({
     }
   };
 
-
-  
-
   return (
     <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
       {new Array(length).fill(null).map((_, index) => (

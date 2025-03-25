@@ -57,6 +57,7 @@ import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
 import CommonButton from "../common/CommonButton";
 import { useAuth } from "../../store/AuthContext";
 import ConfirmAppointments from "./Form/ConfirmAppointments";
+import { DaySchedule } from "../../types/calendar";
 
 dayjs.extend(isSameOrBefore);
 
@@ -207,7 +208,6 @@ export default function AvailabilityCalendar() {
       })
     );
   }, [availabilities]);
-  
 
   const availabilityForm = useForm({
     defaultValues: {
@@ -254,8 +254,78 @@ export default function AvailabilityCalendar() {
     const day = days.find(
       (day) => day.fullDate === dayjs(today).format("YYYY-MM-DD")
     );
-    return day?.availability?.slots || [];
-  }, [days, today]);
+
+    // Get the base slots
+    const baseSlots = day?.availability?.slots || [];
+
+    // Calculate hour range from both available slots and bookings
+    const hourRange = getAvailableHourRange([day!].filter(Boolean), bookings);
+
+    // Determine availability times from the current day data
+    const dayKey = dayjs(today).format("dddd").toLowerCase();
+    
+    const dayAvailability = transformedWeeklyAvailability[dayKey];
+
+
+    // Get earliest availability time (from either phone or in-person)
+    let earliestAvailabilityTime = null;
+    if (dayAvailability) {
+      const phoneStart = dayAvailability.phone && dayAvailability.phone.from;
+      const inPersonStart =
+        dayAvailability.in_person && dayAvailability.in_person.from;
+
+      if (phoneStart && inPersonStart) {
+        earliestAvailabilityTime = dayjs(`2024-01-01 ${phoneStart}`).isBefore(
+          dayjs(`2024-01-01 ${inPersonStart}`)
+        )
+          ? phoneStart
+          : inPersonStart;
+      } else if (phoneStart) {
+        earliestAvailabilityTime = phoneStart;
+      } else if (inPersonStart) {
+        earliestAvailabilityTime = inPersonStart;
+      }
+    }
+
+    // If we have bookings but no slots, or need to expand the time range
+    if (bookings.length > 0 || baseSlots.length === 0) {
+      // Create a full range of slots from start to end hour
+      const allSlots = [];
+      for (let hour = hourRange.start; hour < hourRange.end; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+          const formattedHour = hour.toString().padStart(2, "0");
+          const formattedMinute = minute.toString().padStart(2, "0");
+          const time = `${formattedHour}:${formattedMinute}`;
+
+          // Check if this slot already exists in baseSlots
+          const existingSlot = baseSlots.find((slot) => slot.time === time);
+
+          // Check if this time is before availability starts
+          const isBeforeAvailability =
+            earliestAvailabilityTime &&
+            dayjs(`2024-01-01 ${time}`).isBefore(
+              dayjs(`2024-01-01 ${earliestAvailabilityTime}`)
+            );
+
+          if (existingSlot) {
+            allSlots.push({
+              ...existingSlot,
+              isDisabled: existingSlot.isDisabled || isBeforeAvailability,
+            });
+          } else {
+            // Create a new slot
+            allSlots.push({
+              time,
+              isDisabled: isBeforeAvailability || false,
+            });
+          }
+        }
+      }
+      return allSlots;
+    }
+
+    return baseSlots;
+  }, [days, today, bookings, transformedWeeklyAvailability]);
 
   const handleEditAvailability = (day: string) => {
     console.log(`Editing availability for ${day}`);
@@ -277,6 +347,7 @@ export default function AvailabilityCalendar() {
   const findBookingForTimeSlot = (time: string) => {
     return bookings.find((booking) => booking.start_time === `${time}:00`);
   };
+
   const onCancelSubmit = async () => {
     setLoading(true);
     try {
@@ -320,6 +391,7 @@ export default function AvailabilityCalendar() {
         .format("HH:mm");
       if (isEditing && appointmentId) {
         await updateBooking({
+          user_id: userDetails?.user_id,
           booking_id: Number(appointmentId),
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
@@ -412,7 +484,59 @@ export default function AvailabilityCalendar() {
 
     setIsAvailabilityModalOpen(true);
   };
+  const getAvailableHourRange = (
+    days: DaySchedule[],
+    bookings: IBookingResponse[] = []
+  ) => {
+    let earliestHour = 24;
+    let latestHour = 0;
 
+    // Check availability slots
+    days.forEach((day) => {
+      if (day.availability.slots.length > 0) {
+        // Get all slots that are not disabled
+        const availableSlots = day.availability.slots.filter(
+          (slot) => !slot.isDisabled
+        );
+
+        if (availableSlots.length > 0) {
+          const firstSlot = availableSlots[0].time;
+          const lastSlot = availableSlots[availableSlots.length - 1].time;
+
+          const firstHour = parseInt(firstSlot.split(":")[0]);
+          const lastHour = parseInt(lastSlot.split(":")[0]);
+
+          earliestHour = Math.min(earliestHour, firstHour);
+          latestHour = Math.max(latestHour, lastHour);
+        }
+      }
+    });
+
+    // Also check bookings for additional time range
+    if (bookings.length > 0) {
+      bookings.forEach((booking) => {
+        const startHour = parseInt(booking.start_time.split(":")[0]);
+        const endHour = parseInt(booking.end_time.split(":")[0]);
+
+        earliestHour = Math.min(earliestHour, startHour);
+        latestHour = Math.max(latestHour, endHour);
+      });
+    }
+
+    // If no available slots or bookings were found, return default range
+    if (earliestHour === 24 && latestHour === 0) {
+      return {
+        start: 0,
+        end: 24,
+      };
+    }
+
+    // Ensure we include the full range
+    return {
+      start: Math.max(0, earliestHour), // Show one hour before the earliest slot
+      end: Math.min(24, latestHour + 1), // Show one hour after the latest slot
+    };
+  };
   const handleAvailabilityModalSubmit = (data: any) => {
     // Validate times only if the day is available
     if (available) {
@@ -720,6 +844,7 @@ export default function AvailabilityCalendar() {
                 {!loading ? (
                   getSlots().map((hour, index) => {
                     const booking = findBookingForTimeSlot(hour.time);
+
                     return (
                       <Box
                         key={index}
@@ -1269,6 +1394,7 @@ export default function AvailabilityCalendar() {
         disabled={loading}
       >
         <SlotBookingForm
+          selectedTime={""}
           control={control}
           errors={errors}
           openContactSearch={openContactSearch}

@@ -10,6 +10,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import { useState } from "react";
 import { calenderIcon } from "../../Booking/Form/SlotBookingForm";
+import StepProgress from "../StepProgress";
+import { EnStepProgress } from "../../../utils/enums";
 
 // Define validation schema with zod
 const validationSchema = z.object({
@@ -53,7 +55,7 @@ const NewAppointmentStep1 = () => {
 
   const onSubmit = (data: FormValues) => {
     // Save form data to context
-      //@ts-ignore
+    //@ts-ignore
     setNewAppointmentData({
       ...newAppointmentData,
       ...data,
@@ -73,7 +75,8 @@ const NewAppointmentStep1 = () => {
         sx={{ fontSize: { xs: 24, md: 28 } }}
       >
         New Appointment
-        <br />Step 1
+        <br />
+        Step 1
       </Typography>
 
       <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
@@ -170,6 +173,12 @@ const NewAppointmentStep1 = () => {
           >
             Next
           </CommonButton>
+        </Box>
+        <Box display="flex" justifyContent="center" mt={2}>
+          <StepProgress
+            currentStep={step - 1}
+            totalSteps={EnStepProgress.TOTAL_STEPS}
+          />
         </Box>
       </Box>
     </Box>

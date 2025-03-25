@@ -52,11 +52,12 @@ export enum EnBookings {
   Active = 1,
   Cancel = 2,
   Unconfirmed = 3,
-  Edit=4
+  Edit = 4,
+  Booked = 5
 }
 export enum EStaticID {
   ID = 1,
-  ID2=2
+  ID2 = 2
 }
 export enum EnCancelAppointment {
   DoctorSick = "Doctor is sick",
@@ -94,4 +95,7 @@ export enum EnCallPurposeOptionsValues {
 export enum EnUserCreationStatus {
   SUCCESS = "User created successfully",
   FAILED = "User creation failed",
+}
+export enum EnStepProgress {
+  TOTAL_STEPS = 4,
 }

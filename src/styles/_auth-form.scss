@@ -1,39 +1,32 @@
-@use './variables' as *;
+@use "./variables" as *;
 .auth-form {
-    max-width: 600px;
-    border-radius: 50px;
-    box-shadow: 0px 16px 24px 0px #5D6A8305;
-    background: $primary-contrast;
+  max-width: 600px;
+  border-radius: 50px;
+  box-shadow: 0px 16px 24px 0px #5d6a8305;
+  background: $primary-contrast;
+}
+.step-progress {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 140px;
+  gap: 10px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
 
-  
-    // &__title {
-    //   font-size: 24px;
-    //   margin-bottom: 20px;
-    // }
-  
-    // &__field {
-    //   margin-bottom: 15px;
-  
-    //   input {
-    //     width: 100%;
-    //     padding: 10px;
-    //     border: 1px solid #ddd;
-    //     border-radius: 5px;
-    //   }
-    // }
-  
-    // &__button {
-    //   width: 100%;
-    //   padding: 10px;
-    //   background-color: #1976d2;
-    //   color: #fff;
-    //   border: none;
-    //   border-radius: 5px;
-    //   cursor: pointer;
-  
-    //   &:hover {
-    //     background-color: #1565c0;
-    //   }
-    // }
+  .step {
+    flex: 1;
+    height: 100%;
+    border-radius: 12px;
+    transition: background-color 0.3s ease-in-out;
+
+    &.active {
+      background-color: $primary-main;
+    }
+
+    &.inactive {
+      background-color: #e6e6e6;
+    }
   }
-  
+}

@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useAppointmentChecker } from "../../store/AppointmentCheckerContext";
 import { Box, Typography, BoxProps } from "@mui/material";
 interface AppointmentCheckerProps extends BoxProps {
-  // children: React.ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 // Step components

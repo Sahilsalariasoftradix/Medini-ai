@@ -16,6 +16,8 @@ import { calenderIcon } from "../../Booking/Form/SlotBookingForm";
 import { useState } from "react";
 import CommonTextField from "../../common/CommonTextField";
 import { InPersonIcon } from "../../../utils/Icons";
+import { EnStepProgress } from "../../../utils/enums";
+import StepProgress from "../StepProgress";
 
 // Define validation schema with zod
 const validationSchema = z.object({
@@ -38,7 +40,7 @@ type FormValues = z.infer<typeof validationSchema>;
 const NewAppointmentStep2 = () => {
   const { step, setStep, newAppointmentData, setNewAppointmentData } =
     useAppointmentChecker();
-    
+
   // Initialize with existing data if available
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
     newAppointmentData?.date ? dayjs(newAppointmentData.date) : null
@@ -46,20 +48,24 @@ const NewAppointmentStep2 = () => {
   const [selectedTime, setSelectedTime] = useState<Dayjs | null>(
     newAppointmentData?.time ? dayjs(newAppointmentData.time) : null
   );
-  
+
   // Initialize react-hook-form with controller for complex inputs
   const {
     // register,
     handleSubmit,
     control,
     formState: { errors },
-    setValue
+    setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
       practitioner: newAppointmentData?.practitioner || "",
-      date: newAppointmentData?.date ? new Date(newAppointmentData.date) : undefined,
-      time: newAppointmentData?.time ? new Date(newAppointmentData.time) : undefined,
+      date: newAppointmentData?.date
+        ? new Date(newAppointmentData.date)
+        : undefined,
+      time: newAppointmentData?.time
+        ? new Date(newAppointmentData.time)
+        : undefined,
       appointmentLength: newAppointmentData?.appointmentLength || "",
       appointmentType: newAppointmentData?.appointmentType || "",
     },
@@ -274,6 +280,12 @@ const NewAppointmentStep2 = () => {
           >
             Continue
           </CommonButton>
+        </Box>
+        <Box display="flex" justifyContent="center" mt={2}>
+          <StepProgress
+            currentStep={step - 1}
+            totalSteps={EnStepProgress.TOTAL_STEPS}
+          />
         </Box>
       </Box>
     </Box>
