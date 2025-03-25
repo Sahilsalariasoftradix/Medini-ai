@@ -263,7 +263,7 @@ export default function AvailabilityCalendar() {
 
     // Determine availability times from the current day data
     const dayKey = dayjs(today).format("dddd").toLowerCase();
-    
+
     const dayAvailability = transformedWeeklyAvailability[dayKey];
 
 
@@ -639,12 +639,12 @@ export default function AvailabilityCalendar() {
               : null,
           in_person_start_time:
             weeklyAvailability[day].in_person &&
-            weeklyAvailability[day].in_person.from
+              weeklyAvailability[day].in_person.from
               ? weeklyAvailability[day].in_person.from
               : null,
           in_person_end_time:
             weeklyAvailability[day].in_person &&
-            weeklyAvailability[day].in_person.to
+              weeklyAvailability[day].in_person.to
               ? weeklyAvailability[day].in_person.to
               : null,
           break_start_time:
@@ -821,7 +821,7 @@ export default function AvailabilityCalendar() {
                     cursor: "pointer",
                   }}
                   flexGrow={1}
-                  // onClick={() => setToday(dayjs(day.fullDate))}
+                // onClick={() => setToday(dayjs(day.fullDate))}
                 >
                   <DayHeader
                     isToday={day.fullDate == dayjs(today).format("YYYY-MM-DD")}
@@ -926,7 +926,7 @@ export default function AvailabilityCalendar() {
                                         phone: booking.phone,
                                         title: booking.phone || "",
                                       },
-                                      date: dayjs(booking.date).toDate(), // Ensure date is a Date object
+                                      date: dayjs(booking.date.split("T")[0]).toDate(), // Ensure date is a Date object
                                       startTime: booking.start_time.substring(
                                         0,
                                         5
@@ -981,8 +981,8 @@ export default function AvailabilityCalendar() {
                                       ? booking.status === "active"
                                         ? 1
                                         : booking.status === "cancelled"
-                                        ? 2
-                                        : 3
+                                          ? 2
+                                          : 3
                                       : 0
                                   }
                                 />
@@ -1004,7 +1004,7 @@ export default function AvailabilityCalendar() {
                                   padding: "3px 8px",
                                   borderRadius: "100px",
                                   cursor: isPastDateTime(
-                                    dayjs(booking.date).toDate(),
+                                    dayjs(booking.date.split("T")[0]).toDate(),
                                     booking.start_time
                                   )
                                     ? "not-allowed"
@@ -1013,13 +1013,13 @@ export default function AvailabilityCalendar() {
                                     booking.status === "active"
                                       ? "#22C55E"
                                       : booking.status === "cancelled"
-                                      ? "#FF4747"
-                                      : "#FACC15",
+                                        ? "#FF4747"
+                                        : "#FACC15",
                                 }}
                                 onClick={(e) => {
                                   if (
                                     !isPastDateTime(
-                                      dayjs(booking.date).toDate(),
+                                      dayjs(booking.date.split("T")[0]).toDate(),
                                       booking.start_time
                                     )
                                   ) {
@@ -1036,7 +1036,7 @@ export default function AvailabilityCalendar() {
                                           phone: booking.phone,
                                           title: booking.phone,
                                         },
-                                        date: dayjs(booking.date),
+                                        date: dayjs(booking.date.split("T")[0]),
                                         startTime: booking.start_time.substring(
                                           0,
                                           5

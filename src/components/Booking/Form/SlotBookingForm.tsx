@@ -138,7 +138,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
 
                 slots={{ openPickerIcon: calenderIcon }}
                 label=""
-                // shouldDisableDate={shouldDisableDate}
+              // shouldDisableDate={shouldDisableDate}
               />
             )}
           />
@@ -214,7 +214,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
         />
         <Box display="flex" alignItems="center" gap={0.5}>
           <Typography variant="bodyMediumExtraBold" color="grey.600">
-            Reason for Call
+            Reason for Appointment
           </Typography>
           <img src={questionMark} alt="" />
         </Box>
@@ -227,7 +227,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               fullWidth
               multiline
               rows={3}
-              placeholder="Add reason for call"
+              placeholder="Add reason for appointment"
               error={!!errors.reasonForCall}
               helperText={errors.reasonForCall?.message}
             />
