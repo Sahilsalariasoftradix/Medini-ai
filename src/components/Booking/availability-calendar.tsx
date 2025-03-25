@@ -110,10 +110,14 @@ export const CANCELLATION_REASONS = [
 
 export type CancelFormData = z.infer<typeof cancelSchema>;
 
-const getAvailableHourRange = (days: DaySchedule[]) => {
+const getAvailableHourRange = (
+  days: DaySchedule[],
+  bookings: IBookingResponse[] = []
+) => {
   let earliestHour = 24;
   let latestHour = 0;
 
+  // Check availability slots
   days.forEach((day) => {
     if (day.availability.slots.length > 0) {
       // Get all slots that are not disabled
@@ -134,7 +138,18 @@ const getAvailableHourRange = (days: DaySchedule[]) => {
     }
   });
 
-  // If no available slots were found, return default range
+  // Also check bookings for additional time range
+  if (bookings.length > 0) {
+    bookings.forEach((booking) => {
+      const startHour = parseInt(booking.start_time.split(":")[0]);
+      const endHour = parseInt(booking.end_time.split(":")[0]);
+
+      earliestHour = Math.min(earliestHour, startHour);
+      latestHour = Math.max(latestHour, endHour);
+    });
+  }
+
+  // If no available slots or bookings were found, return default range
   if (earliestHour === 24 && latestHour === 0) {
     return {
       start: 0,
@@ -228,7 +243,7 @@ const TimeSlot = ({
     const currentBooking = bookings.find(
       (booking) =>
         booking.start_time.substring(0, 5) === time &&
-        dayjs(booking.date).format("YYYY-MM-DD") ===
+        booking.date.split("T")[0] ===
           dayjs(date).format("YYYY-MM-DD")
     );
 
@@ -286,7 +301,7 @@ const TimeSlot = ({
   const isPastDate = isPastDateTime(date, time);
   const { userDetails } = useAuth();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    if (disabled || isPastDate) {
+    if ((disabled && !appointment) || isPastDate) {
       return;
     }
 
@@ -299,6 +314,9 @@ const TimeSlot = ({
       setOpenDialog(true);
     } else {
       setAnchorEl(event.currentTarget);
+    }
+    if (selectedStatus === EnBookings.Cancel) {
+      setOpenDialog(true);
     }
   };
 
@@ -326,7 +344,7 @@ const TimeSlot = ({
               phone: currentBooking.phone,
               title: currentBooking.phone,
             },
-            date: dayjs(currentBooking.date),
+            date: currentBooking.date.split("T")[0],
             startTime: currentBooking.start_time.substring(0, 5),
             length: dayjs(currentBooking.end_time, "HH:mm:ss")
               .diff(dayjs(currentBooking.start_time, "HH:mm:ss"), "minute")
@@ -350,8 +368,8 @@ const TimeSlot = ({
       }
 
       if (newStatus === EnBookings.Cancel) {
-        setStatusToUpdate(newStatus);
         setOpenCancelDialog(true);
+        setStatusToUpdate(newStatus);
         return;
       }
 
@@ -392,6 +410,7 @@ const TimeSlot = ({
 
       if (isEditing && appointmentId) {
         await updateBooking({
+          user_id: userDetails?.user_id,
           booking_id: Number(appointmentId),
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
@@ -497,15 +516,16 @@ const TimeSlot = ({
           alignItems: "center",
           justifyContent: "center",
           borderRight: "1px solid #EDF2F7",
-          backgroundColor: disabled || isPastDate ? "grey.300" : "grey.50",
-          opacity: disabled || isPastDate ? 0.5 : 1,
+          backgroundColor:
+            (disabled && !appointment) || isPastDate ? "grey.300" : "grey.50",
+          opacity: (disabled && !appointment) || isPastDate ? 0.5 : 1,
           cursor:
-            disabled || appointment?.parentId || isPastDate
+            (disabled && !appointment) || isPastDate
               ? "not-allowed"
               : "pointer",
           "&:hover": {
             backgroundColor:
-              disabled || appointment?.parentId || isPastDate
+              (disabled && !appointment) || isPastDate
                 ? "grey.300"
                 : "primary.light",
           },
@@ -554,6 +574,7 @@ const TimeSlot = ({
           loading={{ input: loading.input }}
           shouldDisableDate={shouldDisableDate}
           selectedDate={dayjs(date)}
+          selectedTime={time}
           isEditing={isEditing}
         />
       </CommonDialog>
@@ -788,7 +809,7 @@ export default function AvailabilityCalendar() {
               <Box sx={{ height: "83px" }} />
               <Box>
                 {(() => {
-                  const hourRange = getAvailableHourRange(days);
+                  const hourRange = getAvailableHourRange(days, bookings);
                   return Array.from(
                     { length: hourRange.end - hourRange.start },
                     (_, i) => i + hourRange.start
@@ -833,7 +854,6 @@ export default function AvailabilityCalendar() {
               }}
             >
               {days.map((day, dayIndex) => {
-                console.log(day,'day')
                 return (
                   <Grid
                     size={"grow"}
@@ -896,7 +916,10 @@ export default function AvailabilityCalendar() {
                         <TimeLabels />
                         <>
                           {(() => {
-                            const hourRange = getAvailableHourRange(days);
+                            const hourRange = getAvailableHourRange(
+                              days,
+                              bookings
+                            );
                             return Array.from(
                               { length: hourRange.end - hourRange.start },
                               (_, hourIndex) => (
@@ -976,8 +999,20 @@ export default function AvailabilityCalendar() {
                                           }
                                           status={slot.status}
                                           disabled={
-                                            !day.availability.isAvailable ||
-                                            slot.isDisabled
+                                            (!day.availability.isAvailable ||
+                                              slot.isDisabled) &&
+                                            !bookings.some(
+                                              (booking) =>
+                                                booking.start_time.substring(
+                                                  0,
+                                                  5
+                                                ) === slot.time &&
+                                                 booking.date.split("T")[0]
+                                                   ===
+                                                  dayjs(startDate)
+                                                    .add(dayIndex, "day")
+                                                    .format("YYYY-MM-DD")
+                                            )
                                           }
                                           time={slot.time}
                                           date={dayjs(startDate)
@@ -1031,7 +1066,7 @@ export default function AvailabilityCalendar() {
             // Calculate status counts from the bookings data for this specific day
             const dayBookings = bookings.filter(
               (booking) =>
-                dayjs(booking.date).format("YYYY-MM-DD") ===
+                booking.date.split("T")[0] ===
                 dayjs(startDate)
                   .add(days.indexOf(day), "day")
                   .format("YYYY-MM-DD")

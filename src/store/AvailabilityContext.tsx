@@ -9,7 +9,7 @@ import {
 import { DaySchedule } from "../types/calendar";
 import { EnAvailability, EnBookings } from "../utils/enums";
 import dayjs from "dayjs";
-import { getAvailability } from "../api/userApi";
+import { getAvailability, getBookings } from "../api/userApi";
 import { IDayAvailability } from "../utils/Interfaces";
 import { useAuth } from "./AuthContext";
 
@@ -84,11 +84,11 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
           start: timeToMinutes(dayAvailability.phone_start_time),
           end: timeToMinutes(dayAvailability.phone_end_time),
         }
-
       : null;
 
   const inPersonRange =
-    dayAvailability.in_person_start_time && dayAvailability.in_person_start_time !== ""
+    dayAvailability.in_person_start_time &&
+    dayAvailability.in_person_start_time !== ""
       ? {
           start: timeToMinutes(dayAvailability.in_person_start_time),
           end: timeToMinutes(dayAvailability.in_person_end_time),
@@ -161,7 +161,8 @@ const generateTimeSlots = (dayAvailability?: IDayAvailability) => {
       slots.push({
         time: currentTime,
         status: EnBookings.Available,
-        isDisabled: !isWithinAvailability || !hasEnoughTimeUntilEnd || isWithinBreak,
+        isDisabled:
+          !isWithinAvailability || !hasEnoughTimeUntilEnd || isWithinBreak,
       });
     }
   }
@@ -178,26 +179,29 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
   const [availabilities, setAvailabilities] = useState<IDayAvailability[]>([]);
   const [isInitialFetch, setIsInitialFetch] = useState(true);
   // const [appointmentId, setAppointmentId] = useState<string | null>(null);
-  const {userDetails} = useAuth();
-  const fetchAvailabilityData = useCallback(async (date: Date) => {
-    if (!userDetails?.user_id) {
-      console.log("No user ID available for availability fetch");
-      return [];
-    }
-    
-    try {
-      const response = await getAvailability({
-        user_id: userDetails.user_id,
-        date: dayjs(date).format("YYYY-MM-DD"),
-        range: EnAvailability.WEEK,
-      });
-      setAvailabilities(response.availability);
-      return response.availability;
-    } catch (error) {
-      console.error("Error fetching availability:", error);
-      return [];
-    }
-  }, [userDetails?.user_id]);
+  const { userDetails } = useAuth();
+  const fetchAvailabilityData = useCallback(
+    async (date: Date) => {
+      if (!userDetails?.user_id) {
+        console.log("No user ID available for availability fetch");
+        return [];
+      }
+
+      try {
+        const response = await getAvailability({
+          user_id: userDetails.user_id,
+          date: dayjs(date).format("YYYY-MM-DD"),
+          range: EnAvailability.WEEK,
+        });
+        setAvailabilities(response.availability);
+        return response.availability;
+      } catch (error) {
+        console.error("Error fetching availability:", error);
+        return [];
+      }
+    },
+    [userDetails?.user_id]
+  );
 
   const generateDaysFromRange = useCallback(
     (
@@ -249,13 +253,35 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
     },
     []
   );
+  const fetchInitialBookings = useCallback(async () => {
+    if (!userDetails?.user_id) {
+      console.log("Waiting for user details before fetching bookings");
+      return;
+    }
+
+    try {
+      const bookings = await getBookings({
+        user_id: userDetails.user_id,
+        date: dayjs().format("YYYY-MM-DD"),
+        range: EnAvailability.WEEK,
+      });
+      console.log(bookings, "bookings");
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  }, [userDetails?.user_id]);
+  useEffect(() => {
+    if (userDetails?.user_id) {
+      fetchInitialBookings();
+    }
+  }, [fetchInitialBookings, userDetails?.user_id]);
 
   const fetchInitialAvailability = useCallback(async () => {
     if (!userDetails?.user_id) {
       console.log("Waiting for user details before fetching availability");
       return;
     }
-    
+
     try {
       const availability = await fetchAvailabilityData(new Date());
 

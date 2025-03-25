@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { useState } from "react";
 import * as z from "zod";
 import { EditFormIcon } from "../../../utils/Icons";
+import StepProgress from "../StepProgress";
+import { EnStepProgress } from "../../../utils/enums";
 
 // Define validation schema for overall appointment data
 const appointmentSchema = z.object({
@@ -70,11 +72,10 @@ const ConfirmAppointment = () => {
   const formattedDate = newAppointmentData?.date
     ? format(new Date(newAppointmentData.date), "MMMM dd, yyyy")
     : "Not selected";
-    
 
-  // const formattedTime = newAppointmentData?.time
-  //   ? format(new Date(newAppointmentData.time), "h:mm a")
-  //   : "Not selected";
+//   const formattedTime = newAppointmentData?.time
+//     ? format(new Date(newAppointmentData.time), "h:mm a")
+//     : "Not selected";
 
   return (
     <Box>
@@ -224,6 +225,12 @@ const ConfirmAppointment = () => {
           {submitting ? "Processing..." : "Confirm Appointment"}
         </CommonButton>
       </Box>
+      <Box display="flex" justifyContent="center" mt={2}>
+          <StepProgress
+            currentStep={step - 1}
+            totalSteps={EnStepProgress.TOTAL_STEPS}
+          />
+        </Box>
     </Box>
   );
 };

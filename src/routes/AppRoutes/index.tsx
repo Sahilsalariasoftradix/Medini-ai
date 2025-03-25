@@ -45,7 +45,7 @@ const AppRoutes: React.FC = () => {
   
           <Route
             path={routes.appointmentChecker.stepForm}
-            // @ts-ignore
+            //@ts-ignore
             element={<AppointmentChecker />}
           />
 

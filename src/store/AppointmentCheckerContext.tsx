@@ -103,7 +103,6 @@ export const AppointmentCheckerProvider = ({
     setFlowType(null);
     setHasAppointment(null);
   };
-  console.log(newAppointmentData);
   return (
     <AppointmentCheckerContext.Provider
       value={{

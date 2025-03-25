@@ -11,10 +11,15 @@ import { useEffect, useState } from "react";
 
 import AddContact from "./AddContact";
 import { getContactsByUserId } from "../../../firebase/AuthService";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import {
+  DatePicker,
+  LocalizationProvider,
+  TimePicker,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { datePickerIcons } from "../../../utils/Icons";
 import { useAuth } from "../../../store/AuthContext";
+import dayjs from "dayjs";
 
 export const calenderIcon = () => <img src={datePickerIcons.calendar} alt="" />;
 const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
@@ -24,14 +29,14 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
   handleOpen,
   handleClose,
   loading,
-  shouldDisableDate,
+  // shouldDisableDate,
   selectedDate,
   isEditing,
 }) => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [contacts, setContacts] = useState<IGetContacts>([]);
   const [selectedContact, setSelectedContact] = useState(null);
-  const {userDetails} = useAuth();
+  const { userDetails } = useAuth();
   const fetchContacts = async () => {
     const contactList = await getContactsByUserId(userDetails?.user_id);
     setContacts(contactList);
@@ -109,34 +114,56 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
             control={control}
             render={({ field: { onChange, ...field } }) => (
               <DatePicker
-                disabled
+                // disabled
+                slotProps={{
+                  day: {
+                    sx: {
+                      "&.MuiPickersDay-root.Mui-selected": {
+                        backgroundColor: "#FF4747",
+                      },
+                    },
+                  },
+                }}
                 {...field}
                 value={selectedDate}
                 onChange={(newValue) => {
                   onChange(newValue);
                 }}
-                slotProps={{
-                  field: {
-                    readOnly: true,
-                  },
-                }}
+                shouldDisableDate={(date) => date.isBefore(dayjs(), "day")}
+                // slotProps={{
+                //   field: {
+                //     readOnly: true,
+                //   },
+                // }}
+
                 slots={{ openPickerIcon: calenderIcon }}
                 label=""
-                shouldDisableDate={shouldDisableDate}
+              // shouldDisableDate={shouldDisableDate}
               />
             )}
           />
         </LocalizationProvider>
-        <Typography variant="bodyMediumExtraBold" color="grey.600">
-          Start Time
-        </Typography>
-        <Controller
-          name="startTime"
-          control={control}
-          render={({ field }) => (
-            <CommonTextField {...field} fullWidth disabled />
-          )}
-        />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+            Start Time
+          </Typography>
+
+          <Controller
+            name="startTime"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <TimePicker
+                ampm={false} // 24-hour format
+                value={value ? dayjs(value, "HH:mm") : null} // Convert string to dayjs
+                onChange={(newValue) => {
+                  onChange(newValue ? newValue.format("HH:mm") : null); // Convert dayjs back to string
+                }}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            )}
+          />
+        </LocalizationProvider>
+
         <Box display="flex" alignItems="center" gap={0.5}>
           <Typography variant="bodyMediumExtraBold" color="grey.600">
             Length
@@ -187,7 +214,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
         />
         <Box display="flex" alignItems="center" gap={0.5}>
           <Typography variant="bodyMediumExtraBold" color="grey.600">
-            Reason for Call
+            Reason for Appointment
           </Typography>
           <img src={questionMark} alt="" />
         </Box>
@@ -200,7 +227,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               fullWidth
               multiline
               rows={3}
-              placeholder="Add reason for call"
+              placeholder="Add reason for appointment"
               error={!!errors.reasonForCall}
               helperText={errors.reasonForCall?.message}
             />

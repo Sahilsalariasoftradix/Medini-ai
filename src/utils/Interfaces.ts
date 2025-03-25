@@ -97,6 +97,7 @@ export interface ISlotBookingFormProps {
   loading: { input: boolean };
   shouldDisableDate: (date: Dayjs) => boolean;
   selectedDate: dayjs.Dayjs;
+  selectedTime: string;
   isEditing?: boolean;
 }
 export interface Option {
@@ -209,6 +210,7 @@ export interface IBooking {
   phone: string;
 }
 export interface IUpdateBooking {
+  user_id: number;
   booking_id: number;
   date: string;
   start_time: string;
