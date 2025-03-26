@@ -5,7 +5,6 @@ import MoreVertIcon from "../../assets/icons/dots-vertical.svg";
 import CommonDialog from "../common/CommonDialog";
 import AvailabilityTimePicker from "../StepForm/Components/AvailabilityTimePicker";
 import edit from "../../assets/icons/edit-table.svg";
-import deleteIcn from "../../assets/icons/delete-tr.svg";
 import { availabilityIcons } from "../../utils/Icons";
 import { useEditAvailability } from "../../hooks/useEditAvailability";
 import { menuItemHoverStyle } from "../../utils/common";
@@ -244,7 +243,7 @@ export function DayHeader({
             Edit Availability
           </Typography>
         </MenuItem>
-        <MenuItem
+        {/* <MenuItem
           onClick={() => handleMenuItemClick(onClearDay)}
           sx={menuItemHoverStyle}
         >
@@ -252,7 +251,7 @@ export function DayHeader({
           <Typography variant="bodySmallSemiBold" color="grey.600">
             Clear Day
           </Typography>
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
     </Box>
   );

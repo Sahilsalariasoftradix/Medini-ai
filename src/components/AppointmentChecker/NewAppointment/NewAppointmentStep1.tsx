@@ -1,4 +1,5 @@
-import { Box, Typography, Grid, FormHelperText } from "@mui/material";
+import { Box, Typography, FormHelperText } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
 import CommonButton from "../../common/CommonButton";
 import { Controller, useForm } from "react-hook-form";
@@ -7,22 +8,24 @@ import * as z from "zod";
 import CommonTextField from "../../common/CommonTextField";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { useState } from "react";
 import { calenderIcon } from "../../Booking/Form/SlotBookingForm";
 import StepProgress from "../StepProgress";
 import { EnStepProgress } from "../../../utils/enums";
+import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
+import CommonSnackbar from "../../common/CommonSnackbar";
 
 // Define validation schema with zod
 const validationSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().min(1, "Email is required").email("Invalid email format"),
-  phone: z
-    .string()
-    .min(1, "Phone number is required")
-    .regex(/^\+?[0-9]{10,14}$/, "Invalid phone number format"),
-  address: z.string().optional(),
+  // phone: z
+  //   .string()
+  //   .min(1, "Phone number is required")
+  //   .regex(/^\+?[0-9]{10,14}$/, "Invalid phone number format"),
+  // address: z.string().optional(),
   bypass_key: z.string().optional(),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
 });
@@ -31,10 +34,18 @@ const validationSchema = z.object({
 type FormValues = z.infer<typeof validationSchema>;
 
 const NewAppointmentStep1 = () => {
-  const { step, setStep, setNewAppointmentData, newAppointmentData } =
-    useAppointmentChecker();
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const {
+    step,
+    setStep,
+    setNewAppointmentData,
+    newAppointmentData,
+    phone,
+    setPhone,
+    snackbar,
+    setSnackbar,
+  } = useAppointmentChecker();
 
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   // Initialize react-hook-form
   const {
     register,
@@ -47,24 +58,33 @@ const NewAppointmentStep1 = () => {
       firstName: newAppointmentData?.firstName || "",
       lastName: newAppointmentData?.lastName || "",
       email: newAppointmentData?.email || "",
-      phone: newAppointmentData?.phone || "",
       dateOfBirth: newAppointmentData?.dateOfBirth || "",
       bypass_key: newAppointmentData?.bypass_key || "",
     },
   });
 
   const onSubmit = (data: FormValues) => {
+  
+    if (!phone || phone.length < 12) {
+      setSnackbar({
+        open: true,
+        message: "Please enter a valid phone number",
+        severity: "error",
+      });
+      return;
+    }
     // Save form data to context
     //@ts-ignore
     setNewAppointmentData({
       ...newAppointmentData,
       ...data,
       bypass_key: data.bypass_key || "",
+      phone: phone,
     });
     // Navigate to next step
     setStep(step + 1);
+    setFormSubmitted(true);
   };
-  console.log(errors);
 
   return (
     <Box>
@@ -81,7 +101,10 @@ const NewAppointmentStep1 = () => {
 
       <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={12}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+             First Name
+            </Typography>
             <CommonTextField
               // label="Full Name"
               placeholder="First Name"
@@ -89,28 +112,37 @@ const NewAppointmentStep1 = () => {
               errorMessage={errors.firstName?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={12}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+             Last Name
+            </Typography>
             <CommonTextField
               placeholder="Last Name"
               register={register("lastName")}
               errorMessage={errors.lastName?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={12}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+             Email
+            </Typography>
             <CommonTextField
               placeholder="Email Address"
               register={register("email")}
               errorMessage={errors.email?.message}
             />
           </Grid>
-          <Grid item xs={12}>
-            <CommonTextField
-              placeholder="Phone Number"
-              register={register("phone")}
-              errorMessage={errors.phone?.message}
+          <Grid size={12}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+             Phone
+            </Typography>
+            <MuiPhone
+              value={phone}
+              onChange={(phone) => setPhone(phone)}
+              error={formSubmitted && (!phone || phone.length < 12)}
             />
           </Grid>
-          <Grid item xs={12}>
+          {/* <Grid size={12}>
             <Typography mt={1} color="grey.600" variant="bodyMediumExtraBold">
               Bypass key
             </Typography>
@@ -120,7 +152,8 @@ const NewAppointmentStep1 = () => {
               errorMessage={errors.bypass_key?.message}
             />
           </Grid>
-          <Grid item xs={12}>
+           */}
+          <Grid size={12}>
             <Typography variant="bodyMediumExtraBold" color="grey.600">
               Date of birth
             </Typography>
@@ -130,13 +163,13 @@ const NewAppointmentStep1 = () => {
                 control={control}
                 render={({ field }) => (
                   <DatePicker
-                    value={selectedDate}
+                    value={field.value ? dayjs(field.value) : null}
                     onChange={(newValue) => {
-                      setSelectedDate(newValue);
                       field.onChange(
                         newValue ? dayjs(newValue).format("YYYY-MM-DD") : ""
                       );
                     }}
+                    maxDate={dayjs()}
                     slotProps={{
                       field: {
                         //@ts-ignore
@@ -180,6 +213,14 @@ const NewAppointmentStep1 = () => {
             totalSteps={EnStepProgress.TOTAL_STEPS}
           />
         </Box>
+        <CommonSnackbar
+          open={snackbar.open}
+          onClose={() =>
+            setSnackbar({ open: false, message: "", severity: "success" })
+          }
+          message={snackbar.message}
+          severity={snackbar.severity}
+        />
       </Box>
     </Box>
   );

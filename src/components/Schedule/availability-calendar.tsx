@@ -225,6 +225,7 @@ export default function AvailabilityCalendar() {
   useEffect(() => {
     fetchInitialAvailability();
   }, []);
+  // Add this useEffect to reset form with new time and date
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -265,7 +266,6 @@ export default function AvailabilityCalendar() {
     const dayKey = dayjs(today).format("dddd").toLowerCase();
 
     const dayAvailability = transformedWeeklyAvailability[dayKey];
-
 
     // Get earliest availability time (from either phone or in-person)
     let earliestAvailabilityTime = null;
@@ -622,6 +622,7 @@ export default function AvailabilityCalendar() {
 
     setIsAvailabilityModalOpen(false);
   };
+   
 
   const handleSaveAvailability = async () => {
     setLoading(true);
@@ -639,12 +640,12 @@ export default function AvailabilityCalendar() {
               : null,
           in_person_start_time:
             weeklyAvailability[day].in_person &&
-              weeklyAvailability[day].in_person.from
+            weeklyAvailability[day].in_person.from
               ? weeklyAvailability[day].in_person.from
               : null,
           in_person_end_time:
             weeklyAvailability[day].in_person &&
-              weeklyAvailability[day].in_person.to
+            weeklyAvailability[day].in_person.to
               ? weeklyAvailability[day].in_person.to
               : null,
           break_start_time:
@@ -821,7 +822,7 @@ export default function AvailabilityCalendar() {
                     cursor: "pointer",
                   }}
                   flexGrow={1}
-                // onClick={() => setToday(dayjs(day.fullDate))}
+                  // onClick={() => setToday(dayjs(day.fullDate))}
                 >
                   <DayHeader
                     isToday={day.fullDate == dayjs(today).format("YYYY-MM-DD")}
@@ -926,7 +927,9 @@ export default function AvailabilityCalendar() {
                                         phone: booking.phone,
                                         title: booking.phone || "",
                                       },
-                                      date: dayjs(booking.date.split("T")[0]).toDate(), // Ensure date is a Date object
+                                      date: dayjs(
+                                        booking.date.split("T")[0]
+                                      ).toDate(), // Ensure date is a Date object
                                       startTime: booking.start_time.substring(
                                         0,
                                         5
@@ -981,8 +984,8 @@ export default function AvailabilityCalendar() {
                                       ? booking.status === "active"
                                         ? 1
                                         : booking.status === "cancelled"
-                                          ? 2
-                                          : 3
+                                        ? 2
+                                        : 3
                                       : 0
                                   }
                                 />
@@ -1013,13 +1016,15 @@ export default function AvailabilityCalendar() {
                                     booking.status === "active"
                                       ? "#22C55E"
                                       : booking.status === "cancelled"
-                                        ? "#FF4747"
-                                        : "#FACC15",
+                                      ? "#FF4747"
+                                      : "#FACC15",
                                 }}
                                 onClick={(e) => {
                                   if (
                                     !isPastDateTime(
-                                      dayjs(booking.date.split("T")[0]).toDate(),
+                                      dayjs(
+                                        booking.date.split("T")[0]
+                                      ).toDate(),
                                       booking.start_time
                                     )
                                   ) {

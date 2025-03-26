@@ -30,7 +30,7 @@ const GoogleSignInButton = () => {
         onClick={handleGoogleSignIn} // ✅ Use the wrapped function
         disabled={loading}
         sx={{
-          py: 1.5,
+          py: 1,
         }}
       >
         {loading ? (

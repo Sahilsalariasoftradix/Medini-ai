@@ -10,6 +10,7 @@ import {
   displayDays,
   getDaysData,
 } from "../../../utils/common";
+import {  useState } from "react";
 
 const SetAvailabilityForm = ({
   availabilityForm,
@@ -48,6 +49,8 @@ const SetAvailabilityForm = ({
   snackbar: any;
   handleSnackbarClose: any;
 }) => {
+  const [backupAvailability, setBackupAvailability] = useState({});
+  console.log(availabilityForm.getValues());
 
   return (
     <Box sx={{ mt: 2, display: "flex", width: "100%", gap: 0 }}>
@@ -85,13 +88,13 @@ const SetAvailabilityForm = ({
         {[
           {
             icon: availabilityIcons.phone,
-            name: "Phone Availability",
+            name: "Phone Only",
             bgColor: "grey.200",
             type: "phone",
           },
           {
             icon: availabilityIcons.in_person,
-            name: "In Person",
+            name: "In Person or Phone",
             bgColor: "primary.light4",
             type: "in_person",
           },
@@ -155,7 +158,6 @@ const SetAvailabilityForm = ({
                   variant="bodySmallMedium"
                 >
                   {(() => {
-                    
                     const slot =
                       itemIndex === 0
                         ? weeklyAvailability[dayMapping[day]]?.phone
@@ -213,14 +215,20 @@ const SetAvailabilityForm = ({
             name="available"
             checked={available}
             onChange={(e) => {
-              setAvailable(e.target.checked);
-              // Reset form values when switching to unavailable
-              if (!e.target.checked) {
+              const isChecked = e.target.checked;
+              setAvailable(isChecked);
+
+              if (!isChecked) {
+                // Save current values before resetting
+                setBackupAvailability(availabilityForm.getValues());
                 availabilityForm.reset({
                   phone: { from: "", to: "" },
                   in_person: { from: "", to: "" },
                   break: { from: "", to: "" },
                 });
+              } else {
+                // Restore previous values when toggled back on
+                availabilityForm.reset(backupAvailability);
               }
             }}
           />

@@ -5,6 +5,7 @@ import { z } from "zod";
 interface AppointmentCheckerContextType {
   step: number;
   appointmentData: AppointmentData;
+  phone: string;
   flowType: "new" | "existing" | null;
   hasAppointment: boolean | null;
   setStep: (step: number) => void;
@@ -16,6 +17,19 @@ interface AppointmentCheckerContextType {
   existingAppointmentData: ExistingAppointmentData | null;
   newAppointmentData: NewAppointmentData | null;
   setNewAppointmentData: (data: NewAppointmentData) => void;
+  setPhone: (phone: string) => void;
+  snackbar: {
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  };
+  setSnackbar: (snackbar: {
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }) => void;
+  existingPhone: string;
+  setExistingPhone: (phone: string) => void;
 }
 export const EditAppointmentSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -32,6 +46,7 @@ export const EditAppointmentSchema = z.object({
 
 export type EditAppointmentSchemaType = z.infer<typeof EditAppointmentSchema>;
 interface AppointmentData {
+  businessName: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -46,6 +61,7 @@ interface AppointmentData {
 }
 
 const defaultAppointmentData: AppointmentData = {
+  businessName: "",
   firstName: "",
   lastName: "",
   phone: "",
@@ -56,22 +72,26 @@ const defaultAppointmentData: AppointmentData = {
   appointmentTime: "",
   clinicLocation: "",
 };
-interface NewAppointmentData {
+export interface NewAppointmentData {
+  appointment_location: string;
+  day: string;
+  businessName: string;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   practitioner: string;
-  date:string;
-  time:string;
-  appointmentLength:string;
-  appointmentType:string;
+  date: string;
+  time: string;
+  appointmentLength: string;
+  appointmentType: string;
   dateOfBirth: string;
   bypass_key: string;
 }
-interface ExistingAppointmentData {
+export interface ExistingAppointmentData {
   phone: string;
   email: string;
+  appointment_location: string;
 }
 
 const AppointmentCheckerContext = createContext<
@@ -88,12 +108,20 @@ export const AppointmentCheckerProvider = ({
     defaultAppointmentData
   );
   const [flowType, setFlowType] = useState<"new" | "existing" | null>(null);
+
+  const [phone, setPhone] = useState<string>("");
+  const [existingPhone, setExistingPhone] = useState<string>("");
   const [hasAppointment, setHasAppointment] = useState<boolean | null>(null);
   const [existingAppointmentData, setExistingAppointmentData] =
     useState<ExistingAppointmentData | null>(null);
   const updateAppointmentData = (data: Partial<AppointmentData>) => {
     setAppointmentData((prev) => ({ ...prev, ...data }));
   };
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "warning" | "info",
+  });
   const [newAppointmentData, setNewAppointmentData] =
     useState<NewAppointmentData | null>(null);
 
@@ -119,6 +147,12 @@ export const AppointmentCheckerProvider = ({
         existingAppointmentData,
         newAppointmentData,
         setNewAppointmentData,
+        phone,
+        setPhone,
+        snackbar,
+        setSnackbar,
+        existingPhone,
+        setExistingPhone,
       }}
     >
       {children}

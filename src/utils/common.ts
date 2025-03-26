@@ -44,11 +44,11 @@ export const formatType = (type: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
 };
 
-export const displayDays=["", "M", "T", "W", "T", "F", "S", "S"]
-export const dayDataMapping=["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
-export const getDaysData=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+export const displayDays = ["", "M", "T", "W", "T", "F", "S", "S"];
+export const dayDataMapping = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+export const getDaysData = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
- // Update the day mapping to use unique keys
+// Update the day mapping to use unique keys
 export const dayMapping: { [key: string]: string } = {
   MO: "MON",
   TU: "TUE",
@@ -60,7 +60,10 @@ export const dayMapping: { [key: string]: string } = {
 };
 
 // Function to map availabilities array to weeklyAvailability structure
-export const mapAvailabilitiesToWeekly = (availabilities: any[], dayMapping: any) => {
+export const mapAvailabilitiesToWeekly = (
+  availabilities: any[],
+  dayMapping: any
+) => {
   const weeklyAvailability: any = {};
 
   availabilities.forEach((availability) => {
@@ -70,30 +73,43 @@ export const mapAvailabilitiesToWeekly = (availabilities: any[], dayMapping: any
     weeklyAvailability[dayMapping[dayName]] = {
       phone:
         availability.phone_start_time && availability.phone_end_time
-          ? { from: availability.phone_start_time, to: availability.phone_end_time }
+          ? {
+              from: availability.phone_start_time,
+              to: availability.phone_end_time,
+            }
           : null,
       in_person:
         availability.in_person_start_time && availability.in_person_end_time
-          ? { from: availability.in_person_start_time, to: availability.in_person_end_time }
+          ? {
+              from: availability.in_person_start_time,
+              to: availability.in_person_end_time,
+            }
           : null,
-      break:  availability.break_start_time && availability.break_end_time
-      ? { from: availability.break_start_time, to: availability.break_end_time }
-      : null, // No break data available
+      break:
+        availability.break_start_time && availability.break_end_time
+          ? {
+              from: availability.break_start_time,
+              to: availability.break_end_time,
+            }
+          : null, // No break data available
     };
   });
 
   return weeklyAvailability;
 };
 
-export function formatPhoneNumber(number:string) {
+export function formatPhoneNumber(number: string) {
   // Remove all non-numeric characters
-  const cleaned = number.replace(/\D/g, '');
+  const cleaned = number.replace(/\D/g, "");
 
   // Ensure it has the correct length (11 digits for US numbers)
   if (cleaned.length === 11) {
-      return `+1 (${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    return `+1 (${cleaned.slice(0, 3).split("1").join("")}) ${cleaned.slice(
+      3,
+      6
+    )}-${cleaned.slice(6)}`;
   } else {
-      return 'Invalid number';
+    return "Invalid number";
   }
 }
 
