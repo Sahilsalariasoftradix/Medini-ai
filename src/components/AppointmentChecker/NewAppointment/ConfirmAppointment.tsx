@@ -1,70 +1,25 @@
-import {
-  Box,
-  Typography,
-
-  Divider,
-
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
 import CommonButton from "../../common/CommonButton";
 import { format } from "date-fns";
 import { useState } from "react";
-import * as z from "zod";
-import { EditFormIcon } from "../../../utils/Icons";
+import { availabilityIcons, EditFormIcon } from "../../../utils/Icons";
 import StepProgress from "../StepProgress";
 import { EnStepProgress } from "../../../utils/enums";
-
-// Define validation schema for overall appointment data
-const appointmentSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().min(1, "Email is required").email("Invalid email"),
-  phone: z.string().min(1, "Phone is required"),
-  date: z.instanceof(Date, { message: "Date is required" }),
-  time: z.instanceof(Date, { message: "Time is required" }),
-  serviceType: z.string().min(1, "Service type is required"),
-  doctor: z.string().min(1, "Doctor is required"),
-  reason: z.string().min(1, "Reason is required"),
-  // Optional fields
-  address: z.string().optional(),
-  notes: z.string().optional(),
-});
 
 const ConfirmAppointment = () => {
   const { step, setStep, newAppointmentData } = useAppointmentChecker();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  console.log(error)
-
-  const validateAppointmentData = () => {
-    try {
-      appointmentSchema.parse(newAppointmentData);
-      return "";
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return error.errors[0].message;
-      }
-      return "Invalid appointment data";
-    }
-  };
 
   const handleConfirm = () => {
-    // Validate all data
-    const validationError = validateAppointmentData();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
     setSubmitting(true);
-    setError("");
 
     // Simulate API call
     setTimeout(() => {
       // Submit appointment data here to your API
       // Then navigate to the AppointmentBooked screen
       setSubmitting(false);
-    //   setStep(step + 1);
+      setStep(step + 1);
     }, 1500);
   };
 
@@ -73,9 +28,9 @@ const ConfirmAppointment = () => {
     ? format(new Date(newAppointmentData.date), "MMMM dd, yyyy")
     : "Not selected";
 
-//   const formattedTime = newAppointmentData?.time
-//     ? format(new Date(newAppointmentData.time), "h:mm a")
-//     : "Not selected";
+  //   const formattedTime = newAppointmentData?.time
+  //     ? format(new Date(newAppointmentData.time), "h:mm a")
+  //     : "Not selected";
 
   return (
     <Box>
@@ -94,7 +49,7 @@ const ConfirmAppointment = () => {
       <Box display={"flex"} mt={4} mb={2} justifyContent={"space-between"}>
         <Typography variant="bodyMediumExtraBold">Contact</Typography>
         <Box
-        //   onClick={() => setStep(step + 1)}
+          onClick={() => setStep(step - 2)}
           sx={{
             cursor: "pointer",
             display: "flex",
@@ -148,6 +103,26 @@ const ConfirmAppointment = () => {
       </Box>
 
       <Divider sx={{ my: 1 }} />
+      <Box display={"flex"} mt={4} mb={2} justifyContent={"space-between"}>
+        <Typography variant="bodyMediumExtraBold">Your Appointment</Typography>
+
+        <Box
+          onClick={() => setStep(step - 1)}
+          sx={{
+            cursor: "pointer",
+            display: "flex",
+            gap: 1,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <EditFormIcon />
+
+          <Typography variant="bodySmallSemiBold" color="primary.main">
+            Edit
+          </Typography>
+        </Box>
+      </Box>
       <Box display={"flex"} mt={2} justifyContent={"space-between"}>
         <Typography variant="bodySmallMedium" color="grey.600">
           Practitioner:
@@ -160,9 +135,7 @@ const ConfirmAppointment = () => {
         <Typography variant="bodySmallMedium" color="grey.600">
           Clinic:
         </Typography>
-        <Typography variant="bodySmallMedium">
-          { "None"}
-        </Typography>
+        <Typography variant="bodySmallMedium">{"None"}</Typography>
       </Box>
 
       <Box display={"flex"} mt={2} justifyContent={"space-between"}>
@@ -183,12 +156,25 @@ const ConfirmAppointment = () => {
         <Typography variant="bodySmallMedium" color="grey.600">
           Appointment Type:
         </Typography>
-        <Typography variant="bodySmallMedium">
-          {newAppointmentData?.appointmentType || "N/A"}
-        </Typography>
+        <Box
+          display="flex"
+          gap={1}
+          justifyContent="start"
+          alignItems={"center"}
+        >
+          <img
+            src={
+              newAppointmentData?.appointmentType === "phone"
+                ? availabilityIcons.phone
+                : availabilityIcons.in_person
+            }
+            alt=""
+          />
+          <Typography variant="bodySmallMedium">
+            {newAppointmentData?.appointmentType || "N/A"}
+          </Typography>
+        </Box>
       </Box>
-
-      {/* <Divider sx={{ my: 1 }} /> */}
 
       <Box display={"flex"} mt={2} justifyContent={"space-between"}>
         <Typography variant="bodySmallMedium" color="grey.600">
@@ -226,11 +212,11 @@ const ConfirmAppointment = () => {
         </CommonButton>
       </Box>
       <Box display="flex" justifyContent="center" mt={2}>
-          <StepProgress
-            currentStep={step - 1}
-            totalSteps={EnStepProgress.TOTAL_STEPS}
-          />
-        </Box>
+        <StepProgress
+          currentStep={step - 1}
+          totalSteps={EnStepProgress.TOTAL_STEPS}
+        />
+      </Box>
     </Box>
   );
 };

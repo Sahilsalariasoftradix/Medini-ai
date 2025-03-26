@@ -35,12 +35,13 @@ export type CompanyDetailsSchemaType = z.infer<typeof CompanyDetailsSchema>;
 
 export const ExistingAppointmentSchema = z.object({
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(1, "Phone number is required"),
+  // phone: z.string().min(1, "Phone number is required"),
+  appointment_location: z.string().min(1, "Appointment location is required"),
 });
 
-export type ExistingAppointmentSchemaType = z.infer<typeof ExistingAppointmentSchema>;
-
-
+export type ExistingAppointmentSchemaType = z.infer<
+  typeof ExistingAppointmentSchema
+>;
 
 export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -62,7 +63,7 @@ export const StepFormProvider: React.FC<{ children: React.ReactNode }> = ({
       in_person_appointments: false,
       max_appointment_time: null!,
     },
-  
+
     handleBookings: null,
   });
   const { user, loading, userDetails } = useAuth();

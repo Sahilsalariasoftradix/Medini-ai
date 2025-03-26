@@ -12,10 +12,10 @@ const AuthFooter = () => {
       justifyContent={"space-between"}
       alignItems={"center"}
     >
-      <CommonLink to={externalLinks.privacyPolicy} variant="bodyLargeSemiBold">
+      <CommonLink to={externalLinks.privacyPolicy} variant="bodyMediumSemiBold">
         {text.privacyPolicyLink}
       </CommonLink>
-      <Typography variant="bodyLargeSemiBold" sx={{ color: "#358FF7" }}>
+      <Typography variant="bodyMediumSemiBold" sx={{ color: "#358FF7" }}>
         {text.copyright} {new Date().getFullYear()}
       </Typography>
     </Box>

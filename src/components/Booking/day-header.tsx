@@ -1,7 +1,6 @@
 import { Box, Divider, Menu, MenuItem, Typography } from "@mui/material";
 import MoreVertIcon from "../../assets/icons/dots-vertical.svg";
 import edit from "../../assets/icons/edit-table.svg";
-import deleteIcn from "../../assets/icons/delete-tr.svg";
 import { overRideSvgColor } from "../../utils/filters";
 import CommonDialog from "../common/CommonDialog";
 import { Controller, useForm } from "react-hook-form";
@@ -285,7 +284,7 @@ export function DayHeader({
             Edit Availability
           </Typography>
         </MenuItem>
-        <MenuItem
+        {/* <MenuItem
           onClick={() => handleMenuItemClick(onClearDay)}
           sx={menuItemHoverStyle}
         >
@@ -293,7 +292,7 @@ export function DayHeader({
           <Typography variant="bodySmallSemiBold" color="grey.600">
             Clear Day
           </Typography>
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
     </Box>
   );

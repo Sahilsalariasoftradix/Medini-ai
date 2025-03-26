@@ -23,7 +23,7 @@ import {
 } from "../../../store/AppointmentCheckerContext";
 import dayjs from "dayjs";
 
-const clinicOptions = [
+export const clinicOptions = [
   { title: "Downtown Medical Center", value: "downtown_medical" },
   { title: "Sunrise Health Clinic", value: "sunrise_health" },
   { title: "Greenwood Family Care", value: "greenwood_family" },

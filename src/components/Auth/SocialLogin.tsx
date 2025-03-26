@@ -6,7 +6,7 @@ const isAppleDevice = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
 
 const SocialLogin = () => {
   return (
-    <Grid container spacing={2} my={2} justifyContent={"center"}>
+    <Grid container spacing={2} my={1} justifyContent={"center"}>
       <Grid size={{ xs: 6 }}>
         <GoogleSignInButton />
       </Grid>

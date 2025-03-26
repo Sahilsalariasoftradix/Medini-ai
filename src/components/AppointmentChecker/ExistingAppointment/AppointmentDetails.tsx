@@ -1,10 +1,14 @@
 import { Box, Typography } from "@mui/material";
 import { availabilityIcons, EditFormIcon } from "../../../utils/Icons";
 import CommonButton from "../../common/CommonButton";
-import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
+import {
+  ExistingAppointmentData,
+  useAppointmentChecker,
+} from "../../../store/AppointmentCheckerContext";
 
 const AppointmentDetails = () => {
-  const { setStep, step } = useAppointmentChecker();
+  const { setStep, step, setExistingAppointmentData, setExistingPhone } =
+    useAppointmentChecker();
   return (
     <Box>
       <Typography
@@ -114,7 +118,11 @@ const AppointmentDetails = () => {
             fullWidth
             variant="contained"
             color="primary"
-            onClick={() => setStep(step - 3)}
+            onClick={() => {
+              setStep(step - 3);
+              setExistingAppointmentData({} as ExistingAppointmentData);
+              setExistingPhone("");
+            }}
           />
         </Box>
       </Box>

@@ -147,7 +147,7 @@ const SignUpForm = () => {
           height={"100%"}
         >
           <CircularProgress />
-          <Typography variant="bodyLargeSemiBold" mt={2} color="grey.600">
+          <Typography variant="bodyLargeSemiBold" mt={1} color="grey.600">
             We are signing you in please do not close the tab
           </Typography>
         </Box>
@@ -180,12 +180,12 @@ const SignUpForm = () => {
             </Typography>
             <SocialLogin />
             <Divider>
-              <Typography variant="bodyLargeRegular" color="grey.600">
+              <Typography variant="bodyMediumRegular" color="grey.600">
                 {text.orText}
               </Typography>
             </Divider>
             {/* Input fields */}
-            <Box my={2}>
+            <Box my={1}>
               <Grid container spacing={2}>
                 <Grid size={6}>
                   <CommonTextField
@@ -204,21 +204,21 @@ const SignUpForm = () => {
                   />
                 </Grid>
               </Grid>
-              <Box mt={2}>
+              <Box mt={1}>
                 <MuiPhone
                   error={formSubmitted && (!phone || phone.length < 12)}
                   value={phone}
                   onChange={(phone) => setPhone(phone)}
                 />
               </Box>
-              <Box mt={2}>
+              <Box mt={1}>
                 <CommonTextField
                   placeholder="Email"
                   register={register("email")}
                   errorMessage={errors.email?.message}
                 />
               </Box>
-              <Box mt={2}>
+              <Box mt={1}>
                 <OutlinedInput
                   {...register("password")}
                   error={!!errors.password?.message}
@@ -248,7 +248,7 @@ const SignUpForm = () => {
                 </FormHelperText>
               </Box>
 
-              <Box mt={3}>
+              <Box mt={1}>
                 <Typography variant="bodyMediumMedium" color="grey.600">
                   {text.privacyPolicyText}{" "}
                   <CommonLink
@@ -270,7 +270,7 @@ const SignUpForm = () => {
               </Box>
             </Box>
 
-            <Box mt={3}>
+            <Box mt={1}>
               <CommonButton
                 loading={isLoading}
                 text={text.signUpButton}
@@ -279,7 +279,7 @@ const SignUpForm = () => {
               />
             </Box>
 
-            <Typography mt={4} align="center" variant="bodyLargeMedium">
+            <Typography mt={2} align="center" variant="bodyLargeMedium">
               {text.signupText}{" "}
               <CommonLink
                 to={routes.auth.signIn}
@@ -310,7 +310,7 @@ const SignUpForm = () => {
               <VerificationIcon />
             </Box>
             <Typography
-              mt={2}
+              mt={1}
               textAlign={"center"}
               variant="bodyXLargeExtraBold"
               sx={{ fontSize: "20px" }}

@@ -138,7 +138,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
 
                 slots={{ openPickerIcon: calenderIcon }}
                 label=""
-              // shouldDisableDate={shouldDisableDate}
+                // shouldDisableDate={shouldDisableDate}
               />
             )}
           />
@@ -153,6 +153,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
             control={control}
             render={({ field: { onChange, value } }) => (
               <TimePicker
+                minutesStep={15}
                 ampm={false} // 24-hour format
                 value={value ? dayjs(value, "HH:mm") : null} // Convert string to dayjs
                 onChange={(newValue) => {

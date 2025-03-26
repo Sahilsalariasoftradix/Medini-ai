@@ -6,6 +6,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { InPersonIcon } from "../../../utils/Icons";
 import dayjs from "dayjs";
 import { AvailabilityFormData } from "../../../utils/common";
+import { useEffect } from "react";
 
 const AvailabilityTimePicker = ({
   label,
@@ -18,6 +19,12 @@ const AvailabilityTimePicker = ({
   availabilityForm: UseFormReturn<AvailabilityFormData>;
   autoFocus?: boolean;
 }) => {
+  // Add this useEffect to reset form with new time and date
+  useEffect(() => {
+    availabilityForm.reset({
+      ...availabilityForm.getValues(),
+    });
+  }, [availabilityForm]);
   return (
     <Box>
       <Typography variant="bodyMediumExtraBold" color="grey.600" mb={1}>
@@ -33,6 +40,8 @@ const AvailabilityTimePicker = ({
             <TimePicker
               ampm={false}
               autoFocus={autoFocus}
+              // minutesStep={15}
+
               //@ts-ignore
               value={field.value ? dayjs(field.value, "HH:mm") : null}
               onChange={(newValue) => {
