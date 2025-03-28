@@ -183,7 +183,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               error={!!errors.length}
               helperText={errors.length?.message}
               disabled={isEditing}
-              value={isEditing ? "15" : "15"}
+              value={field.value}
             >
               {Object.values(EnBookingDuration).map((duration) => (
                 <MenuItem value={duration}>{duration} minutes</MenuItem>

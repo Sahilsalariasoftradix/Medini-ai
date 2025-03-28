@@ -3,7 +3,7 @@ import { availabilityIcons } from "../../utils/Icons";
 import { EnBookingType } from "../../utils/enums";
 
 interface BookingTypeIconProps {
-  bookingType: keyof typeof availabilityIcons | "";
+  bookingType: EnBookingType | "break" | "";
   sx?: SxProps;
 }
 
