@@ -34,7 +34,7 @@ const BpIcon = styled("span")<{
     boxShadow: "none",
     background: "rgba(42, 81, 105, 0.5)",
     ...theme.applyStyles?.("dark", {
-      background: "rgba(36, 49, 59, 0.5)",
+      background: "rgba(57,75,89,.5)",
     }),
   },
   ...theme.applyStyles?.("dark", {
@@ -63,7 +63,7 @@ const BpCheckedIcon = styled(BpIcon)<{
     content: '""',
   },
   "input:hover ~ &": {
-    backgroundColor: "#358FF7",
+    backgroundColor: "#106ba3",
   },
 }));
 
@@ -111,7 +111,7 @@ export function RoundCheckbox({
       })}
       label={
         <Typography
-          variant={activeLabel ? "bodyMediumExtraBold" : 'bodyMediumMedium'}
+          variant={activeLabel ? "bodyMediumExtraBold" : 'bodyMediumMedium'} 
           sx={{ mb: { lg: "0px", md: "0px", sm: "5px", xs: "5px" } }}
         >
           {label}

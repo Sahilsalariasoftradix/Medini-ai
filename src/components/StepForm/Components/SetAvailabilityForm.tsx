@@ -162,8 +162,8 @@ const SetAvailabilityForm = ({
                       itemIndex === 0
                         ? weeklyAvailability[dayMapping[day]]?.phone
                         : itemIndex === 1
-                          ? weeklyAvailability[dayMapping[day]]?.in_person
-                          : weeklyAvailability[dayMapping[day]]?.break;
+                        ? weeklyAvailability[dayMapping[day]]?.in_person
+                        : weeklyAvailability[dayMapping[day]]?.break;
 
                     return formatTimeSlot(slot) === "Unavailable" ? (
                       <Box
@@ -251,8 +251,8 @@ const SetAvailabilityForm = ({
                     {key === "in_person"
                       ? "In Person"
                       : key === "phone"
-                        ? "Calls Only"
-                        : "Break"}
+                      ? "Calls Only"
+                      : "Break"}
                   </Typography>
                 </Box>
                 <Box display="flex" mt={1} gap={3}>

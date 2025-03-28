@@ -188,6 +188,9 @@ export default function AvailabilityCalendar() {
   const [clearAppointment, setClearAppointment] = useState(false);
   const [valuesChanged, setValuesChanged] = useState(false);
   const [weeklyAvailability, setWeeklyAvailability] = useState<any>({});
+  const [isCancelAppointmentLoading, setIsCancelAppointmentLoading] =
+    useState(false);
+  const [loadingSubmission, setLoadingSubmission] = useState(false);
   const [transformedWeeklyAvailability, setTransformedWeeklyAvailability] =
     useState(
       mapAvailabilitiesToWeekly(availabilities, {
@@ -243,7 +246,6 @@ export default function AvailabilityCalendar() {
 
   const fetchBookings = useCallback(async () => {
     try {
-      setLoading(true);
       const response = await getBookings({
         user_id: userDetails?.user_id,
         date: dayjs(today).format("YYYY-MM-DD"),
@@ -253,8 +255,6 @@ export default function AvailabilityCalendar() {
     } catch (error) {
       console.error("Error fetching bookings:", error);
       setBookings([]);
-    } finally {
-      setLoading(false);
     }
   }, [today]);
 
@@ -356,7 +356,7 @@ export default function AvailabilityCalendar() {
   };
 
   const onCancelSubmit = async () => {
-    setLoading(true);
+    setIsCancelAppointmentLoading(true);
     try {
       if (!appointmentId) return;
 
@@ -385,12 +385,12 @@ export default function AvailabilityCalendar() {
         severity: "error",
       });
     } finally {
-      setLoading(false);
+      setIsCancelAppointmentLoading(false);
     }
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
-    setLoading(true);
+    setLoadingSubmission(true);
     try {
       const startTimeFormatted = dayjs(data.startTime, "HH:mm");
       const endTimeFormatted = startTimeFormatted
@@ -438,7 +438,7 @@ export default function AvailabilityCalendar() {
       });
       console.error("Failed to create appointment:", error);
     } finally {
-      setLoading(false);
+      setLoadingSubmission(false);
     }
   };
 
@@ -632,8 +632,6 @@ export default function AvailabilityCalendar() {
     setTransformedWeeklyAvailability(updatedAvailability);
 
     setIsAvailabilityModalOpen(false);
-    
-   
   };
 
   const handleSaveAvailability = async () => {
@@ -1280,7 +1278,6 @@ export default function AvailabilityCalendar() {
             </Box>
 
             <SetAvailabilityForm
-             
               availabilityForm={availabilityForm}
               handleAvailabilitySubmit={availabilityForm.handleSubmit(
                 handleAvailabilityModalSubmit
@@ -1414,8 +1411,8 @@ export default function AvailabilityCalendar() {
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
-        loading={loading}
-        disabled={loading}
+        loading={loadingSubmission}
+        disabled={loadingSubmission}
       >
         <SlotBookingForm
           selectedTime={""}
@@ -1468,8 +1465,8 @@ export default function AvailabilityCalendar() {
         confirmText="Confirm"
         cancelText="Back"
         onConfirm={handleCancelSubmit(onCancelSubmit)}
-        loading={loading}
-        disabled={loading}
+        loading={isCancelAppointmentLoading}
+        disabled={isCancelAppointmentLoading}
       >
         <Divider sx={{ my: 2 }} />
         <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
