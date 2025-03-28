@@ -1,5 +1,6 @@
 import dayjs, { Dayjs } from "dayjs";
 import { Dispatch, SetStateAction } from "react";
+import { EnBookingType } from "./enums";
 
 export interface LoginRequest {
   email: string;
@@ -208,8 +209,10 @@ export interface IBooking {
   last_name: string;
   email: string;
   phone: string;
+  booking_type: EnBookingType.IN_PERSON | EnBookingType.PHONE;
 }
 export interface IUpdateBooking {
+  booking_type: EnBookingType.IN_PERSON | EnBookingType.PHONE;
   user_id: number;
   booking_id: number;
   date: string;
@@ -221,7 +224,9 @@ export interface IUpdateBooking {
   email: string;
   phone: string;
 }
-
+export interface IBookingIds {
+  booking_ids: number[];
+}
 export interface IBookingResponse {
   booking_id: number;
   first_name: string;
@@ -234,6 +239,7 @@ export interface IBookingResponse {
   details: string;
   user_id: number;
   status: string;
+  booking_type: EnBookingType.IN_PERSON | EnBookingType.PHONE;
 }
 export interface IAppointment {
   id: string;

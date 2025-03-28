@@ -53,11 +53,13 @@ export enum EnBookings {
   Cancel = 2,
   Unconfirmed = 3,
   Edit = 4,
-  Booked = 5
+  Booked = 5,
+  AddAppointment = 6,
+  ClearAppointment = 7,
 }
 export enum EStaticID {
   ID = 1,
-  ID2 = 2
+  ID2 = 2,
 }
 export enum EnCancelAppointment {
   DoctorSick = "Doctor is sick",
@@ -69,10 +71,10 @@ export enum EnCancelAppointment {
   ClinicClosed = "Clinic is closed",
   NoShow = "Patient did not show up",
 }
-export enum  EnAvailability{
-  WEEK= 'week',
-  MONTH='month',
-  DAY='day'
+export enum EnAvailability {
+  WEEK = "week",
+  MONTH = "month",
+  DAY = "day",
 }
 export enum EnSocialLogin {
   GOOGLE = "google",
@@ -98,4 +100,14 @@ export enum EnUserCreationStatus {
 }
 export enum EnStepProgress {
   TOTAL_STEPS = 4,
+}
+export enum EnBookingType {
+  IN_PERSON = "in_person",
+  PHONE = "phone",
+}
+export enum EnBookingDuration {
+  DURATION_15 = "15",
+  DURATION_30 = "30",
+  DURATION_45 = "45",
+  DURATION_60 = "60",
 }
