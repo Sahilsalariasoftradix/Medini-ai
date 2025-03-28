@@ -19,7 +19,7 @@ import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
-import { EnAvailability, EnBookings } from "../../utils/enums";
+import { EnAvailability, EnBookings, EnBookingType } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonTextField from "../common/CommonTextField";
 import DatePicker from "react-datepicker";
@@ -36,7 +36,12 @@ import CommonSnackbar from "../common/CommonSnackbar";
 import { AlertProps } from "@mui/material";
 import SlotBookingForm from "./Form/SlotBookingForm";
 import { IAppointment, IBookingResponse, IFilm } from "../../utils/Interfaces";
-import { cancelBooking, createBooking, updateBooking } from "../../api/userApi";
+import {
+  cancelBooking,
+  clearBooking,
+  createBooking,
+  updateBooking,
+} from "../../api/userApi";
 import { getBookings } from "../../api/userApi";
 import { DaySchedule } from "../../types/calendar";
 import { isPastDateTime, mapApiStatusToEnum } from "../../utils/common";
@@ -88,7 +93,7 @@ const appointmentSchema = z.object({
   date: z.any(),
   startTime: z.string(),
   length: z.string().min(1, "Appointment length is required"),
-  appointmentType: z.enum(["inPerson", "phoneCall"], {
+  booking_type: z.enum([EnBookingType.IN_PERSON, EnBookingType.PHONE], {
     errorMap: () => ({ message: "Please select an appointment type" }),
   }),
   reasonForCall: z.string().min(1, "Reason for appointment is required"),
@@ -186,6 +191,7 @@ const TimeSlot = ({
   const [selectedStatus, setSelectedStatus] = useState<EnBookings>(status);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [clearAppointment, setClearAppointment] = useState(false);
   const [selectedDate] = useState<Dayjs>(dayjs(date));
 
   // Search contact inputs
@@ -195,6 +201,7 @@ const TimeSlot = ({
     input: false,
     data: false,
     options: false,
+    clearAppointment: false,
   });
 
   const {
@@ -209,8 +216,8 @@ const TimeSlot = ({
       date: selectedDate,
       startTime: time,
       length: "15",
-      appointmentType: "inPerson",
       reasonForCall: "",
+      booking_type: EnBookingType.PHONE,
     },
   });
 
@@ -243,8 +250,7 @@ const TimeSlot = ({
     const currentBooking = bookings.find(
       (booking) =>
         booking.start_time.substring(0, 5) === time &&
-        booking.date.split("T")[0] ===
-          dayjs(date).format("YYYY-MM-DD")
+        booking.date.split("T")[0] === dayjs(date).format("YYYY-MM-DD")
     );
 
     if (currentBooking) {
@@ -315,9 +321,9 @@ const TimeSlot = ({
     } else {
       setAnchorEl(event.currentTarget);
     }
-    if (selectedStatus === EnBookings.Cancel) {
-      setOpenDialog(true);
-    }
+    // if (selectedStatus === EnBookings.Cancel) {
+    //   setOpenDialog(true);
+    // }
   };
 
   const handleSnackbarClose = () => {
@@ -349,9 +355,12 @@ const TimeSlot = ({
             length: dayjs(currentBooking.end_time, "HH:mm:ss")
               .diff(dayjs(currentBooking.start_time, "HH:mm:ss"), "minute")
               .toString(),
-            appointmentType: "inPerson",
+            booking_type: currentBooking.booking_type,
             reasonForCall: currentBooking.details,
           });
+
+          // console.log("Booking type being set:", currentBooking.booking_type);
+          // console.log("Available booking types:", EnBookingType.IN_PERSON, EnBookingType.PHONE);
         }
         setSelectedStatus(EnBookings.Active);
         setOpenDialog(true);
@@ -370,6 +379,14 @@ const TimeSlot = ({
       if (newStatus === EnBookings.Cancel) {
         setOpenCancelDialog(true);
         setStatusToUpdate(newStatus);
+        return;
+      }
+      if (newStatus === EnBookings.AddAppointment) {
+        setOpenDialog(true);
+        return;
+      }
+      if (newStatus === EnBookings.ClearAppointment) {
+        setClearAppointment(true);
         return;
       }
 
@@ -418,6 +435,7 @@ const TimeSlot = ({
             .add(15, "minute")
             .format("HH:mm"),
           details: data.reasonForCall,
+          booking_type: data.booking_type,
           first_name: data.contact.firstName,
           last_name: data.contact.lastName,
           email: data.contact.email,
@@ -434,6 +452,7 @@ const TimeSlot = ({
           last_name: data.contact.lastName,
           email: data.contact.email,
           phone: data.contact.phone,
+          booking_type: data.booking_type,
         });
       }
 
@@ -506,6 +525,18 @@ const TimeSlot = ({
       startTime: time,
     });
   }, [time, date, reset]);
+
+  const handleClearAppointment = async (appointmentId: string) => {
+    setLoading({ ...loading, clearAppointment: true });
+    try {
+      await clearBooking({ booking_ids: [Number(appointmentId)] });
+      fetchBookings();
+    } catch (error) {
+      console.error("Failed to clear appointment:", error);
+    } finally {
+      setLoading({ ...loading, clearAppointment: false });
+    }
+  };
 
   return (
     <>
@@ -620,6 +651,33 @@ const TimeSlot = ({
         </Box>
       </CommonDialog>
 
+      {/* Clear Availability Dialog */}
+      <CommonDialog
+        open={clearAppointment}
+        onClose={() => setClearAppointment(false)}
+        title="Clear Appointment"
+        confirmText="Clear"
+        cancelText="Cancel"
+        onConfirm={() => handleClearAppointment(appointmentId!)}
+        confirmButtonType="error"
+        loading={loading.clearAppointment}
+        disabled={loading.clearAppointment}
+      >
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+            Are you sure you want to clear this appointment?
+          </Typography>
+          <Typography
+            variant="bodySmallSemiBold"
+            color="grey.500"
+            sx={{ mt: 1 }}
+          >
+            This action cannot be undone.
+          </Typography>
+        </Box>
+      </CommonDialog>
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -631,7 +689,7 @@ const TimeSlot = ({
             border: "1px solid #718096",
             p: 0,
             borderTopLeftRadius: 0,
-            display: selectedStatus === EnBookings.Cancel ? "none" : "block",
+            // display: selectedStatus === EnBookings.Cancel ? "none" : "block",
           },
         }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
@@ -644,6 +702,8 @@ const TimeSlot = ({
           [
             ...(selectedStatus === EnBookings.Active && !isPastDate
               ? [EnBookings.Edit, EnBookings.Cancel]
+              : selectedStatus === EnBookings.Cancel && !isPastDate
+              ? [EnBookings.AddAppointment, EnBookings.ClearAppointment]
               : isPastDate
               ? [] // Empty array for past dates - no options available
               : [
@@ -1007,8 +1067,7 @@ export default function AvailabilityCalendar() {
                                                   0,
                                                   5
                                                 ) === slot.time &&
-                                                 booking.date.split("T")[0]
-                                                   ===
+                                                booking.date.split("T")[0] ===
                                                   dayjs(startDate)
                                                     .add(dayIndex, "day")
                                                     .format("YYYY-MM-DD")

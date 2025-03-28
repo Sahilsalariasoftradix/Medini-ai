@@ -20,6 +20,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { datePickerIcons } from "../../../utils/Icons";
 import { useAuth } from "../../../store/AuthContext";
 import dayjs from "dayjs";
+import { EnBookingDuration, EnBookingType } from "../../../utils/enums";
 
 export const calenderIcon = () => <img src={datePickerIcons.calendar} alt="" />;
 const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
@@ -43,7 +44,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
   };
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [control._formValues?.contact]);
 
   useEffect(() => {
     // Get the current contact value from the form
@@ -184,10 +185,9 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               disabled={isEditing}
               value={isEditing ? "15" : "15"}
             >
-              <MenuItem value="15">15 minutes</MenuItem>
-              {/* <MenuItem value="30">30 minutes</MenuItem>
-              <MenuItem value="45">45 minutes</MenuItem>
-              <MenuItem value="60">60 minutes</MenuItem> */}
+              {Object.values(EnBookingDuration).map((duration) => (
+                <MenuItem value={duration}>{duration} minutes</MenuItem>
+              ))}
             </CommonTextField>
           )}
         />
@@ -198,18 +198,18 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
           <img src={questionMark} alt="" />
         </Box>
         <Controller
-          name="appointmentType"
+          name="booking_type"
           control={control}
           render={({ field }) => (
             <CommonTextField
               {...field}
               select
               fullWidth
-              error={!!errors.appointmentType}
-              helperText={errors.appointmentType?.message}
+              error={!!errors.booking_type}
+              helperText={errors.booking_type?.message}
             >
-              <MenuItem value="inPerson">In Person</MenuItem>
-              <MenuItem value="phoneCall">Phone Call</MenuItem>
+              <MenuItem value={EnBookingType.IN_PERSON}>In Person</MenuItem>
+              <MenuItem value={EnBookingType.PHONE}>Phone Call</MenuItem>
             </CommonTextField>
           )}
         />

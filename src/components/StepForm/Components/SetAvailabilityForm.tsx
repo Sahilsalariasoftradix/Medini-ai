@@ -8,9 +8,10 @@ import CommonSnackbar from "../../common/CommonSnackbar";
 import {
   dayDataMapping,
   displayDays,
+  formatDays,
   getDaysData,
 } from "../../../utils/common";
-import {  useState } from "react";
+import { useState } from "react";
 
 const SetAvailabilityForm = ({
   availabilityForm,
@@ -50,7 +51,6 @@ const SetAvailabilityForm = ({
   handleSnackbarClose: any;
 }) => {
   const [backupAvailability, setBackupAvailability] = useState({});
-  console.log(availabilityForm.getValues());
 
   return (
     <Box sx={{ mt: 2, display: "flex", width: "100%", gap: 0 }}>
@@ -162,8 +162,8 @@ const SetAvailabilityForm = ({
                       itemIndex === 0
                         ? weeklyAvailability[dayMapping[day]]?.phone
                         : itemIndex === 1
-                        ? weeklyAvailability[dayMapping[day]]?.in_person
-                        : weeklyAvailability[dayMapping[day]]?.break;
+                          ? weeklyAvailability[dayMapping[day]]?.in_person
+                          : weeklyAvailability[dayMapping[day]]?.break;
 
                     return formatTimeSlot(slot) === "Unavailable" ? (
                       <Box
@@ -193,7 +193,7 @@ const SetAvailabilityForm = ({
       <CommonDialog
         open={isAvailabilityModalOpen}
         onClose={() => setIsAvailabilityModalOpen(false)}
-        title={`Add Availability `}
+        title={`Add Availability for ${formatDays(checkedDays)[0] ?? ""} `}
         cancelText="Cancel"
         confirmText={available ? "Mark Available" : "Mark Unavailable"}
         onConfirm={availabilityForm.handleSubmit(handleAvailabilitySubmit)}
@@ -251,8 +251,8 @@ const SetAvailabilityForm = ({
                     {key === "in_person"
                       ? "In Person"
                       : key === "phone"
-                      ? "Calls Only"
-                      : "Break"}
+                        ? "Calls Only"
+                        : "Break"}
                   </Typography>
                 </Box>
                 <Box display="flex" mt={1} gap={3}>
@@ -309,7 +309,13 @@ const SetAvailabilityForm = ({
                 }
                 label={getDaysData[index]}
                 checked={checkedDays.includes(day)}
-                onChange={() => handleCheckboxChange(day)}
+                onChange={() => {
+                  if (day === checkedDays[0] && checkedDays.includes(day)) {
+                    return;
+                  }
+                  handleCheckboxChange(day);
+                }}
+                disabled={day === checkedDays[0] && checkedDays.includes(day)}
               />
             ))}
           </Box>

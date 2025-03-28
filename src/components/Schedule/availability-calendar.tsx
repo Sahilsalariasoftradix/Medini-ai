@@ -12,7 +12,7 @@ import {
   AlertProps,
 } from "@mui/material";
 import { DayHeader } from "./day-header";
-import edit from "../../assets/icons/edit-table.svg";
+// import edit from "../../assets/icons/edit-table.svg";
 import Grid from "@mui/material/Grid2";
 import { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
@@ -20,7 +20,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
-import { EnAvailability, EnBookings } from "../../utils/enums";
+import { EnAvailability, EnBookings, EnBookingType } from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -30,9 +30,10 @@ import {
   getBookings,
   updateBooking,
   postAvailabilityGeneral,
+  clearBooking,
 } from "../../api/userApi";
 import { BookingTypeIcon } from "./booking-type-icon";
-import { otherIcons } from "../../utils/Icons";
+// import { otherIcons } from "../../utils/Icons";
 import { z } from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,9 +50,10 @@ import CommonTextField from "../common/CommonTextField";
 import CommonSnackbar from "../common/CommonSnackbar";
 import { StatusIcon } from "../Booking/status-icon";
 import {
+  formatTimeSlot,
   isPastDateTime,
   mapAvailabilitiesToWeekly,
-  menuItemHoverStyle,
+  // menuItemHoverStyle,
 } from "../../utils/common";
 import SetAvailabilityForm from "../StepForm/Components/SetAvailabilityForm";
 import CommonButton from "../common/CommonButton";
@@ -72,7 +74,7 @@ const appointmentSchema = z.object({
   date: z.any(),
   startTime: z.string(),
   length: z.string().min(1, "Appointment length is required"),
-  appointmentType: z.enum(["inPerson", "phoneCall"], {
+  booking_type: z.enum([EnBookingType.IN_PERSON, EnBookingType.PHONE], {
     errorMap: () => ({ message: "Please select an appointment type" }),
   }),
   reasonForCall: z.string().min(1, "Reason for appointment is required"),
@@ -131,8 +133,8 @@ export default function AvailabilityCalendar() {
   } = useAvailability();
   const [startDate, endDate] = dateRange;
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const [anchorEl1, setAnchorEl1] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl1);
+  // const [anchorEl1, setAnchorEl1] = useState<null | HTMLElement>(null);
+  // const open = Boolean(anchorEl1);
   const [bookings, setBookings] = useState<IBookingResponse[]>([]);
   const [today, setToday] = useState(dayjs());
   const [changed, setChanged] = useState(false);
@@ -140,6 +142,7 @@ export default function AvailabilityCalendar() {
   const [loading, setLoading] = useState(false);
   const [openContactSearch, setOpenContactSearch] = useState(false);
   const [options] = useState<readonly any[]>([]);
+  const [loadingClearAppointment, setLoadingClearAppointment] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -149,9 +152,12 @@ export default function AvailabilityCalendar() {
     message: "",
     severity: "error" as AlertProps["severity"],
   });
-  const handleClose = () => {
-    setAnchorEl1(null);
-  };
+  const [appointmentStatus, setAppointmentStatus] = useState<string | null>(
+    null
+  );
+  // const handleClose = () => {
+  //   setAnchorEl1(null);
+  // };
 
   const {
     control,
@@ -176,10 +182,11 @@ export default function AvailabilityCalendar() {
   // Add these new states for availability form
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
   const [available, setAvailable] = useState(true);
-  const [openEditAvailability, setOpenEditAvailability] = useState(false);
+  const [openEditAvailability, setOpenEditAvailability] = useState(true);
   const [repeat, setRepeat] = useState(false);
   const [checkedDays, setCheckedDays] = useState<string[]>([]);
-
+  const [clearAppointment, setClearAppointment] = useState(false);
+  const [valuesChanged, setValuesChanged] = useState(false);
   const [weeklyAvailability, setWeeklyAvailability] = useState<any>({});
   const [transformedWeeklyAvailability, setTransformedWeeklyAvailability] =
     useState(
@@ -403,6 +410,7 @@ export default function AvailabilityCalendar() {
           last_name: data.contact.lastName,
           email: data.contact.email,
           phone: data.contact.phone,
+          booking_type: data.booking_type,
         });
       } else {
         await createBooking({
@@ -415,6 +423,7 @@ export default function AvailabilityCalendar() {
           last_name: data.contact.lastName,
           email: data.contact.email,
           phone: data.contact.phone,
+          booking_type: data.booking_type,
         });
       }
 
@@ -615,14 +624,17 @@ export default function AvailabilityCalendar() {
       const dayKey = dayMapping[day].toLowerCase();
       updatedAvailability[dayKey] = newAvailability;
     });
-
+    if (updatedAvailability) {
+      setValuesChanged(true);
+    }
     // Update both states to ensure consistency
     setWeeklyAvailability(updatedAvailability);
     setTransformedWeeklyAvailability(updatedAvailability);
 
     setIsAvailabilityModalOpen(false);
-  };
+    
    
+  };
 
   const handleSaveAvailability = async () => {
     setLoading(true);
@@ -704,26 +716,27 @@ export default function AvailabilityCalendar() {
       });
     } finally {
       setLoading(false);
+      setValuesChanged(false);
     }
   };
 
-  const formatTimeSlot = (slot: any) => {
-    if (!slot || !slot.from || !slot.to) return "Unavailable";
-
-    const formatTime = (time: string) => {
-      // Convert only if time is in HH:mm:ss format
-      return time.match(/^\d{2}:\d{2}:\d{2}$/) ? time.slice(0, -3) : time;
-    };
-
-    return `${formatTime(slot.from)} - ${formatTime(slot.to)}`;
+  // const handleEditAvailabilityClick = (
+  //   event: React.MouseEvent<HTMLButtonElement>
+  // ) => {
+  //   setAnchorEl1(event.currentTarget);
+  // };
+  const handleClearAppointment = async (appointmentId: string) => {
+    setLoadingClearAppointment(true);
+    try {
+      await clearBooking({ booking_ids: [Number(appointmentId)] });
+      fetchBookings();
+    } catch (error) {
+      console.error("Failed to clear appointment:", error);
+    } finally {
+      setLoadingClearAppointment(false);
+      setClearAppointment(false);
+    }
   };
-
-  const handleEditAvailabilityClick = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setAnchorEl1(event.currentTarget);
-  };
-
   return (
     <Box display={"grid"} gridTemplateColumns={"2fr 1fr"} gap={2}>
       <Box>
@@ -845,7 +858,6 @@ export default function AvailabilityCalendar() {
                 {!loading ? (
                   getSlots().map((hour, index) => {
                     const booking = findBookingForTimeSlot(hour.time);
-
                     return (
                       <Box
                         key={index}
@@ -918,6 +930,7 @@ export default function AvailabilityCalendar() {
                                     setAppointmentId(
                                       booking.booking_id.toString()
                                     );
+                                    setAppointmentStatus("active");
 
                                     reset({
                                       contact: {
@@ -943,7 +956,7 @@ export default function AvailabilityCalendar() {
                                           "minute"
                                         )
                                         .toString(),
-                                      appointmentType: "inPerson",
+                                      booking_type: EnBookingType.IN_PERSON,
                                       reasonForCall: booking.details,
                                     });
                                   } else {
@@ -958,6 +971,7 @@ export default function AvailabilityCalendar() {
                                     } else {
                                       setOpenDialog(true);
                                       setAppointmentId(null);
+                                      setAppointmentStatus(null);
 
                                       // Ensure we're setting the correct date (today) and time (from hour)
                                       reset({
@@ -971,7 +985,7 @@ export default function AvailabilityCalendar() {
                                         date: dayjs(today).toDate(), // Ensure date is a Date object
                                         startTime: hour.time,
                                         length: "15",
-                                        appointmentType: "inPerson",
+                                        booking_type: EnBookingType.IN_PERSON,
                                         reasonForCall: "",
                                       });
                                     }
@@ -991,7 +1005,9 @@ export default function AvailabilityCalendar() {
                                 />
                               </Box>
                               <BookingTypeIcon
-                                bookingType={booking ? "phone" : ""}
+                                bookingType={
+                                  booking ? booking.booking_type : ""
+                                }
                               />
                             </>
                           )}
@@ -1033,6 +1049,7 @@ export default function AvailabilityCalendar() {
                                       setAppointmentId(
                                         booking.booking_id.toString()
                                       );
+                                      setAppointmentStatus("active");
                                       reset({
                                         contact: {
                                           firstName: booking.first_name,
@@ -1058,7 +1075,7 @@ export default function AvailabilityCalendar() {
                                             "minute"
                                           )
                                           .toString(),
-                                        appointmentType: "inPerson",
+                                        booking_type: EnBookingType.IN_PERSON,
                                         reasonForCall: booking.details,
                                       });
                                     }
@@ -1066,22 +1083,16 @@ export default function AvailabilityCalendar() {
                                     return;
                                   }
                                   if (booking?.status === "cancelled") {
-                                    if (
-                                      isPastDateTime(
-                                        dayjs(today).toDate(),
-                                        hour.time
-                                      )
-                                    ) {
-                                      setOpenDialog(false);
-                                    } else {
-                                      setOpenDialog(true);
-                                    }
-                                    setAppointmentId(null);
+                                    setMenuAnchorEl(e.currentTarget);
+                                    setAppointmentId(
+                                      booking.booking_id.toString()
+                                    );
+                                    setAppointmentStatus("cancelled");
                                     reset({
                                       date: dayjs(today),
                                       startTime: hour.time,
                                       length: "15",
-                                      appointmentType: "inPerson",
+                                      booking_type: EnBookingType.IN_PERSON,
                                       reasonForCall: "",
                                     });
                                   }
@@ -1137,11 +1148,12 @@ export default function AvailabilityCalendar() {
                                   setOpenDialog(true);
                                 }
                                 setAppointmentId(null);
+                                setAppointmentStatus(null);
                                 reset({
                                   date: dayjs(today),
                                   startTime: hour.time,
                                   length: "15",
-                                  appointmentType: "inPerson",
+                                  booking_type: EnBookingType.IN_PERSON,
                                   reasonForCall: "",
                                 });
                               }}
@@ -1207,7 +1219,11 @@ export default function AvailabilityCalendar() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}></Box>
           </Box>
         </Paper>
-        <Paper elevation={1} sx={{ p: 2 }}>
+        <Paper
+          elevation={1}
+          sx={{ p: 2 }}
+          onClick={() => setOpenEditAvailability(true)}
+        >
           <Box>
             <Box
               sx={{
@@ -1223,13 +1239,13 @@ export default function AvailabilityCalendar() {
               >
                 {openEditAvailability ? "Edit Availability" : " Availability"}
               </Typography>
-              <IconButton
+              {/* <IconButton
                 onClick={handleEditAvailabilityClick}
                 sx={{ border: "1px solid #E2E8F0", borderRadius: "12px" }}
               >
                 <img src={otherIcons.dotsVertical} alt="dotsVertical" />
-              </IconButton>
-              <Menu
+              </IconButton> */}
+              {/* <Menu
                 id="day-menu"
                 anchorEl={anchorEl1}
                 open={open}
@@ -1260,10 +1276,11 @@ export default function AvailabilityCalendar() {
                     Edit Availability
                   </Typography>
                 </MenuItem>
-              </Menu>
+              </Menu> */}
             </Box>
 
             <SetAvailabilityForm
+             
               availabilityForm={availabilityForm}
               handleAvailabilitySubmit={availabilityForm.handleSubmit(
                 handleAvailabilityModalSubmit
@@ -1284,7 +1301,8 @@ export default function AvailabilityCalendar() {
               snackbar={snackbar}
               handleSnackbarClose={handleSnackbarClose}
             />
-            {openEditAvailability && (
+
+            {valuesChanged && (
               <Box
                 sx={{
                   display: "flex",
@@ -1296,7 +1314,8 @@ export default function AvailabilityCalendar() {
                 <CommonButton
                   variant="outlined"
                   onClick={() => {
-                    setOpenEditAvailability(false);
+                    // setOpenEditAvailability(false);
+                    setValuesChanged(false);
                     setCheckedDays([]);
                     setRepeat(false);
                     setAvailable(true);
@@ -1412,7 +1431,32 @@ export default function AvailabilityCalendar() {
           isEditing={isEditing}
         />
       </CommonDialog>
-
+      {/* Clear Availability Dialog */}
+      <CommonDialog
+        open={clearAppointment}
+        onClose={() => setClearAppointment(false)}
+        title="Clear Appointment"
+        confirmText="Clear"
+        cancelText="Cancel"
+        onConfirm={() => handleClearAppointment(appointmentId!)}
+        confirmButtonType="error"
+        loading={loadingClearAppointment}
+        disabled={loadingClearAppointment}
+      >
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="bodyMediumExtraBold" color="grey.600">
+            Are you sure you want to clear this appointment?
+          </Typography>
+          <Typography
+            variant="bodySmallSemiBold"
+            color="grey.500"
+            sx={{ mt: 1 }}
+          >
+            This action cannot be undone.
+          </Typography>
+        </Box>
+      </CommonDialog>
       <CommonDialog
         open={openCancelDialog}
         onClose={() => {
@@ -1475,9 +1519,11 @@ export default function AvailabilityCalendar() {
         }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        {[EnBookings.Edit, EnBookings.Cancel].map((option) => {
-          return (
+        {appointmentStatus === "active" ? (
+          // Options for active appointments
+          [EnBookings.Edit, EnBookings.Cancel].map((option) => (
             <MenuItem
+              key={option}
               sx={{ justifyContent: "start", gap: 1 }}
               onClick={() => {
                 if (option === EnBookings.Edit) {
@@ -1494,8 +1540,59 @@ export default function AvailabilityCalendar() {
                 {EnBookings[option]}
               </Typography>
             </MenuItem>
-          );
-        })}
+          ))
+        ) : (
+          // Options for cancelled appointments
+          <>
+            <MenuItem
+              sx={{ justifyContent: "start", gap: 1 }}
+              onClick={() => {
+                setOpenDialog(true);
+                setIsEditing(false);
+                setAppointmentId(null);
+                setMenuAnchorEl(null);
+
+                // Pre-fill the form with the date and time of the cancelled appointment
+                const cancelledBooking = bookings.find(
+                  (booking) => booking.booking_id.toString() === appointmentId
+                );
+                if (cancelledBooking) {
+                  reset({
+                    contact: {
+                      firstName: "",
+                      lastName: "",
+                      email: "",
+                      phone: "",
+                      title: "",
+                    },
+                    date: dayjs(cancelledBooking.date.split("T")[0]).toDate(),
+                    startTime: cancelledBooking.start_time.substring(0, 5),
+                    length: "15",
+                    booking_type: EnBookingType.IN_PERSON,
+                    reasonForCall: "",
+                  });
+                }
+              }}
+            >
+              <StatusIcon status={6} />
+              <Typography variant="bodySmallSemiBold" color="grey.500">
+                Add Appointment
+              </Typography>
+            </MenuItem>
+            <MenuItem
+              sx={{ justifyContent: "start", gap: 1 }}
+              onClick={() => {
+                setClearAppointment(true);
+                setMenuAnchorEl(null);
+              }}
+            >
+              <StatusIcon status={7} />
+              <Typography variant="bodySmallSemiBold" color="grey.500">
+                Clear Appointment
+              </Typography>
+            </MenuItem>
+          </>
+        )}
       </Menu>
     </Box>
   );

@@ -2,6 +2,7 @@ import {
   IAvailabilityRequest,
   IAvailabilitySpecific,
   IBooking,
+  IBookingIds,
   ICall,
   ICompanyDetails,
   IGetAvailability,
@@ -153,5 +154,15 @@ export const createCall = async (callData: ICall) => {
   } catch (error) {
     console.error("Error posting company details:", error);
     throw error;
+  }
+};
+
+export const clearBooking = async (bookingIds: IBookingIds) => {
+  try {
+    const response = await apiClient.post(`bookings/clear`, bookingIds);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error clearing booking:", error);
+    throw new Error(error.response?.data?.error || "Booking clearing failed.");
   }
 };

@@ -26,6 +26,7 @@ import hidden from "../assets/icons/eye-off.svg";
 import visibile from "../assets/icons/eye-on.svg";
 import verification from "../assets/icons/verification.svg";
 import editForm from "../assets/icons/edit-form.svg";
+import deleteIcn from "../assets/icons/delete-tr.svg";
 export const Icons: {
   [key in "option1" | "option2" | "option3" | "option4"]: string;
 } = {
@@ -80,4 +81,7 @@ export const VerificationIcon = () => (
 );
 export const EditFormIcon = () => (
   <img src={editForm} alt="icon" />
+);
+export const DeleteIcon = () => (
+  <img src={deleteIcn} alt="icon" />
 );

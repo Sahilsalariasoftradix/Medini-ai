@@ -27,11 +27,24 @@ export const mapApiStatusToEnum = (status: string): EnBookings => {
       return EnBookings.Cancel;
     case "unconfirmed":
       return EnBookings.Unconfirmed;
+    case "addappointment":
+      return EnBookings.AddAppointment;
+    case "clearappointment":
+      return EnBookings.ClearAppointment;
     default:
       return EnBookings.Available;
   }
 };
+export const formatTimeSlot = (slot: any) => {
+  if (!slot || !slot.from || !slot.to) return "Unavailable";
 
+  const formatTime = (time: string) => {
+    // Convert only if time is in HH:mm:ss format
+    return time.match(/^\d{2}:\d{2}:\d{2}$/) ? time.slice(0, -3) : time;
+  };
+
+  return `${formatTime(slot.from)} - ${formatTime(slot.to)}`;
+};
 export const isPastDateTime = (date: Date, time: string) => {
   return (
     dayjs(date).isBefore(dayjs(), "day") &&
@@ -145,3 +158,16 @@ export const availabilitySchema = z.object({
 
 export type AppointmentFormData = z.infer<typeof appointmentSchema>;
 export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
+export function formatDays(dayCodes:string[]) {
+  const dayMap = {
+      MO: "Monday",
+      TU: "Tuesday",
+      WE: "Wednesday",
+      TH: "Thursday",
+      FR: "Friday",
+      SA: "Saturday",
+      SU: "Sunday"
+  };
+
+  return dayCodes.map((code) => dayMap[code as keyof typeof dayMap] || code);
+}

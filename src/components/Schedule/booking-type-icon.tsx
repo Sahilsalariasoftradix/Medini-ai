@@ -1,5 +1,6 @@
 import { Box, SxProps } from "@mui/material";
 import { availabilityIcons } from "../../utils/Icons";
+import { EnBookingType } from "../../utils/enums";
 
 interface BookingTypeIconProps {
   bookingType: keyof typeof availabilityIcons | "";
@@ -10,10 +11,10 @@ export const BookingTypeIcon = ({ bookingType, sx }: BookingTypeIconProps) => {
   let icon;
 
   switch (bookingType) {
-    case "phone":
+    case EnBookingType.PHONE:
       icon = availabilityIcons.phone;
       break;
-    case "in_person":
+    case EnBookingType.IN_PERSON:
       icon = availabilityIcons.in_person;
       break;
     case "break":
