@@ -57,6 +57,13 @@ export enum EnBookings {
   AddAppointment = 6,
   ClearAppointment = 7,
 }
+export enum EnBookingStatus {
+  Available = 'available',
+  Active = 'active',
+  Cancelled = 'cancelled',
+
+}
+
 export enum EStaticID {
   ID = 1,
   ID2 = 2,

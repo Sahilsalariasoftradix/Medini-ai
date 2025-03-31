@@ -28,11 +28,26 @@ import add from "../../assets/icons/add-icn.svg";
 import filter from "../../assets/icons/Filter.svg";
 import { useEffect, useMemo, useState } from "react";
 import { RoundCheckbox } from "../../components/common/RoundCheckbox";
-import { Chip, Pagination, Select, TextField } from "@mui/material";
+import {
+  ButtonGroup,
+  Chip,
+  Pagination,
+  Select,
+  TextField,
+} from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { overRideSvgColor } from "../../utils/filters";
 import CommonDialog from "../../components/common/CommonDialog";
-import { ICall, IFilm, IGetContacts } from "../../utils/Interfaces";
+import {
+  Data,
+  EnhancedTableProps,
+  IBooking,
+  ICall,
+  IFilm,
+  IGetBookingsByUser,
+  IGetContacts,
+  Order,
+} from "../../utils/Interfaces";
 import { getContactsByUserId } from "../../firebase/AuthService";
 import { Controller, useForm } from "react-hook-form";
 import SearchInput from "../../components/common/SearchInput";
@@ -44,551 +59,23 @@ import addIcon from "../../assets/icons/add-icn.svg";
 import AddContact from "../../components/Booking/Form/AddContact";
 import CustomSelect from "../../components/common/CustomSelect";
 
-import {
-  EnCallPurposeOptions,
-  EnCallPurposeOptionsValues,
-} from "../../utils/enums";
+import { EnCallPurposeOptionsValues } from "../../utils/enums";
 import { useAuth } from "../../store/AuthContext";
 import CommonSnackbar from "../../components/common/CommonSnackbar";
-import { createCall, getCompanyUniqueNumber } from "../../api/userApi";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import {
+  createCall,
+  getBookingsByUser,
+  getCompanyUniqueNumber,
+} from "../../api/userApi";
+import {
+  DatePicker,
+  DateTimePicker,
+  LocalizationProvider,
+} from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import CustomSwitch from "../../components/common/CustomSwitch";
-
-interface Data {
-  id: number;
-  contact: string;
-  patientId: string;
-  date: string;
-  callPurpose: string;
-  length: string;
-  details: string;
-  status?: "Cancel" | "Book" | "Reschedule" | "Request Info";
-}
-export const rows = [
-  createData(
-    1,
-    "Wiltz, K",
-    "Patient123219",
-    "January 05, 2025",
-    "Cancel",
-    "30 min",
-    "Please give patient a pharmac...",
-    "Follow-up"
-  ),
-  createData(
-    2,
-    "Johnson, P",
-    "Patient123219",
-    "January 02, 2025",
-    "Book",
-    "15 min",
-    "Broken ickle sorcerer",
-    "Follow-up"
-  ),
-  createData(
-    3,
-    "Hussein, M",
-    "Patient123219",
-    "January 01, 2025",
-    "Reschedule",
-    "45 min",
-    "Biting vulture-hat mewing phials with",
-    "Follow-up"
-  ),
-  createData(
-    4,
-    "Gonzalez, L",
-    "Patient123220",
-    "January 06, 2025",
-    "Book",
-    "30 min",
-    "Chronic back pain issues",
-    "Follow-up"
-  ),
-  createData(
-    5,
-    "Smith, J",
-    "Patient123221",
-    "January 07, 2025",
-    "Cancel",
-    "25 min",
-    "Heartburn and indigestion",
-    "Follow-up"
-  ),
-  createData(
-    6,
-    "Martinez, R",
-    "Patient123222",
-    "January 08, 2025",
-    "Request Info",
-    "40 min",
-    "Migraine headache symptoms",
-    "Follow-up"
-  ),
-  createData(
-    7,
-    "Lee, S",
-    "Patient123223",
-    "January 09, 2025",
-    "Request Info",
-    "20 min",
-    "Anxiety and stress management",
-    "Follow-up"
-  ),
-  createData(
-    8,
-    "Taylor, D",
-    "Patient123224",
-    "January 10, 2025",
-    "Request Info",
-    "15 min",
-    "Allergic reaction to pollen",
-    "Follow-up"
-  ),
-  createData(
-    9,
-    "Brown, C",
-    "Patient123225",
-    "January 11, 2025",
-    "Request Info",
-    "35 min",
-    "Severe coughing fits",
-    "Follow-up"
-  ),
-  createData(
-    10,
-    "Kim, H",
-    "Patient123226",
-    "January 12, 2025",
-    "Book",
-    "25 min",
-    "Routine physical checkup",
-    "Follow-up"
-  ),
-  createData(
-    11,
-    "Davis, N",
-    "Patient123227",
-    "January 13, 2025",
-    "Cancel",
-    "30 min",
-    "Knee injury after sports",
-    "Follow-up"
-  ),
-  createData(
-    12,
-    "White, A",
-    "Patient123228",
-    "January 14, 2025",
-    "Reschedule",
-    "40 min",
-    "Skin rash and irritation",
-    "Follow-up"
-  ),
-  createData(
-    13,
-    "Evans, M",
-    "Patient123229",
-    "January 15, 2025",
-    "Book",
-    "20 min",
-    "Ear infection treatment",
-    "Follow-up"
-  ),
-  createData(
-    14,
-    "Wilson, B",
-    "Patient123230",
-    "January 16, 2025",
-    "Cancel",
-    "30 min",
-    "Blood pressure monitoring",
-    "Follow-up"
-  ),
-  createData(
-    15,
-    "Moore, T",
-    "Patient123231",
-    "January 17, 2025",
-    "Reschedule",
-    "45 min",
-    "Flu-like symptoms",
-    "Follow-up"
-  ),
-  createData(
-    16,
-    "Taylor, J",
-    "Patient123232",
-    "January 18, 2025",
-    "Book",
-    "15 min",
-    "Pregnancy test consultation",
-    "Follow-up"
-  ),
-  createData(
-    17,
-    "Martin, C",
-    "Patient123233",
-    "January 19, 2025",
-    "Cancel",
-    "30 min",
-    "Back pain after lifting heavy",
-    "Follow-up"
-  ),
-  createData(
-    18,
-    "Hernandez, G",
-    "Patient123234",
-    "January 20, 2025",
-    "Reschedule",
-    "35 min",
-    "Sore throat and cough",
-    "Follow-up"
-  ),
-  createData(
-    19,
-    "Lee, K",
-    "Patient123235",
-    "January 21, 2025",
-    "Book",
-    "25 min",
-    "Childhood vaccination",
-    "Follow-up"
-  ),
-  createData(
-    20,
-    "King, W",
-    "Patient123236",
-    "January 22, 2025",
-    "Cancel",
-    "40 min",
-    "Tiredness and fatigue",
-    "Follow-up"
-  ),
-  createData(
-    21,
-    "Graham, R",
-    "Patient123237",
-    "January 23, 2025",
-    "Reschedule",
-    "15 min",
-    "Chronic headache issues",
-    "Follow-up"
-  ),
-  createData(
-    22,
-    "Green, J",
-    "Patient123238",
-    "January 24, 2025",
-    "Book",
-    "30 min",
-    "Diabetes management",
-    "Follow-up"
-  ),
-  createData(
-    23,
-    "Adams, F",
-    "Patient123239",
-    "January 25, 2025",
-    "Cancel",
-    "25 min",
-    "Seasonal allergies",
-    "Follow-up"
-  ),
-  createData(
-    24,
-    "Scott, V",
-    "Patient123240",
-    "January 26, 2025",
-    "Reschedule",
-    "35 min",
-    "Chest pain and pressure",
-    "Follow-up"
-  ),
-  createData(
-    25,
-    "Nelson, E",
-    "Patient123241",
-    "January 27, 2025",
-    "Book",
-    "20 min",
-    "Sprained ankle recovery",
-    "Follow-up"
-  ),
-  createData(
-    26,
-    "Carter, D",
-    "Patient123242",
-    "January 28, 2025",
-    "Cancel",
-    "15 min",
-    "Abdominal cramps",
-    "Follow-up"
-  ),
-  createData(
-    27,
-    "Morris, P",
-    "Patient123243",
-    "January 29, 2025",
-    "Reschedule",
-    "45 min",
-    "Infection after surgery",
-    "Follow-up"
-  ),
-  createData(
-    28,
-    "Baker, J",
-    "Patient123244",
-    "January 30, 2025",
-    "Book",
-    "40 min",
-    "Routine physical exam",
-    "Follow-up"
-  ),
-  createData(
-    29,
-    "Perez, A",
-    "Patient123245",
-    "February 01, 2025",
-    "Cancel",
-    "30 min",
-    "Severe nausea",
-    "Follow-up"
-  ),
-  createData(
-    30,
-    "Harris, T",
-    "Patient123246",
-    "February 02, 2025",
-    "Reschedule",
-    "25 min",
-    "Urinary tract infection",
-    "Follow-up"
-  ),
-  createData(
-    31,
-    "Martin, D",
-    "Patient123247",
-    "February 03, 2025",
-    "Book",
-    "20 min",
-    "Headache and dizziness",
-    "Follow-up"
-  ),
-  createData(
-    32,
-    "Clark, B",
-    "Patient123248",
-    "February 04, 2025",
-    "Cancel",
-    "35 min",
-    "Earache and blocked ear",
-    "Follow-up"
-  ),
-  createData(
-    33,
-    "Rodriguez, P",
-    "Patient123249",
-    "February 05, 2025",
-    "Reschedule",
-    "45 min",
-    "Knee pain from injury",
-    "Follow-up"
-  ),
-  createData(
-    34,
-    "Lewis, J",
-    "Patient123250",
-    "February 06, 2025",
-    "Book",
-    "30 min",
-    "Cold and cough symptoms",
-    "Follow-up"
-  ),
-  createData(
-    35,
-    "Young, T",
-    "Patient123251",
-    "February 07, 2025",
-    "Cancel",
-    "15 min",
-    "Food poisoning",
-    "Follow-up"
-  ),
-  createData(
-    36,
-    "Walker, K",
-    "Patient123252",
-    "February 08, 2025",
-    "Reschedule",
-    "40 min",
-    "Numbness in hands",
-    "Follow-up"
-  ),
-  createData(
-    37,
-    "Allen, R",
-    "Patient123253",
-    "February 09, 2025",
-    "Book",
-    "30 min",
-    "Chronic fatigue syndrome",
-    "Follow-up"
-  ),
-  createData(
-    38,
-    "Hill, F",
-    "Patient123254",
-    "February 10, 2025",
-    "Cancel",
-    "45 min",
-    "Asthma flare-up",
-    "Follow-up"
-  ),
-  createData(
-    39,
-    "Collins, S",
-    "Patient123255",
-    "February 11, 2025",
-    "Reschedule",
-    "25 min",
-    "Sinus congestion",
-    "Follow-up"
-  ),
-  createData(
-    40,
-    "Gonzalez, T",
-    "Patient123256",
-    "February 12, 2025",
-    "Book",
-    "20 min",
-    "High cholesterol consultation",
-    "Follow-up"
-  ),
-  createData(
-    41,
-    "Anderson, M",
-    "Patient123257",
-    "February 13, 2025",
-    "Cancel",
-    "35 min",
-    "Stomach cramps",
-    "Follow-up"
-  ),
-  createData(
-    42,
-    "Harris, K",
-    "Patient123258",
-    "February 14, 2025",
-    "Reschedule",
-    "40 min",
-    "Muscle spasms in back",
-    "Follow-up"
-  ),
-  createData(
-    43,
-    "Mitchell, E",
-    "Patient123259",
-    "February 15, 2025",
-    "Book",
-    "25 min",
-    "Skin rash and blisters",
-    "Follow-up"
-  ),
-  createData(
-    44,
-    "Perez, N",
-    "Patient123260",
-    "February 16, 2025",
-    "Cancel",
-    "30 min",
-    "Severe abdominal pain",
-    "Follow-up"
-  ),
-  createData(
-    45,
-    "Roberts, L",
-    "Patient123261",
-    "February 17, 2025",
-    "Reschedule",
-    "15 min",
-    "Dizzy spells",
-    "Follow-up"
-  ),
-  createData(
-    46,
-    "Jackson, F",
-    "Patient123262",
-    "February 18, 2025",
-    "Book",
-    "20 min",
-    "Fever and chills",
-    "Follow-up"
-  ),
-  createData(
-    47,
-    "Taylor, M",
-    "Patient123263",
-    "February 19, 2025",
-    "Cancel",
-    "25 min",
-    "Cold and cough",
-    "Follow-up"
-  ),
-  createData(
-    48,
-    "Lopez, R",
-    "Patient123264",
-    "February 20, 2025",
-    "Reschedule",
-    "35 min",
-    "Severe headaches",
-    "Follow-up"
-  ),
-  createData(
-    49,
-    "King, L",
-    "Patient123265",
-    "February 21, 2025",
-    "Book",
-    "40 min",
-    "Blood sugar regulation",
-    "Follow-up"
-  ),
-  createData(
-    50,
-    "Nguyen, P",
-    "Patient123266",
-    "February 22, 2025",
-    "Cancel",
-    "30 min",
-    "Upper back pain",
-    "Follow-up"
-  ),
-];
-function createData(
-  id: number,
-  contact: string,
-  patientId: string,
-  date: string,
-  status: Data["status"],
-  length: string,
-  details: string,
-  callPurpose: string
-): Data {
-  return {
-    id,
-    contact,
-    patientId,
-    date,
-    status,
-    length,
-    details,
-    callPurpose,
-  };
-}
+import { callPurposeOptions, headCells, rows } from "../../utils/common";
+import { calenderIcon } from "../../components/Booking/Form/SlotBookingForm";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -599,8 +86,6 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   }
   return 0;
 }
-
-type Order = "asc" | "desc";
 
 function getComparator<Key extends keyof any>(
   order: Order,
@@ -614,70 +99,6 @@ function getComparator<Key extends keyof any>(
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-interface HeadCell {
-  disablePadding: boolean;
-  id: keyof Data;
-  label: string;
-  numeric: boolean;
-  sortable: boolean; // Add this property
-}
-
-const headCells: readonly HeadCell[] = [
-  {
-    id: "contact",
-    numeric: false,
-    disablePadding: true,
-    label: "Contact",
-    sortable: true, // Add this property
-  },
-  {
-    id: "date",
-    numeric: false,
-    disablePadding: false,
-    label: "Date",
-    sortable: true, // Add this property
-  },
-  {
-    id: "status",
-    numeric: false,
-    disablePadding: false,
-    label: "Call Purpose",
-    sortable: true, // Add this property
-  },
-  {
-    id: "length",
-    numeric: false,
-    disablePadding: false,
-    label: "Length",
-    sortable: true, // Add this property
-  },
-  {
-    id: "details",
-    numeric: false,
-    disablePadding: false,
-    label: "Details",
-    sortable: true, // Add this property
-  },
-  {
-    id: "actions" as keyof Data,
-    numeric: false,
-    disablePadding: false,
-    label: "Actions",
-    sortable: false, // Add this property
-  },
-];
-
-interface EnhancedTableProps {
-  numSelected: number;
-  onRequestSort: (
-    event: React.MouseEvent<unknown>,
-    property: keyof Data
-  ) => void;
-  onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  order: Order;
-  orderBy: string;
-  rowCount: number;
-}
 function EnhancedTableHead(props: EnhancedTableProps) {
   const {
     onSelectAllClick,
@@ -941,29 +362,14 @@ const addCallSchema = z.object({
   bookingEndDate: z.string().optional(),
   appointmentLength: z.string().optional(),
   appointmentId: z.string().optional(),
+  is_scheduled_call: z.boolean().optional(),
+  scheduledCallTime: z
+    .string({ message: "Scheduled Call Time is required" })
+    .min(1, { message: "Scheduled Call Time is required" }),
 });
 
 type AddCallSchema = z.infer<typeof addCallSchema>;
 
-const callPurposeOptions = [
-  {
-    label: EnCallPurposeOptions.REQUESTINFO,
-    value: EnCallPurposeOptionsValues.REQUESTINFO,
-  },
-  { label: EnCallPurposeOptions.BOOK, value: EnCallPurposeOptionsValues.BOOK },
-  {
-    label: EnCallPurposeOptions.CANCEL,
-    value: EnCallPurposeOptionsValues.CANCEL,
-  },
-  {
-    label: EnCallPurposeOptions.RESCHEDULE,
-    value: EnCallPurposeOptionsValues.RESCHEDULE,
-  },
-  {
-    label: EnCallPurposeOptions.INFORMPATIENT,
-    value: EnCallPurposeOptionsValues.INFORMPATIENT,
-  },
-];
 const CallCenter = () => {
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Data>("contact");
@@ -981,6 +387,10 @@ const CallCenter = () => {
   const [isEditing, setIsEditing] = useState(false);
   //@ts-ignore
   const [options, setOptions] = useState<readonly IFilm[]>([]);
+  const [getBookingByUser, setGetBookingByUser] = useState<IGetBookingsByUser>({
+    bookings: [],
+  });
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1004,7 +414,8 @@ const CallCenter = () => {
       contact: {},
       callPurpose: "",
       appointmentReason: "",
-      appointmentId: "",
+      appointmentId:
+        getBookingByUser?.bookings?.[0]?.booking_id?.toString() || "",
       inPersonOnly: false,
       bookingStartDate: "",
       bookingEndDate: "",
@@ -1025,7 +436,7 @@ const CallCenter = () => {
     email: contact.email,
     phone: contact.phone,
   }));
-  
+
   const callPurpose = watch("callPurpose");
 
   const handleClose = () => {
@@ -1137,7 +548,12 @@ const CallCenter = () => {
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [order, orderBy, page, rowsPerPage]
   );
-
+  useEffect(() => {
+    (async () => {
+      const bookings = await getBookingsByUser(userDetails?.user_id);
+      setGetBookingByUser(bookings);
+    })();
+  }, []);
   const onSubmit = async (data: AddCallSchema) => {
     const callData: ICall = {
       user_id: userDetails?.user_id,
@@ -1145,6 +561,10 @@ const CallCenter = () => {
       from: companyPhone,
       agenda: data.callPurpose,
       customer_name: data.contact.title,
+      is_scheduled_call: true,
+      scheduled_call_time: dayjs(data.scheduledCallTime).format(
+        "YYYY-MM-DD HH:mm:ss"
+      ),
     };
     clearErrors("bookingStartDate");
     clearErrors("bookingEndDate");
@@ -1274,7 +694,6 @@ const CallCenter = () => {
     }
   };
 
-  const [pendingCalls, setPendingCalls] = useState(false);
 
   return (
     <Box sx={{ px: "12px" }}>
@@ -1284,26 +703,33 @@ const CallCenter = () => {
         justifyContent={"space-between"}
       >
         <Box display={"flex"} alignItems={"center"} gap={2}>
-
-        <CommonTextField
-          startIcon={<img src={searchIcon} alt="down" />}
-          placeholder="Search Calls"
-          sx={{ maxWidth: "300px", "& .MuiInputBase-input": { py: "11px" } }}
-        />
-        <Box display={"flex"} alignItems={"center"} gap={2} minWidth={"300px"}>
-          <Typography variant="bodyMediumMedium" color="grey.600" mr={2.5}>
-            Pending Calls
-          </Typography>
-          <CustomSwitch
-            name="pendingCalls"
-            checked={pendingCalls}
-            onChange={(e) => setPendingCalls(e.target.checked)}
+          <CommonTextField
+            startIcon={<img src={searchIcon} alt="down" />}
+            placeholder="Search Calls"
+            sx={{ maxWidth: "300px", "& .MuiInputBase-input": { py: "11px" } }}
           />
-          <Typography variant="bodyMediumMedium" color="grey.600">
-            Completed Calls
-          </Typography>
-          {/* <CustomSwitch name="completedCalls" /> */}
-        </Box>
+
+          <Box
+            display={"flex"}
+            alignItems={"center"}
+            gap={2}
+            minWidth={"300px"}
+          >
+            <ButtonGroup
+              variant="contained"
+              aria-label="Basic button group"
+              sx={{
+                borderRadius: "50px",
+                boxShadow: "none",
+                backgroundColor: "grey.200",
+                padding: "8px",
+                
+              }}
+            >
+              <CommonButton text="Pending Calls" sx={{borderRadius:'50px'}} />
+              <CommonButton variant="outlined" sx={{borderRadius:'50px'}} text="Completed Calls" />
+            </ButtonGroup>
+          </Box>
         </Box>
         <Box
           display={"flex"}
@@ -1508,13 +934,16 @@ const CallCenter = () => {
           // setIsEditing(false);
         }}
         confirmButtonType="primary"
-        title={"Call Details"}
+        title={"Add New Call"}
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
         // loading={loading.data}
         // disabled={loading.data}
       >
+        <Typography variant="bodyMediumExtraBold" my={2}>
+          Person to Call
+        </Typography>
         <Controller
           name="contact"
           control={control}
@@ -1528,7 +957,7 @@ const CallCenter = () => {
               setSelectedContact={setSelectedContact}
               options={contactOptions}
               loading={loading.input}
-              placeholder="Search contacts..."
+              placeholder="Search for a contact..."
               error={!!errors.contact}
               helperText={errors.contact?.phone?.message}
               // disabled={isEditing}
@@ -1552,7 +981,7 @@ const CallCenter = () => {
         )}
 
         <Typography variant="bodyMediumExtraBold" my={2}>
-          Details
+          Call Purpose
         </Typography>
 
         <CustomSelect
@@ -1560,7 +989,44 @@ const CallCenter = () => {
           control={control}
           errors={errors}
           options={callPurposeOptions}
-          placeholder="Call Purpose"
+          placeholder="Select Reason"
+        />
+        <Typography variant="bodyMediumExtraBold" my={2}>
+          Scheduled Date & Time
+        </Typography>
+        <Controller
+          name="scheduledCallTime"
+          control={control}
+          render={({ field: { onChange, value, ...field } }) => (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateTimePicker
+                shouldDisableDate={(date) => date.isBefore(dayjs(), "day")}
+                ampm={false}
+                {...field}
+                sx={{ width: "100%" }}
+                value={value ? dayjs(value) : null}
+                onChange={(newValue) => {
+                  onChange(
+                    newValue ? newValue.format("YYYY-MM-DD HH:mm:ss") : null
+                  );
+                }}
+                slotProps={{
+                  textField: {
+                    placeholder: "Select Date & Time",
+                    error: !!errors.scheduledCallTime,
+                    helperText: errors.scheduledCallTime?.message,
+                    onKeyDown: (e) => {
+                      if (e.key === "Backspace" && value) {
+                        e.preventDefault();
+                        onChange(null);
+                      }
+                    },
+                  },
+                }}
+                slots={{ openPickerIcon: calenderIcon }}
+              />
+            </LocalizationProvider>
+          )}
         />
 
         {/* Appointment ID field */}
@@ -1575,8 +1041,34 @@ const CallCenter = () => {
                 ? "reschedule"
                 : "cancel"}
             </Typography>
-
             <Controller
+              name="appointmentId"
+              control={control}
+              render={({ field }) => (
+                <CommonTextField
+                  {...field}
+                  select
+                  fullWidth
+                  error={!!errors.appointmentId}
+                  helperText={errors.appointmentId?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)} // Ensure onChange is properly set
+                  placeholder="Select Appointment"
+                >
+                  {getBookingByUser?.bookings?.map((booking: IBooking) => (
+                    <MenuItem
+                      key={booking?.booking_id?.toString()}
+                      value={booking?.booking_id?.toString()}
+                    >
+                      {dayjs(booking?.date).format("DD-MM-YYYY")} {" ,"}
+                      {booking.start_time}
+                    </MenuItem>
+                  ))}
+                </CommonTextField>
+              )}
+            />
+
+            {/* <Controller
               name="appointmentId"
               control={control}
               render={({ field }) => (
@@ -1595,7 +1087,7 @@ const CallCenter = () => {
                   }}
                 />
               )}
-            />
+            /> */}
           </Box>
         )}
 

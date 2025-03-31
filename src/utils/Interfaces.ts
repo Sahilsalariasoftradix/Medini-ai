@@ -271,6 +271,8 @@ export interface IUser {
 
 export interface ICall {
   user_id: number;
+  is_scheduled_call?: boolean;
+  scheduled_call_time:string;
   to: string;
   from: string;
   agenda: string; // BOOK_APPOINTMENT, CANCEL_APPOINTMENT, RESCHEDULE_APPOINTMENT, INFORM_PATIENT
@@ -295,4 +297,36 @@ export interface ICall {
   reschedule_booking_id?: number;
   // # inform_patient
   info_to_patient?: string;
+}
+export interface Data {
+  id: number;
+  contact: string;
+  patientId: string;
+  date: string;
+  callPurpose: string;
+  length: string;
+  details: string;
+  status?: "Cancel" | "Book" | "Reschedule" | "Request Info";
+}
+export interface HeadCell {
+  disablePadding: boolean;
+  id: keyof Data;
+  label: string;
+  numeric: boolean;
+  sortable: boolean; // Add this property
+} 
+export type Order = "asc" | "desc";
+export interface EnhancedTableProps {
+  numSelected: number;
+  onRequestSort: (
+    event: React.MouseEvent<unknown>,
+    property: keyof Data
+  ) => void;
+  onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  order: Order;
+  orderBy: string;
+  rowCount: number;
+}
+export interface IGetBookingsByUser {
+  bookings: IBooking[];
 }

@@ -20,7 +20,13 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
-import { EnAvailability, EnBookings, EnBookingType } from "../../utils/enums";
+import {
+  EnAvailability,
+  EnBookingDuration,
+  EnBookings,
+  EnBookingStatus,
+  EnBookingType,
+} from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -73,6 +79,7 @@ const appointmentSchema = z.object({
   }),
   date: z.any(),
   startTime: z.string(),
+  dateTime: z.any(),
   length: z.string().min(1, "Appointment length is required"),
   booking_type: z.enum([EnBookingType.IN_PERSON, EnBookingType.PHONE], {
     errorMap: () => ({ message: "Please select an appointment type" }),
@@ -294,6 +301,53 @@ export default function AvailabilityCalendar() {
       }
     }
 
+    // Create a mapping of all time slots that are part of a booking
+    const bookedSlots = new Map();
+
+    bookings.forEach((booking) => {
+      const startTime = booking.start_time.substring(0, 5); // Format: "HH:MM"
+      const endTime = booking.end_time.substring(0, 5);
+
+      // Calculate duration in minutes
+      const startMinutes =
+        parseInt(startTime.split(":")[0]) * 60 +
+        parseInt(startTime.split(":")[1]);
+      const endMinutes =
+        parseInt(endTime.split(":")[0]) * 60 + parseInt(endTime.split(":")[1]);
+      const durationMinutes = endMinutes - startMinutes;
+
+      // Mark each 15-minute slot within this booking's duration
+      let currentSlotTime = startTime;
+      let slotMinutes = startMinutes;
+
+      while (slotMinutes < endMinutes) {
+        const hour = Math.floor(slotMinutes / 60)
+          .toString()
+          .padStart(2, "0");
+        const minute = (slotMinutes % 60).toString().padStart(2, "0");
+        currentSlotTime = `${hour}:${minute}`;
+
+        // For the first slot, store the booking details
+        if (currentSlotTime === startTime) {
+          bookedSlots.set(currentSlotTime, {
+            booking: booking,
+            isFirstSlot: true,
+            durationMinutes,
+          });
+        } else {
+          // For continuation slots, mark them as part of a booking but not the first slot
+          bookedSlots.set(currentSlotTime, {
+            booking: booking,
+            isFirstSlot: false,
+            durationMinutes,
+          });
+        }
+
+        // Move to next 15-minute slot
+        slotMinutes += 15;
+      }
+    });
+
     // If we have bookings but no slots, or need to expand the time range
     if (bookings.length > 0 || baseSlots.length === 0) {
       // Create a full range of slots from start to end hour
@@ -314,16 +368,28 @@ export default function AvailabilityCalendar() {
               dayjs(`2024-01-01 ${earliestAvailabilityTime}`)
             );
 
+          // Check if this slot is part of a booking but not the first slot
+          const bookedSlotInfo = bookedSlots.get(time);
+          const isMiddleOfBooking =
+            bookedSlotInfo && !bookedSlotInfo.isFirstSlot;
+
+          // Skip this slot if it's in the middle of a booking (not the first slot)
+          if (isMiddleOfBooking) {
+            continue;
+          }
+
           if (existingSlot) {
             allSlots.push({
               ...existingSlot,
               isDisabled: existingSlot.isDisabled || isBeforeAvailability,
+              bookingInfo: bookedSlots.get(time),
             });
           } else {
             // Create a new slot
             allSlots.push({
               time,
               isDisabled: isBeforeAvailability || false,
+              bookingInfo: bookedSlots.get(time),
             });
           }
         }
@@ -331,7 +397,11 @@ export default function AvailabilityCalendar() {
       return allSlots;
     }
 
-    return baseSlots;
+    // If there are no bookings, just return the base slots with booking info
+    return baseSlots.map((slot) => ({
+      ...slot,
+      bookingInfo: bookedSlots.get(slot.time),
+    }));
   }, [days, today, bookings, transformedWeeklyAvailability]);
 
   const handleEditAvailability = (day: string) => {
@@ -352,7 +422,26 @@ export default function AvailabilityCalendar() {
     setSnackbar({ ...snackbar, open: false });
   };
   const findBookingForTimeSlot = (time: string) => {
-    return bookings.find((booking) => booking.start_time === `${time}:00`);
+    const bookedSlot = bookings.find(
+      (booking) => booking.start_time === `${time}:00`
+    );
+    if (bookedSlot) {
+      // Calculate booking duration in minutes
+      const startTime = bookedSlot.start_time.substring(0, 5);
+      const endTime = bookedSlot.end_time.substring(0, 5);
+      const startMinutes =
+        parseInt(startTime.split(":")[0]) * 60 +
+        parseInt(startTime.split(":")[1]);
+      const endMinutes =
+        parseInt(endTime.split(":")[0]) * 60 + parseInt(endTime.split(":")[1]);
+      const durationMinutes = endMinutes - startMinutes;
+
+      return {
+        ...bookedSlot,
+        durationMinutes,
+      };
+    }
+    return null;
   };
 
   const onCancelSubmit = async () => {
@@ -402,9 +491,7 @@ export default function AvailabilityCalendar() {
           booking_id: Number(appointmentId),
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
-          end_time: dayjs(data.startTime, "HH:mm")
-            .add(15, "minute")
-            .format("HH:mm"),
+          end_time: endTimeFormatted,
           details: data.reasonForCall,
           first_name: data.contact.firstName,
           last_name: data.contact.lastName,
@@ -728,8 +815,18 @@ export default function AvailabilityCalendar() {
     try {
       await clearBooking({ booking_ids: [Number(appointmentId)] });
       fetchBookings();
+      setSnackbar({
+        open: true,
+        message: "Appointment cleared successfully",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Failed to clear appointment:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to clear appointment",
+        severity: "error",
+      });
     } finally {
       setLoadingClearAppointment(false);
       setClearAppointment(false);
@@ -855,7 +952,19 @@ export default function AvailabilityCalendar() {
               <Box width={"100%"} sx={{ minWidth: "80px" }}>
                 {!loading ? (
                   getSlots().map((hour, index) => {
-                    const booking = findBookingForTimeSlot(hour.time);
+                    const booking = hour.bookingInfo
+                      ? hour.bookingInfo.booking
+                      : findBookingForTimeSlot(hour.time);
+                    //@ts-ignore
+                    const durationMinutes = hour.bookingInfo
+                      ? hour.bookingInfo.durationMinutes
+                      : booking
+                      ? dayjs(booking.end_time, "HH:mm:ss").diff(
+                          dayjs(booking.start_time, "HH:mm:ss"),
+                          "minute"
+                        )
+                      : 0;
+
                     return (
                       <Box
                         key={index}
@@ -921,15 +1030,44 @@ export default function AvailabilityCalendar() {
                                   }
 
                                   // Always set isEditing based on whether we're editing an existing booking
-                                  setIsEditing(booking?.status === "active");
+                                  setIsEditing(
+                                    booking?.status === EnBookingStatus.Active
+                                  );
 
-                                  if (booking?.status === "active") {
+                                  if (
+                                    booking?.status === EnBookingStatus.Active
+                                  ) {
                                     setMenuAnchorEl(e.currentTarget);
                                     setAppointmentId(
                                       booking.booking_id.toString()
                                     );
-                                    setAppointmentStatus("active");
-
+                                    setAppointmentStatus(
+                                      EnBookingStatus.Active
+                                    );
+                                    let appointmentLength =
+                                      EnBookingDuration.DURATION_15;
+                                    try {
+                                      const startTime = dayjs(
+                                        `2000-01-01T${booking.start_time}`
+                                      );
+                                      const endTime = dayjs(
+                                        `2000-01-01T${booking.end_time}`
+                                      );
+                                      // Only use the calculated difference if it's a valid number
+                                      const diff = endTime.diff(
+                                        startTime,
+                                        "minute"
+                                      );
+                                      if (!isNaN(diff) && diff > 0) {
+                                        appointmentLength =
+                                          diff.toString() as EnBookingDuration;
+                                      }
+                                    } catch (error) {
+                                      console.error(
+                                        "Error calculating appointment length:",
+                                        error
+                                      );
+                                    }
                                     reset({
                                       contact: {
                                         firstName: booking.first_name,
@@ -945,15 +1083,7 @@ export default function AvailabilityCalendar() {
                                         0,
                                         5
                                       ),
-                                      length: dayjs(
-                                        booking.end_time,
-                                        "HH:mm:ss"
-                                      )
-                                        .diff(
-                                          dayjs(booking.start_time, "HH:mm:ss"),
-                                          "minute"
-                                        )
-                                        .toString(),
+                                      length: appointmentLength,
                                       booking_type: EnBookingType.IN_PERSON,
                                       reasonForCall: booking.details,
                                     });
@@ -982,7 +1112,7 @@ export default function AvailabilityCalendar() {
                                         },
                                         date: dayjs(today).toDate(), // Ensure date is a Date object
                                         startTime: hour.time,
-                                        length: "15",
+                                        length: EnBookingDuration.DURATION_15,
                                         booking_type: EnBookingType.IN_PERSON,
                                         reasonForCall: "",
                                       });
@@ -993,9 +1123,11 @@ export default function AvailabilityCalendar() {
                                 <StatusIcon
                                   status={
                                     booking && booking.status
-                                      ? booking.status === "active"
+                                      ? booking.status ===
+                                        EnBookingStatus.Active
                                         ? 1
-                                        : booking.status === "cancelled"
+                                        : booking.status ===
+                                          EnBookingStatus.Cancelled
                                         ? 2
                                         : 3
                                       : 0
@@ -1027,9 +1159,10 @@ export default function AvailabilityCalendar() {
                                     ? "not-allowed"
                                     : "pointer",
                                   backgroundColor:
-                                    booking.status === "active"
+                                    booking.status === EnBookingStatus.Active
                                       ? "#22C55E"
-                                      : booking.status === "cancelled"
+                                      : booking.status ===
+                                        EnBookingStatus.Cancelled
                                       ? "#FF4747"
                                       : "#FACC15",
                                 }}
@@ -1042,12 +1175,40 @@ export default function AvailabilityCalendar() {
                                       booking.start_time
                                     )
                                   ) {
-                                    if (booking?.status === "active") {
+                                    if (
+                                      booking?.status === EnBookingStatus.Active
+                                    ) {
                                       setMenuAnchorEl(e.currentTarget);
                                       setAppointmentId(
                                         booking.booking_id.toString()
                                       );
-                                      setAppointmentStatus("active");
+                                      setAppointmentStatus(
+                                        EnBookingStatus.Active
+                                      );
+                                      let appointmentLength =
+                                        EnBookingDuration.DURATION_15;
+                                      try {
+                                        const startTime = dayjs(
+                                          `2000-01-01T${booking.start_time}`
+                                        );
+                                        const endTime = dayjs(
+                                          `2000-01-01T${booking.end_time}`
+                                        );
+                                        // Only use the calculated difference if it's a valid number
+                                        const diff = endTime.diff(
+                                          startTime,
+                                          "minute"
+                                        );
+                                        if (!isNaN(diff) && diff > 0) {
+                                          appointmentLength =
+                                            diff.toString() as EnBookingDuration;
+                                        }
+                                      } catch (error) {
+                                        console.error(
+                                          "Error calculating appointment length:",
+                                          error
+                                        );
+                                      }
                                       reset({
                                         contact: {
                                           firstName: booking.first_name,
@@ -1061,18 +1222,7 @@ export default function AvailabilityCalendar() {
                                           0,
                                           5
                                         ),
-                                        length: dayjs(
-                                          booking.end_time,
-                                          "HH:mm:ss"
-                                        )
-                                          .diff(
-                                            dayjs(
-                                              booking.start_time,
-                                              "HH:mm:ss"
-                                            ),
-                                            "minute"
-                                          )
-                                          .toString(),
+                                        length: appointmentLength,
                                         booking_type: EnBookingType.IN_PERSON,
                                         reasonForCall: booking.details,
                                       });
@@ -1080,16 +1230,21 @@ export default function AvailabilityCalendar() {
                                   } else {
                                     return;
                                   }
-                                  if (booking?.status === "cancelled") {
+                                  if (
+                                    booking?.status ===
+                                    EnBookingStatus.Cancelled
+                                  ) {
                                     setMenuAnchorEl(e.currentTarget);
                                     setAppointmentId(
                                       booking.booking_id.toString()
                                     );
-                                    setAppointmentStatus("cancelled");
+                                    setAppointmentStatus(
+                                      EnBookingStatus.Cancelled
+                                    );
                                     reset({
                                       date: dayjs(today),
                                       startTime: hour.time,
-                                      length: "15",
+                                      length: EnBookingDuration.DURATION_15,
                                       booking_type: EnBookingType.IN_PERSON,
                                       reasonForCall: "",
                                     });
@@ -1150,7 +1305,7 @@ export default function AvailabilityCalendar() {
                                 reset({
                                   date: dayjs(today),
                                   startTime: hour.time,
-                                  length: "15",
+                                  length: EnBookingDuration.DURATION_15,
                                   booking_type: EnBookingType.IN_PERSON,
                                   reasonForCall: "",
                                 });
@@ -1516,7 +1671,7 @@ export default function AvailabilityCalendar() {
         }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        {appointmentStatus === "active" ? (
+        {appointmentStatus === EnBookingStatus.Active ? (
           // Options for active appointments
           [EnBookings.Edit, EnBookings.Cancel].map((option) => (
             <MenuItem
@@ -1564,7 +1719,7 @@ export default function AvailabilityCalendar() {
                     },
                     date: dayjs(cancelledBooking.date.split("T")[0]).toDate(),
                     startTime: cancelledBooking.start_time.substring(0, 5),
-                    length: "15",
+                    length: EnBookingDuration.DURATION_15,
                     booking_type: EnBookingType.IN_PERSON,
                     reasonForCall: "",
                   });

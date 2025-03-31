@@ -162,7 +162,7 @@ const ProceedAvailability = () => {
       break_end_time: "",
     },
   });
-  console.log(weeklyAvailability);
+  // console.log(weeklyAvailability);
   // Add this state to track which day was clicked
   const [selectedDay, setSelectedDay] = useState<string>("");
 
