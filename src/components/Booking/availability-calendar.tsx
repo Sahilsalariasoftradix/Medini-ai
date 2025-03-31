@@ -19,7 +19,12 @@ import calendarIcon from "../../assets/icons/calenderIcon.svg";
 import leftArrow from "../../assets/icons/left.svg";
 import rightArrow from "../../assets/icons/right.svg";
 import { StatusIcon } from "./status-icon";
-import { EnAvailability, EnBookings, EnBookingType } from "../../utils/enums";
+import {
+  EnAvailability,
+  EnBookingDuration,
+  EnBookings,
+  EnBookingType,
+} from "../../utils/enums";
 import { useAvailability } from "../../store/AvailabilityContext";
 import CommonTextField from "../common/CommonTextField";
 import DatePicker from "react-datepicker";
@@ -215,7 +220,7 @@ const TimeSlot = ({
       contact: {},
       date: selectedDate,
       startTime: time,
-      length: "15",
+      length: EnBookingDuration.DURATION_15,
       reasonForCall: "",
       booking_type: EnBookingType.PHONE,
     },
@@ -342,6 +347,18 @@ const TimeSlot = ({
         );
 
         if (currentBooking) {
+          let appointmentLength = EnBookingDuration.DURATION_15;
+          try {
+            const startTime = dayjs(`2000-01-01T${currentBooking.start_time}`);
+            const endTime = dayjs(`2000-01-01T${currentBooking.end_time}`);
+            // Only use the calculated difference if it's a valid number
+            const diff = endTime.diff(startTime, "minute");
+            if (!isNaN(diff) && diff > 0) {
+              appointmentLength = diff.toString() as EnBookingDuration;
+            }
+          } catch (error) {
+            console.error("Error calculating appointment length:", error);
+          }
           reset({
             contact: {
               firstName: currentBooking.first_name,
@@ -352,15 +369,12 @@ const TimeSlot = ({
             },
             date: currentBooking.date.split("T")[0],
             startTime: currentBooking.start_time.substring(0, 5),
-            length: dayjs(currentBooking.end_time, "HH:mm:ss")
-              .diff(dayjs(currentBooking.start_time, "HH:mm:ss"), "minute")
-              .toString(),
+            length: appointmentLength,
             booking_type: currentBooking.booking_type,
             reasonForCall: currentBooking.details,
           });
 
-          // console.log("Booking type being set:", currentBooking.booking_type);
-          // console.log("Available booking types:", EnBookingType.IN_PERSON, EnBookingType.PHONE);
+          // console.log("Booking type being set:", appointmentLength);
         }
         setSelectedStatus(EnBookings.Active);
         setOpenDialog(true);
@@ -413,6 +427,7 @@ const TimeSlot = ({
   };
 
   const onSubmit = async (data: AppointmentFormData) => {
+    console.log(data);
     setLoading({ ...loading, data: true });
     try {
       const userId = getCurrentUserId();
@@ -431,9 +446,7 @@ const TimeSlot = ({
           booking_id: Number(appointmentId),
           date: dayjs(data.date).format("YYYY-MM-DD"),
           start_time: data.startTime,
-          end_time: dayjs(data.startTime, "HH:mm")
-            .add(15, "minute")
-            .format("HH:mm"),
+          end_time: endTimeFormatted,
           details: data.reasonForCall,
           booking_type: data.booking_type,
           first_name: data.contact.firstName,
@@ -531,8 +544,18 @@ const TimeSlot = ({
     try {
       await clearBooking({ booking_ids: [Number(appointmentId)] });
       fetchBookings();
+      setSnackbar({
+        open: true,
+        message: "Appointment cleared successfully",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Failed to clear appointment:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to clear appointment",
+        severity: "error",
+      });
     } finally {
       setLoading({ ...loading, clearAppointment: false });
     }
@@ -726,7 +749,7 @@ const TimeSlot = ({
               >
                 <StatusIcon status={option} />
                 <Typography variant="bodySmallSemiBold" color="grey.500">
-                  {EnBookings[option]}
+                  {EnBookings[option].replace(/([a-z])([A-Z])/g, "$1 $2")}
                 </Typography>
               </MenuItem>
             );
@@ -992,40 +1015,198 @@ export default function AvailabilityCalendar() {
                                     gridTemplateColumns: "repeat(4, 1fr)",
                                   }}
                                 >
-                                  {Array.from(
-                                    { length: 4 },
-                                    (_, quarterIndex) => {
-                                      const currentHour =
-                                        hourRange.start + hourIndex;
-                                      // Find the slot with matching time
-                                      const slot = day.availability.slots.find(
-                                        (s) =>
-                                          s.time.startsWith(
-                                            `${currentHour
-                                              .toString()
-                                              .padStart(2, "0")}:${(
-                                              quarterIndex * 15
-                                            )
-                                              .toString()
-                                              .padStart(2, "0")}`
-                                          )
+                                  {(() => {
+                                    const slots = [];
+                                    // Track which quarter slots we've already handled
+                                    const handledQuarters = new Set();
+                                    const currentHour = hourRange.start + hourIndex;
+
+                                    for (let quarterIndex = 0; quarterIndex < 4; quarterIndex++) {
+                                      // Skip if this quarter has already been handled as part of a longer booking
+                                      if (handledQuarters.has(quarterIndex)) continue;
+
+                                      const timeString = `${currentHour.toString().padStart(2, "0")}:${(
+                                        quarterIndex * 15
+                                      )
+                                        .toString()
+                                        .padStart(2, "0")}`;
+
+                                      // Check for bookings that start earlier but span into this slot
+                                      const continuedBooking = bookings.find(booking => {
+                                        // Convert booking times to minutes since midnight
+                                        const bookingStartTime = booking.start_time.substring(0, 5);
+                                        const startMinutes = parseInt(bookingStartTime.split(":")[0]) * 60 + 
+                                                            parseInt(bookingStartTime.split(":")[1]);
+                                        const endMinutes = parseInt(booking.end_time.split(":")[0]) * 60 + 
+                                                          parseInt(booking.end_time.split(":")[1]);
+                                        
+                                        // Current slot time in minutes
+                                        const slotMinutes = currentHour * 60 + quarterIndex * 15;
+                                        
+                                        // Check if this slot falls within the booking's time range
+                                        // but is not the starting slot
+                                        return booking.date.split("T")[0] === dayjs(startDate)
+                                                .add(dayIndex, "day")
+                                                .format("YYYY-MM-DD") &&
+                                              slotMinutes > startMinutes &&
+                                              slotMinutes < endMinutes;
+                                      });
+
+                                      // Find if there's a booking that starts at this time slot
+                                      const currentBooking = bookings.find(
+                                        (booking) =>
+                                          booking.start_time.substring(0, 5) === timeString &&
+                                          booking.date.split("T")[0] === dayjs(startDate)
+                                            .add(dayIndex, "day")
+                                            .format("YYYY-MM-DD")
                                       );
 
-                                      if (!slot) {
-                                        // Return disabled slot if no matching slot found
-                                        return (
+                                      // Find the slot with matching time
+                                      const slot = day.availability.slots.find(
+                                        (s) => s.time.startsWith(timeString)
+                                      );
+
+                                      if (continuedBooking) {
+                                        // This is a continuation of a booking that started earlier
+                                        // Mark this slot as handled
+                                        handledQuarters.add(quarterIndex);
+                                        
+                                        slots.push(
+                                          <Box
+                                            key={quarterIndex}
+                                            sx={{
+                                              gridColumn: "span 1",
+                                              display: "flex",
+                                              height: "100%",
+                                              backgroundColor: "grey.200",
+                                              opacity: 0.7,
+                                              // border: "1px dashed grey",
+                                            }}
+                                          >
+                                            <Box
+                                              height={"100%"}
+                                              width={"100%"}
+                                              display={"flex"}
+                                              justifyContent={"center"}
+                                              alignItems={"center"}
+                                            >
+                                              <StatusIcon
+                                                status={mapApiStatusToEnum(continuedBooking.status)}
+                                                sx={{ opacity: 0.5 }}
+                                              />
+                                            </Box>
+                                          </Box>
+                                        );
+                                      } else if (currentBooking) {
+                                        // Calculate how many 15-minute slots this booking spans
+                                        const startMinutes =
+                                          parseInt(currentBooking.start_time.split(":")[0]) * 60 +
+                                          parseInt(currentBooking.start_time.split(":")[1]);
+                                        const endMinutes =
+                                          parseInt(currentBooking.end_time.split(":")[0]) * 60 +
+                                          parseInt(currentBooking.end_time.split(":")[1]);
+                                        const durationInMinutes = endMinutes - startMinutes;
+                                        const slotSpan = Math.ceil(durationInMinutes / 15);
+
+                                        // Calculate how many slots are in this hour block (limited to remaining quarters)
+                                        const slotsInThisHour = Math.min(slotSpan, 4 - quarterIndex);
+
+                                        // Mark these slots as handled
+                                        for (let i = 0; i < slotsInThisHour; i++) {
+                                          handledQuarters.add(quarterIndex + i);
+                                        }
+
+                                        slots.push(
+                                          <Box
+                                            key={quarterIndex}
+                                            sx={{
+                                              gridColumn: `span ${slotsInThisHour}`,
+                                              display: "flex",
+                                              height: "100%",
+                                            }}
+                                          >
+                                            <TimeSlot
+                                              onChange={(newStatus) => {
+                                                if (slot) {
+                                                  updateSlotStatus(
+                                                    dayIndex,
+                                                    day.availability.slots.indexOf(slot),
+                                                    newStatus
+                                                  );
+                                                }
+                                              }}
+                                              status={mapApiStatusToEnum(currentBooking.status)}
+                                              disabled={
+                                                !day.availability.isAvailable || (slot?.isDisabled ?? false)
+                                              }
+                                              time={timeString}
+                                              date={dayjs(startDate).add(dayIndex, "day").toDate()}
+                                              availableDates={days
+                                                .filter((d) => d.availability.isAvailable)
+                                                .map((d) =>
+                                                  dayjs(startDate).add(days.indexOf(d), "day").toDate()
+                                                )}
+                                              bookings={bookings}
+                                              fetchBookings={fetchBookings}
+                                            />
+                                          </Box>
+                                        );
+                                      } else if (slot) {
+                                        slots.push(
+                                          <TimeSlot
+                                            key={quarterIndex}
+                                            onChange={(newStatus) =>
+                                              updateSlotStatus(
+                                                dayIndex,
+                                                day.availability.slots.indexOf(
+                                                  slot
+                                                ),
+                                                newStatus
+                                              )
+                                            }
+                                            status={slot.status}
+                                            disabled={
+                                              (!day.availability.isAvailable ||
+                                                slot.isDisabled) &&
+                                              !bookings.some(
+                                                (booking) =>
+                                                  booking.start_time.substring(
+                                                    0,
+                                                    5
+                                                  ) === slot.time &&
+                                                  booking.date.split("T")[0] ===
+                                                    dayjs(startDate)
+                                                      .add(dayIndex, "day")
+                                                      .format("YYYY-MM-DD")
+                                              )
+                                            }
+                                            time={slot.time}
+                                            date={dayjs(startDate)
+                                              .add(dayIndex, "day")
+                                              .toDate()}
+                                            availableDates={days
+                                              .filter(
+                                                (d) =>
+                                                  d.availability.isAvailable
+                                              )
+                                              .map((d) =>
+                                                dayjs(startDate)
+                                                  .add(days.indexOf(d), "day")
+                                                  .toDate()
+                                              )}
+                                            bookings={bookings}
+                                            fetchBookings={fetchBookings}
+                                          />
+                                        );
+                                      } else {
+                                        // Disabled slot if no matching slot found
+                                        slots.push(
                                           <TimeSlot
                                             key={quarterIndex}
                                             onChange={() => {}}
                                             status={EnBookings.Available}
                                             disabled={true}
-                                            time={`${currentHour
-                                              .toString()
-                                              .padStart(2, "0")}:${(
-                                              quarterIndex * 15
-                                            )
-                                              .toString()
-                                              .padStart(2, "0")}`}
+                                            time={timeString}
                                             date={dayjs(startDate)
                                               .add(dayIndex, "day")
                                               .toDate()}
@@ -1044,54 +1225,10 @@ export default function AvailabilityCalendar() {
                                           />
                                         );
                                       }
-
-                                      return (
-                                        <TimeSlot
-                                          key={quarterIndex}
-                                          onChange={(newStatus) =>
-                                            updateSlotStatus(
-                                              dayIndex,
-                                              day.availability.slots.indexOf(
-                                                slot
-                                              ),
-                                              newStatus
-                                            )
-                                          }
-                                          status={slot.status}
-                                          disabled={
-                                            (!day.availability.isAvailable ||
-                                              slot.isDisabled) &&
-                                            !bookings.some(
-                                              (booking) =>
-                                                booking.start_time.substring(
-                                                  0,
-                                                  5
-                                                ) === slot.time &&
-                                                booking.date.split("T")[0] ===
-                                                  dayjs(startDate)
-                                                    .add(dayIndex, "day")
-                                                    .format("YYYY-MM-DD")
-                                            )
-                                          }
-                                          time={slot.time}
-                                          date={dayjs(startDate)
-                                            .add(dayIndex, "day")
-                                            .toDate()}
-                                          availableDates={days
-                                            .filter(
-                                              (d) => d.availability.isAvailable
-                                            )
-                                            .map((d) =>
-                                              dayjs(startDate)
-                                                .add(days.indexOf(d), "day")
-                                                .toDate()
-                                            )}
-                                          bookings={bookings}
-                                          fetchBookings={fetchBookings}
-                                        />
-                                      );
                                     }
-                                  )}
+
+                                    return slots;
+                                  })()}
                                 </Box>
                               )
                             );

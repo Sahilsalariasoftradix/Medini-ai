@@ -166,3 +166,14 @@ export const clearBooking = async (bookingIds: IBookingIds) => {
     throw new Error(error.response?.data?.error || "Booking clearing failed.");
   }
 };
+
+// Getting the bookings by user API
+export const getBookingsByUser = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`bookings/user?user_id=${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting bookings by user:", error);
+    throw error;
+  }
+};

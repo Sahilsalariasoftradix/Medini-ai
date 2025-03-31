@@ -182,7 +182,7 @@ const SlotBookingForm: React.FC<ISlotBookingFormProps> = ({
               fullWidth
               error={!!errors.length}
               helperText={errors.length?.message}
-              disabled={isEditing}
+              // disabled={isEditing}
               value={field.value}
             >
               {Object.values(EnBookingDuration).map((duration) => (
