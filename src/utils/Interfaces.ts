@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from "dayjs";
 import { Dispatch, SetStateAction } from "react";
-import { EnBookingType } from "./enums";
+import { EnBookingType, EnShowPurposeUI } from "./enums";
 
 export interface LoginRequest {
   email: string;
@@ -272,7 +272,7 @@ export interface IUser {
 export interface ICall {
   user_id: number;
   is_scheduled_call?: boolean;
-  scheduled_call_time:string;
+  scheduled_call_time: string;
   to: string;
   from: string;
   agenda: string; // BOOK_APPOINTMENT, CANCEL_APPOINTMENT, RESCHEDULE_APPOINTMENT, INFORM_PATIENT
@@ -300,13 +300,14 @@ export interface ICall {
 }
 export interface Data {
   id: number;
-  contact: string;
+  contact: string | null;
   patientId: string;
   date: string;
-  callPurpose: string;
+  callPurpose?: string;
   length: string;
   details: string;
-  status?: "Cancel" | "Book" | "Reschedule" | "Request Info";
+  status?: EnShowPurposeUI;
+  
 }
 export interface HeadCell {
   disablePadding: boolean;
@@ -314,7 +315,7 @@ export interface HeadCell {
   label: string;
   numeric: boolean;
   sortable: boolean; // Add this property
-} 
+}
 export type Order = "asc" | "desc";
 export interface EnhancedTableProps {
   numSelected: number;
@@ -330,3 +331,16 @@ export interface EnhancedTableProps {
 export interface IGetBookingsByUser {
   bookings: IBooking[];
 }
+export interface ICallHistory {
+  id: number;
+  user_id: number;
+  time: string;
+  from_phone: string;
+  to_phone: string;
+  duration: number;
+  caller: string | null;
+  call_purpose: string;
+  scheduled_time?: string;
+  call_failed?: boolean;
+}
+

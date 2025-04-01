@@ -16,7 +16,7 @@ import MoreVertIcon from "../../assets/icons/dots-vertical.svg";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import EditIcon from "../../assets/icons/edit-table.svg";
-import PrintIcon from "../../assets/icons/printer.svg";
+// import PrintIcon from "../../assets/icons/printer.svg";
 import CancelIcon from "../../assets/icons/cancel-table.svg";
 import DeleteIcon from "../../assets/icons/delete-tr.svg";
 import SortIcon from "../../assets/icons/arrows-down-up.svg";
@@ -43,6 +43,7 @@ import {
   EnhancedTableProps,
   IBooking,
   ICall,
+  ICallHistory,
   IFilm,
   IGetBookingsByUser,
   IGetContacts,
@@ -64,7 +65,9 @@ import { useAuth } from "../../store/AuthContext";
 import CommonSnackbar from "../../components/common/CommonSnackbar";
 import {
   createCall,
+  deleteCall,
   getBookingsByUser,
+  getCallHistoryData,
   getCompanyUniqueNumber,
 } from "../../api/userApi";
 import {
@@ -74,8 +77,10 @@ import {
 } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { callPurposeOptions, headCells, rows } from "../../utils/common";
+import { callPurposeOptions, headCells } from "../../utils/common";
 import { calenderIcon } from "../../components/Booking/Form/SlotBookingForm";
+import { EnShowPurposeUI } from "../../utils/enums";
+import { CircularProgress } from "@mui/material";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -235,10 +240,26 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 //   );
 // }
 
-const ActionMenu = ({ row }: { row: Data }) => {
+const ActionMenu = ({
+  row,
+  onCallDeleted,
+}: {
+  row: Data;
+  onCallDeleted: () => void;
+}) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-
+  const [shallDelete, setShallDelete] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "error",
+  });
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation(); // Prevent row selection when clicking menu
     setAnchorEl(event.currentTarget);
@@ -250,7 +271,7 @@ const ActionMenu = ({ row }: { row: Data }) => {
   };
 
   const handleAction =
-    (action: string) => (event: React.MouseEvent<HTMLElement>) => {
+    (action: string) => async (event: React.MouseEvent<HTMLElement>) => {
       event.stopPropagation();
       switch (action) {
         case "edit":
@@ -263,11 +284,34 @@ const ActionMenu = ({ row }: { row: Data }) => {
           console.log("Cancel", row);
           break;
         case "delete":
-          console.log("Delete", row);
+          setShallDelete(true);
+          // await deleteCall(row.id);
+          console.log("Delete", row.id);
           break;
       }
       handleClose(event);
     };
+  const handleRowDelete = async () => {
+    setLoading(true);
+    try {
+      await deleteCall(row.id);
+      setShallDelete(false);
+      setLoading(false);
+      setSnackbar({
+        open: true,
+        message: "Call deleted successfully",
+        severity: "success",
+      });
+      onCallDeleted(); // Call the callback to refresh the table data
+    } catch (error) {
+      setLoading(false);
+      setSnackbar({
+        open: true,
+        message: "Failed to delete call",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <>
@@ -314,13 +358,13 @@ const ActionMenu = ({ row }: { row: Data }) => {
             Edit
           </Typography>
         </MenuItem>
-        <MenuItem onClick={handleAction("print")} sx={{ gap: 1 }}>
+        {/* <MenuItem onClick={handleAction("print")} sx={{ gap: 1 }}>
           <img src={PrintIcon} alt="" />
           <Typography variant="bodySmallSemiBold" color="grey.600">
             {" "}
             Print
           </Typography>
-        </MenuItem>
+        </MenuItem> */}
         <MenuItem onClick={handleAction("cancel")} sx={{ gap: 1 }}>
           <img src={CancelIcon} alt="" />
           <Typography variant="bodySmallSemiBold" color="grey.600">
@@ -336,6 +380,27 @@ const ActionMenu = ({ row }: { row: Data }) => {
           </Typography>
         </MenuItem>
       </Menu>
+      <CommonDialog
+        open={shallDelete}
+        onClose={() => setShallDelete(false)}
+        title="Delete Call"
+        confirmButtonType="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={loading}
+        disabled={loading}
+        onConfirm={handleRowDelete}
+      >
+        <Typography variant="bodyLargeMedium" color="grey.600">
+          Are you sure you want to delete this call?
+        </Typography>
+      </CommonDialog>
+      <CommonSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        severity={snackbar.severity}
+      />
     </>
   );
 };
@@ -390,16 +455,9 @@ const CallCenter = () => {
   const [getBookingByUser, setGetBookingByUser] = useState<IGetBookingsByUser>({
     bookings: [],
   });
+  const [getCallHistory, setGetCallHistory] = useState<ICallHistory[]>([]);
+  const [tableLoading, setTableLoading] = useState(true);
 
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "error",
-  });
   const {
     control,
     handleSubmit,
@@ -459,7 +517,17 @@ const CallCenter = () => {
     fetchContacts();
     fetchCompanyPhone();
   }, []);
-
+  const refreshCallHistory = async () => {
+    setTableLoading(true);
+    try {
+      const callHistory = await getCallHistoryData(userDetails?.user_id);
+      setGetCallHistory(callHistory);
+    } catch (error) {
+      console.error("Error fetching call history:", error);
+    } finally {
+      setTableLoading(false);
+    }
+  };
   useEffect(() => {
     // Get the current contact value from the form
     const currentValue = control._formValues?.contact;
@@ -480,7 +548,7 @@ const CallCenter = () => {
     })();
   };
   // Add this calculation for total pages
-  const totalPages = Math.ceil(rows.length / rowsPerPage);
+  const totalPages = Math.ceil(getCallHistory.length / rowsPerPage);
 
   const handleRequestSort = (
     //@ts-ignore
@@ -494,7 +562,7 @@ const CallCenter = () => {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows.map((n) => n.id);
+      const newSelected = getCallHistory.map((_, index) => index); // Use index as ID
       setSelected(newSelected);
       return;
     }
@@ -537,23 +605,90 @@ const CallCenter = () => {
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+    page > 0
+      ? Math.max(0, (1 + page) * rowsPerPage - getCallHistory.length)
+      : 0;
 
-  const visibleRows = useMemo(
-    () =>
-      [...rows]
+  const visibleRows = useMemo(() => {
+    //@ts-ignore
+    const formattedRows = getCallHistory.map((call, index) => {
+      let status;
+      // if (call.call_failed) {
+      //   status = EnShowPurposeUI.FAILED;
+      // } else
+      {
+        switch (call.call_purpose) {
+          case "BOOK":
+          case "BOOK_APPOINTMENT":
+            status = EnShowPurposeUI.BOOKED;
+            break;
+          case "CANCEL":
+          case "CANCEL_APPOINTMENT":
+            status = EnShowPurposeUI.CANCELLED;
+            break;
+          case "REQUEST_INFO":
+            status = EnShowPurposeUI.REQUESTINFO;
+            break;
+          case "RESCHEDULE_APPOINTMENT":
+            status = EnShowPurposeUI.RESCHEDULED;
+            break;
+          case "INFORM_PATIENT":
+            status = EnShowPurposeUI.INFORM_PATIENT;
+            break;
+          default:
+            status = EnShowPurposeUI.SCHEDULED;
+        }
+      }
+
+      return {
+        id: call.id,
+        contact: call.caller,
+        patientId: `${call.to_phone}`,
+        date: dayjs(
+          call.scheduled_time ? call.scheduled_time : call.time
+        ).format("DD/MM/YYYY"),
+        status: status,
+        length: call.duration ? call.duration + " mins" : "--",
+        details: "--",
+      };
+    });
+
+    return (
+      formattedRows
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         .sort(getComparator(order, orderBy))
-        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [order, orderBy, page, rowsPerPage]
-  );
+        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    );
+  }, [order, orderBy, page, rowsPerPage, getCallHistory]);
   useEffect(() => {
     (async () => {
-      const bookings = await getBookingsByUser(userDetails?.user_id);
-      setGetBookingByUser(bookings);
+      setTableLoading(true);
+      try {
+        const bookings = await getBookingsByUser(userDetails?.user_id);
+        setGetBookingByUser(bookings);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      } finally {
+        setTableLoading(false);
+      }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      setTableLoading(true);
+      try {
+        const callHistory = await getCallHistoryData(userDetails?.user_id);
+        setGetCallHistory(callHistory);
+      } catch (error) {
+        console.error("Error fetching call history:", error);
+      } finally {
+        setTableLoading(false);
+      }
+    })();
+  }, []);
+
   const onSubmit = async (data: AddCallSchema) => {
     const callData: ICall = {
       user_id: userDetails?.user_id,
@@ -683,6 +818,7 @@ const CallCenter = () => {
           severity: "error",
         });
       }
+      refreshCallHistory();
     } catch (error) {
       setSnackbar({
         open: true,
@@ -694,6 +830,15 @@ const CallCenter = () => {
     }
   };
 
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "error",
+  });
 
   return (
     <Box sx={{ px: "12px" }}>
@@ -723,11 +868,17 @@ const CallCenter = () => {
                 boxShadow: "none",
                 backgroundColor: "grey.200",
                 padding: "8px",
-                
               }}
             >
-              <CommonButton text="Pending Calls" sx={{borderRadius:'50px'}} />
-              <CommonButton variant="outlined" sx={{borderRadius:'50px'}} text="Completed Calls" />
+              <CommonButton
+                text="Pending Calls"
+                sx={{ borderRadius: "50px" }}
+              />
+              <CommonButton
+                variant="outlined"
+                sx={{ borderRadius: "50px" }}
+                text="Completed Calls"
+              />
             </ButtonGroup>
           </Box>
         </Box>
@@ -757,173 +908,218 @@ const CallCenter = () => {
       </Box>
       <Box sx={{ width: "100%" }} mt={4}>
         <Paper sx={{ width: "100%", mb: 2, boxShadow: "none", p: 0 }}>
-          {/* <EnhancedTableToolbar numSelected={selected.length} /> */}
-          <TableContainer sx={{ height: "calc(100vh - 300px)" }}>
-            <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
-              <EnhancedTableHead
-                numSelected={selected.length}
-                order={order}
-                orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
-                onRequestSort={handleRequestSort}
-                rowCount={rows.length}
-              />
-              <TableBody>
-                {visibleRows.map((row, index) => {
-                  const isItemSelected = selected.includes(row.id);
-                  const labelId = `enhanced-table-checkbox-${index}`;
+          {tableLoading ? (
+            <Box
+              sx={{
+                height: "calc(100vh - 300px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Box sx={{ textAlign: "center" }}>
+                <CircularProgress />
+                <Typography variant="bodyMediumMedium" mt={2} color="grey.600">
+                  Loading call history...
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <>
+              <TableContainer sx={{ height: "calc(100vh - 300px)" }}>
+                <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
+                  <EnhancedTableHead
+                    numSelected={selected.length}
+                    order={order}
+                    orderBy={orderBy}
+                    onSelectAllClick={handleSelectAllClick}
+                    onRequestSort={handleRequestSort}
+                    rowCount={getCallHistory.length}
+                  />
+                  {getCallHistory.length > 0 ? (
+                    <TableBody>
+                      {visibleRows.map((row, index) => {
+                        const isItemSelected = selected.includes(row.id);
+                        const labelId = `enhanced-table-checkbox-${index}`;
 
-                  return (
-                    <TableRow
-                      hover
-                      onClick={(event) => handleClick(event, row.id)}
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={row.id}
-                      selected={isItemSelected}
-                      sx={{
-                        cursor: "pointer",
-                        "& td": { borderColor: "#EDF2F7" },
-                      }}
-                    >
-                      <TableCell padding="checkbox">
-                        <RoundCheckbox
-                          label=""
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            "aria-labelledby": labelId,
+                        return (
+                          <TableRow
+                            hover
+                            onClick={(event) => handleClick(event, row.id)}
+                            role="checkbox"
+                            aria-checked={isItemSelected}
+                            tabIndex={-1}
+                            key={row.id}
+                            selected={isItemSelected}
+                            sx={{
+                              cursor: "pointer",
+                              "& td": { borderColor: "#EDF2F7" },
+                            }}
+                          >
+                            <TableCell padding="checkbox">
+                              <RoundCheckbox
+                                label=""
+                                color="primary"
+                                checked={isItemSelected}
+                                inputProps={{
+                                  "aria-labelledby": labelId,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell
+                              // component="th"
+                              id={labelId}
+                              scope="row"
+                              padding="none"
+                            >
+                              <Typography variant="bodyMediumExtraBold">
+                                {" "}
+                                {row.contact}
+                              </Typography>
+                              <Typography
+                                mt={1}
+                                color="grey.600"
+                                variant="bodyXSmallMedium"
+                              >
+                                {" "}
+                                {row.patientId}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="bodyMediumMedium">
+                                {row.date}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                sx={{ fontWeight: 500, p: 0 }}
+                                label={row.status}
+                                color={
+                                  row.status === EnShowPurposeUI.CANCELLED
+                                    ? "error"
+                                    : row.status === EnShowPurposeUI.BOOKED
+                                      ? "success"
+                                      : row.status === EnShowPurposeUI.RESCHEDULED
+                                        ? "error"
+                                        : row.status === EnShowPurposeUI.FAILED
+                                          ? "error"
+                                          : row.status === EnShowPurposeUI.SCHEDULED
+                                            ? "success"
+                                            : row.status === EnShowPurposeUI.REQUESTINFO
+                                              ? "warning"
+                                              : "default"
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {" "}
+                              <Typography variant="bodyMediumMedium">
+                                {row.length}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              {" "}
+                              <Typography variant="bodyMediumMedium">
+                                {row.details}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <ActionMenu
+                                row={row}
+                                onCallDeleted={refreshCallHistory}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+
+                      {emptyRows > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} />
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  ) : (
+                    <>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            height: "calc(100vh - 360px)",
+                            textAlign: "center",
                           }}
-                        />
-                      </TableCell>
-                      <TableCell
-                        // component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                      >
-                        <Typography variant="bodyMediumExtraBold">
-                          {" "}
-                          {row.contact}
-                        </Typography>
-                        <Typography
-                          mt={1}
-                          color="grey.600"
-                          variant="bodyXSmallMedium"
+                          colSpan={100}
                         >
-                          {" "}
-                          {row.patientId}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="bodyMediumMedium">
-                          {row.date}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          sx={{ fontWeight: 500, p: 0 }}
-                          label={row.status}
-                          color={
-                            row.status === "Cancel"
-                              ? "error"
-                              : row.status === "Book"
-                              ? "success"
-                              : row.status === "Reschedule"
-                              ? "warning"
-                              : row.status === "Request Info"
-                              ? "warning"
-                              : "default"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {" "}
-                        <Typography variant="bodyMediumMedium">
-                          {row.length}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {" "}
-                        <Typography variant="bodyMediumMedium">
-                          {row.details}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <ActionMenu row={row} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {emptyRows > 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} />
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              px: 2,
-              py: 1.5,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="bodyMediumMedium" color="grey.600">
-                Show result:
-              </Typography>
-              <Select
-                value={rowsPerPage}
-                onChange={handleChangeRowsPerPage}
-                size="small"
+                          <Typography variant="bodyLargeExtraBold" my={2}>
+                            No calls found
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    </>
+                  )}
+                </Table>
+              </TableContainer>
+              <Box
                 sx={{
-                  minWidth: "70px",
-                  height: "36px",
-                  "& .MuiSelect-select": {
-                    py: "6px",
-                  },
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1.5,
                 }}
               >
-                <MenuItem value={7}>7</MenuItem>
-                <MenuItem value={10}>10</MenuItem>
-                <MenuItem value={25}>25</MenuItem>
-                <MenuItem value={50}>50</MenuItem>
-              </Select>
-            </Box>
-            {/* <TablePagination
-              rowsPerPageOptions={[5, 7, 10, 25]}
-              component="div"
-              count={rows.length}
-              rowsPerPage={rowsPerPage}
-              labelRowsPerPage="Show result:"
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            /> */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="bodyMediumMedium" color="grey.600">
+                    Show result:
+                  </Typography>
+                  <Select
+                    value={rowsPerPage}
+                    onChange={handleChangeRowsPerPage}
+                    size="small"
+                    sx={{
+                      minWidth: "70px",
+                      height: "36px",
+                      "& .MuiSelect-select": {
+                        py: "6px",
+                      },
+                    }}
+                  >
+                    <MenuItem value={7}>7</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                    <MenuItem value={25}>25</MenuItem>
+                    <MenuItem value={50}>50</MenuItem>
+                  </Select>
+                </Box>
+                {/* <TablePagination
+                  rowsPerPageOptions={[5, 7, 10, 25]}
+                  component="div"
+                  count={rows.length}
+                  rowsPerPage={rowsPerPage}
+                  labelRowsPerPage="Show result:"
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                /> */}
 
-            <Pagination
-              variant="outlined"
-              shape="rounded"
-              count={totalPages}
-              page={page + 1} // MUI Pagination uses 1-based index
-              onChange={(e, page) => handleChangePage(e as any, page)}
-              color="primary"
-              sx={{
-                "& .MuiPaginationItem-previousNext": {
-                  border: "none",
-                  "&:hover": {
-                    backgroundColor: "transparent",
-                    border: "none",
-                  },
-                },
-              }}
-            />
-          </Box>
+                <Pagination
+                  variant="outlined"
+                  shape="rounded"
+                  count={totalPages}
+                  page={page + 1} // MUI Pagination uses 1-based index
+                  onChange={(e, page) => handleChangePage(e as any, page)}
+                  color="primary"
+                  sx={{
+                    "& .MuiPaginationItem-previousNext": {
+                      border: "none",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                        border: "none",
+                      },
+                    },
+                  }}
+                />
+              </Box>
+            </>
+          )}
         </Paper>
       </Box>
       <CommonDialog
@@ -938,8 +1134,8 @@ const CallCenter = () => {
         confirmText="Confirm"
         cancelText="Cancel"
         onConfirm={handleSubmit(onSubmit)}
-        // loading={loading.data}
-        // disabled={loading.data}
+        loading={loading.data}
+        disabled={loading.data}
       >
         <Typography variant="bodyMediumExtraBold" my={2}>
           Person to Call
@@ -1034,41 +1230,41 @@ const CallCenter = () => {
           EnCallPurposeOptionsValues.CANCEL,
           EnCallPurposeOptionsValues.RESCHEDULE,
         ].includes(callPurpose as EnCallPurposeOptionsValues) && (
-          <Box mt={2}>
-            <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
-              Appointment to{" "}
-              {callPurpose === EnCallPurposeOptionsValues.RESCHEDULE
-                ? "reschedule"
-                : "cancel"}
-            </Typography>
-            <Controller
-              name="appointmentId"
-              control={control}
-              render={({ field }) => (
-                <CommonTextField
-                  {...field}
-                  select
-                  fullWidth
-                  error={!!errors.appointmentId}
-                  helperText={errors.appointmentId?.message}
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target.value)} // Ensure onChange is properly set
-                  placeholder="Select Appointment"
-                >
-                  {getBookingByUser?.bookings?.map((booking: IBooking) => (
-                    <MenuItem
-                      key={booking?.booking_id?.toString()}
-                      value={booking?.booking_id?.toString()}
-                    >
-                      {dayjs(booking?.date).format("DD-MM-YYYY")} {" ,"}
-                      {booking.start_time}
-                    </MenuItem>
-                  ))}
-                </CommonTextField>
-              )}
-            />
+            <Box mt={2}>
+              <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+                Appointment to{" "}
+                {callPurpose === EnCallPurposeOptionsValues.RESCHEDULE
+                  ? "reschedule"
+                  : "cancel"}
+              </Typography>
+              <Controller
+                name="appointmentId"
+                control={control}
+                render={({ field }) => (
+                  <CommonTextField
+                    {...field}
+                    select
+                    fullWidth
+                    error={!!errors.appointmentId}
+                    helperText={errors.appointmentId?.message}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)} // Ensure onChange is properly set
+                    placeholder="Select Appointment"
+                  >
+                    {getBookingByUser?.bookings?.map((booking: IBooking) => (
+                      <MenuItem
+                        key={booking?.booking_id?.toString()}
+                        value={booking?.booking_id?.toString()}
+                      >
+                        {dayjs(booking?.date).format("DD-MM-YYYY")} {" ,"}
+                        {booking.start_time}
+                      </MenuItem>
+                    ))}
+                  </CommonTextField>
+                )}
+              />
 
-            {/* <Controller
+              {/* <Controller
               name="appointmentId"
               control={control}
               render={({ field }) => (
@@ -1088,8 +1284,8 @@ const CallCenter = () => {
                 />
               )}
             /> */}
-          </Box>
-        )}
+            </Box>
+          )}
 
         {/* Add Reason for appointment field */}
         <Box mt={2}>
@@ -1098,10 +1294,10 @@ const CallCenter = () => {
             {callPurpose === EnCallPurposeOptionsValues.BOOK
               ? "appointment"
               : callPurpose === EnCallPurposeOptionsValues.RESCHEDULE
-              ? "reschedule"
-              : callPurpose === EnCallPurposeOptionsValues.CANCEL
-              ? "cancellation"
-              : "call"}
+                ? "reschedule"
+                : callPurpose === EnCallPurposeOptionsValues.CANCEL
+                  ? "cancellation"
+                  : "call"}
           </Typography>
 
           <Controller
@@ -1130,163 +1326,163 @@ const CallCenter = () => {
           EnCallPurposeOptionsValues.BOOK,
           EnCallPurposeOptionsValues.RESCHEDULE,
         ].includes(callPurpose as EnCallPurposeOptionsValues) && (
-          <>
-            {/* Add In Person Only toggle */}
-            <Box mt={2}>
-              <Typography variant="bodyMediumMedium" mb={1}>
-                In Person Only?
-              </Typography>
-              <Box display="flex" gap={4}>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Controller
-                    name="inPersonOnly"
-                    control={control}
-                    render={({ field }) => (
-                      <RoundCheckbox
-                        checked={field.value === true}
-                        onChange={() => field.onChange(true)}
-                        label=""
-                      />
-                    )}
-                  />
-                  <Typography variant="bodyMediumMedium">Yes</Typography>
-                </Box>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Controller
-                    name="inPersonOnly"
-                    control={control}
-                    render={({ field }) => (
-                      <RoundCheckbox
-                        checked={field.value === false}
-                        onChange={() => field.onChange(false)}
-                        label=""
-                      />
-                    )}
-                  />
-                  <Typography variant="bodyMediumMedium">No</Typography>
+            <>
+              {/* Add In Person Only toggle */}
+              <Box mt={2}>
+                <Typography variant="bodyMediumMedium" mb={1}>
+                  In Person Only?
+                </Typography>
+                <Box display="flex" gap={4}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Controller
+                      name="inPersonOnly"
+                      control={control}
+                      render={({ field }) => (
+                        <RoundCheckbox
+                          checked={field.value === true}
+                          onChange={() => field.onChange(true)}
+                          label=""
+                        />
+                      )}
+                    />
+                    <Typography variant="bodyMediumMedium">Yes</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Controller
+                      name="inPersonOnly"
+                      control={control}
+                      render={({ field }) => (
+                        <RoundCheckbox
+                          checked={field.value === false}
+                          onChange={() => field.onChange(false)}
+                          label=""
+                        />
+                      )}
+                    />
+                    <Typography variant="bodyMediumMedium">No</Typography>
+                  </Box>
                 </Box>
               </Box>
-            </Box>
 
-            {/* Add Book Between section */}
-            <Typography variant="bodyMediumMedium" mt={3} mb={1}>
-              Book Between
-            </Typography>
-
-            {/* From date */}
-            <Box mt={2}>
-              <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
-                From
+              {/* Add Book Between section */}
+              <Typography variant="bodyMediumMedium" mt={3} mb={1}>
+                Book Between
               </Typography>
-              <Controller
-                name="bookingStartDate"
-                control={control}
-                render={({ field: { onChange, value, ...field } }) => (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      {...field}
-                      sx={{
-                        width: "100%",
-                      }}
-                      value={value ? dayjs(value) : null}
-                      onChange={(newValue) => {
-                        onChange(
-                          newValue ? newValue.format("YYYY-MM-DD") : null
-                        );
-                      }}
-                      minDate={dayjs()}
-                      slotProps={{
-                        textField: {
-                          error: !!errors.bookingStartDate,
-                          helperText: errors.bookingStartDate?.message,
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                )}
-              />
-            </Box>
 
-            {/* Not Later Than */}
-            <Box mt={2}>
-              <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
-                Not Later Than
-              </Typography>
-              <Controller
-                name="bookingEndDate"
-                control={control}
-                render={({ field: { onChange, value, ...field } }) => (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      {...field}
-                      sx={{
-                        width: "100%",
-                      }}
-                      minDate={dayjs()}
-                      value={value ? dayjs(value) : null}
-                      onChange={(newValue) => {
-                        onChange(
-                          newValue ? newValue.format("YYYY-MM-DD") : null
-                        );
-                      }}
-                      slotProps={{
-                        textField: {
-                          error: !!errors.bookingEndDate,
-                          helperText: errors.bookingEndDate?.message,
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                )}
-              />
-            </Box>
+              {/* From date */}
+              <Box mt={2}>
+                <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+                  From
+                </Typography>
+                <Controller
+                  name="bookingStartDate"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        {...field}
+                        sx={{
+                          width: "100%",
+                        }}
+                        value={value ? dayjs(value) : null}
+                        onChange={(newValue) => {
+                          onChange(
+                            newValue ? newValue.format("YYYY-MM-DD") : null
+                          );
+                        }}
+                        minDate={dayjs()}
+                        slotProps={{
+                          textField: {
+                            error: !!errors.bookingStartDate,
+                            helperText: errors.bookingStartDate?.message,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  )}
+                />
+              </Box>
 
-            {/* Appointment Length */}
-            <Box mt={2}>
-              <Typography
-                variant="bodySmallMedium"
-                color="grey.600"
-                mb={1}
-                display="flex"
-                alignItems="center"
-                gap={1}
-              >
-                Length
-                <Box
-                  component="span"
-                  sx={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: "50%",
-                    border: "1px solid #E2E8F0",
-                    display: "inline-flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "10px",
-                    color: "grey.500",
-                  }}
+              {/* Not Later Than */}
+              <Box mt={2}>
+                <Typography variant="bodySmallMedium" color="grey.600" mb={1}>
+                  Not Later Than
+                </Typography>
+                <Controller
+                  name="bookingEndDate"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        {...field}
+                        sx={{
+                          width: "100%",
+                        }}
+                        minDate={dayjs()}
+                        value={value ? dayjs(value) : null}
+                        onChange={(newValue) => {
+                          onChange(
+                            newValue ? newValue.format("YYYY-MM-DD") : null
+                          );
+                        }}
+                        slotProps={{
+                          textField: {
+                            error: !!errors.bookingEndDate,
+                            helperText: errors.bookingEndDate?.message,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  )}
+                />
+              </Box>
+
+              {/* Appointment Length */}
+              <Box mt={2}>
+                <Typography
+                  variant="bodySmallMedium"
+                  color="grey.600"
+                  mb={1}
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
                 >
-                  i
-                </Box>
-              </Typography>
-              <CustomSelect
-                name="appointmentLength"
-                control={control}
-                errors={errors}
-                options={[
-                  { label: "15 minutes", value: "15" },
-                  { label: "30 minutes", value: "30" },
-                  { label: "45 minutes", value: "45" },
-                  { label: "1 hour", value: "60" },
-                  { label: "1 hour 15 minutes", value: "75" },
-                  { label: "1 hour 30 minutes", value: "90" },
-                  { label: "1 hour 45 minutes", value: "105" },
-                  { label: "2 hours", value: "120" },
-                ]}
-              />
-            </Box>
-          </>
-        )}
+                  Length
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: "50%",
+                      border: "1px solid #E2E8F0",
+                      display: "inline-flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      fontSize: "10px",
+                      color: "grey.500",
+                    }}
+                  >
+                    i
+                  </Box>
+                </Typography>
+                <CustomSelect
+                  name="appointmentLength"
+                  control={control}
+                  errors={errors}
+                  options={[
+                    { label: "15 minutes", value: "15" },
+                    { label: "30 minutes", value: "30" },
+                    { label: "45 minutes", value: "45" },
+                    { label: "1 hour", value: "60" },
+                    { label: "1 hour 15 minutes", value: "75" },
+                    { label: "1 hour 30 minutes", value: "90" },
+                    { label: "1 hour 45 minutes", value: "105" },
+                    { label: "2 hours", value: "120" },
+                  ]}
+                />
+              </Box>
+            </>
+          )}
 
         {!isEditing && (
           <AddContact

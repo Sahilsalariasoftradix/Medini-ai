@@ -58,10 +58,9 @@ export enum EnBookings {
   ClearAppointment = 7,
 }
 export enum EnBookingStatus {
-  Available = 'available',
-  Active = 'active',
-  Cancelled = 'cancelled',
-
+  Available = "available",
+  Active = "active",
+  Cancelled = "cancelled",
 }
 
 export enum EStaticID {
@@ -100,6 +99,19 @@ export enum EnCallPurposeOptionsValues {
   RESCHEDULE = "RESCHEDULE_APPOINTMENT",
   REQUESTINFO = "REQUEST_INFO",
   INFORMPATIENT = "INFORM_PATIENT",
+}
+export enum EnShowPurposeUI {
+  SCHEDULED = "Scheduled",
+  FAILED = "Failed",
+  CANCELLED = "Cancel",
+  UNCONFIRMED = "Unconfirmed",
+  EDIT = "Edit",
+  BOOKED = "Booked",
+  ADD_APPOINTMENT = "Add Appointment",
+  CLEAR_APPOINTMENT = "Clear Appointment",
+  RESCHEDULED = "Reschedule",
+  REQUESTINFO = "Request Info",
+  INFORM_PATIENT = "Inform Patient"
 }
 export enum EnUserCreationStatus {
   SUCCESS = "User created successfully",
