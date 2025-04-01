@@ -177,3 +177,26 @@ export const getBookingsByUser = async (userId: number) => {
     throw error;
   }
 };
+
+export const getCallHistoryData = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`call-history?user_id=${userId}`);
+    return response.data?.data;
+  } catch (error) {
+    console.error("Error getting call history:", error);
+    throw error;
+  }
+};
+export const deleteCall = async (callId: number) => {
+  try {
+    const response = await apiClient.delete(`outbound-call-grok`, {
+      data: {
+        call_id: callId
+      }
+    });
+    return response.data?.data;
+  } catch (error) {
+    console.error("Error deleting call:", error);
+    throw error;
+  }
+};
