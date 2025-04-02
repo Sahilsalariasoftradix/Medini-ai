@@ -7,18 +7,32 @@ import { getCompanyUniqueNumber } from "../../../api/userApi";
 import { useAuth } from "../../../store/AuthContext";
 import useLoading from "../../../hooks/useLoading";
 import { formatPhoneNumber } from "../../../utils/common";
+import {
+  getCurrentUserId,
+  // updateUserDetailsInFirestore,
+} from "../../../firebase/AuthService";
+import { userNotSignedInErrorMessage } from "../../../utils/errorHandler";
 
 const YourNewPhone = () => {
-  const { goToNextStep, setCompanyNumber, companyNumber,companyId } = useStepForm();
+  const { goToNextStep, setCompanyNumber, companyNumber, companyId } =
+    useStepForm();
   const { loading, startLoading, stopLoading } = useLoading();
-  const { userDetails } = useAuth();  
+  const { userDetails } = useAuth();
 
   useEffect(() => {
     const fetchCompanyNumber = async () => {
       startLoading();
       try {
+        // Step 1: Get the current user ID
+        const userId = getCurrentUserId();
+        if (!userId) {
+          throw new Error(userNotSignedInErrorMessage);
+        }
         const resp = await getCompanyUniqueNumber(companyId!);
         setCompanyNumber(formatPhoneNumber(resp.phoneNumber));
+        // await updateUserDetailsInFirestore(userId, {
+        //   company_phone: resp.phoneNumber,
+        // });
       } catch (error) {
         console.error("Error fetching company number:", error);
       } finally {
@@ -32,7 +46,7 @@ const YourNewPhone = () => {
   return (
     <StepFormLayout>
       <Typography align="center" variant="h3">
-      This is your new phone #
+        This is your new phone #
       </Typography>
       {loading ? (
         <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
@@ -49,8 +63,8 @@ const YourNewPhone = () => {
         sx={{ my: 1 }}
         color="grey.600"
       >
-        This is your new phone number for patient bookings. 
-        Share this with your patients to start receiving calls.
+        This is your new phone number for patient bookings. Share this with your
+        patients to start receiving calls.
       </Typography>
 
       <form>

@@ -1,5 +1,10 @@
 import dayjs from "dayjs";
-import { EnBookings, EnCallPurposeOptions, EnCallPurposeOptionsValues, EnCancelAppointment } from "./enums";
+import {
+  EnBookings,
+  EnCallPurposeOptions,
+  EnCallPurposeOptionsValues,
+  EnCancelAppointment,
+} from "./enums";
 import { overRideSvgColor } from "./filters";
 import { z } from "zod";
 import { Data, HeadCell } from "./Interfaces";
@@ -159,21 +164,20 @@ export const availabilitySchema = z.object({
 
 export type AppointmentFormData = z.infer<typeof appointmentSchema>;
 export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
-export function formatDays(dayCodes:string[]) {
+export function formatDays(dayCodes: string[]) {
   const dayMap = {
-      MO: "Monday",
-      TU: "Tuesday",
-      WE: "Wednesday",
-      TH: "Thursday",
-      FR: "Friday",
-      SA: "Saturday",
-      SU: "Sunday"
+    MO: "Monday",
+    TU: "Tuesday",
+    WE: "Wednesday",
+    TH: "Thursday",
+    FR: "Friday",
+    SA: "Saturday",
+    SU: "Sunday",
   };
 
   return dayCodes.map((code) => dayMap[code as keyof typeof dayMap] || code);
 }
 export const callPurposeOptions = [
-
   {
     label: EnCallPurposeOptions.REQUESTINFO,
     value: EnCallPurposeOptionsValues.REQUESTINFO,
@@ -361,3 +365,7 @@ const mockMessages = [
     isUser: true,
   },
 ];
+
+export const removeTimeZone = (date: string) => {
+  return date.split("T")[0];
+};

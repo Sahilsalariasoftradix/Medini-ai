@@ -111,7 +111,6 @@ export enum EnShowPurposeUI {
   CLEAR_APPOINTMENT = "Clear Appointment",
   RESCHEDULED = "Reschedule",
   REQUESTINFO = "Request Info",
-  INFORM_PATIENT = "Inform Patient"
 }
 export enum EnUserCreationStatus {
   SUCCESS = "User created successfully",

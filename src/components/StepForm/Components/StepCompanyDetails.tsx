@@ -69,6 +69,7 @@ const CompanyDetails: React.FC = () => {
       // Send company details
       const response = await postCompanyDetails(companyData);
       await updateUserDetailsInFirestore(userId, {
+        company_id: response.company?.id,
         onboardingStatus: EnOnboardingStatus.STATUS_1, // Use updatedStatus directly
       });
 

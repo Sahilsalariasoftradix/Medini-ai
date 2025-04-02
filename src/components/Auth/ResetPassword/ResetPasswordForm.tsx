@@ -53,7 +53,7 @@ const ResetPasswordForm = () => {
       setIsLoading(false);
       setTimeout(function () {
         navigate(routes.auth.signIn, { replace: true });
-      }, 1000);
+      }, 2000);
     } catch (error: any) {
       setSnackbarSeverity("error");
       setSnackbarMessage(resetPasswordEmailAlreadyRegisteredMessage);
@@ -98,11 +98,11 @@ const ResetPasswordForm = () => {
           />
           <Box sx={{ textAlign: "center" }} mt={3}>
             <CommonLink
-              to={routes.auth.verifyEmail}
+              to={routes.auth.signIn}
               sx={{ color: "secondary.main" }}
               variant="bodyLargeExtraBold"
             >
-              {staticText.auth.forgotEmailText}
+            Back to Login
             </CommonLink>
           </Box>
         </form>

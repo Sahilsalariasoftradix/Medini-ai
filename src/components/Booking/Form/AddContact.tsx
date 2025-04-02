@@ -13,8 +13,8 @@ import { useAuth } from "../../../store/AuthContext";
 import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
 
 const contactSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(1, "First name is required").max(50, "First name must be less than 50 characters"),
+  lastName: z.string().min(1, "Last name is required").max(50, "Last name must be less than 50 characters"),
   email: z
     .string()
     .min(1, { message: formErrorMessage.email.required }) // Checks if the field is empty
