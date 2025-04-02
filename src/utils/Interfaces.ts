@@ -270,6 +270,7 @@ export interface IUser {
 }
 
 export interface ICall {
+  call_id?: number;
   user_id: number;
   is_scheduled_call?: boolean;
   scheduled_call_time: string;

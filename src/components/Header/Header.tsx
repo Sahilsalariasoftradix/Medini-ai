@@ -19,6 +19,7 @@ import profile2 from "../../assets/images/profile-2.svg";
 import { useAuth } from "../../store/AuthContext";
 import { useLocation } from "react-router-dom";
 import { getPageNameFromPath } from "../../utils/common";
+import CommonDialog from "../common/CommonDialog";
 
 const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -33,6 +34,7 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
     setAnchorEl(null);
   };
   const { userDetails: userInfo, logout } = useAuth();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   return (
     <AppBar
       position="fixed"
@@ -135,7 +137,7 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
               <MenuItem
                 onClick={() => {
                   // Handle logout
-                  logout();
+                  setIsLogoutModalOpen(true);
                 }}
                 sx={{
                   color: "error.main",
@@ -147,6 +149,22 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
                 Logout
               </MenuItem>
             </Menu>
+            <CommonDialog
+              open={isLogoutModalOpen}
+              onClose={() => setIsLogoutModalOpen(false)}
+              confirmButtonType="error"
+              confirmText="Logout"
+              onConfirm={() => {
+                setIsLogoutModalOpen(false);
+                logout();
+              }}
+              cancelText="Cancel"
+              title="Logout"
+            >
+              <Typography variant="bodyLargeExtraBold" color="grey.600">
+                Are you sure you want to logout?
+              </Typography>
+            </CommonDialog>
           </Box>
         </Toolbar>
       </Container>

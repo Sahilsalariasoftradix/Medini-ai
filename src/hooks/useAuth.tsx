@@ -44,18 +44,18 @@ export const SignInSchema = z.object({
   password: z
     .string()
     .min(1, { message: formErrorMessage.password.required }) // Empty password
-    .min(8, { message: formErrorMessage.password.tooShort })
-    .max(20, "Max 20 characters.") // Less than 8 characters
-    .refine(
-      (password) =>
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
-          password
-        ),
-      {
-        message:
-          "Password must contain 8 characters (at least 1 uppercase, 1 lowercase, 1 number, and 1 special character).",
-      }
-    ),
+    // .min(8, { message: formErrorMessage.password.tooShort })
+    // .max(20, "Max 20 characters.") // Less than 8 characters
+    // .refine(
+    //   (password) =>
+    //     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+    //       password
+    //     ),
+    //   {
+    //     message:
+    //       "Password must contain 8 characters (at least 1 uppercase, 1 lowercase, 1 number, and 1 special character).",
+    //   }
+    // ),
 });
 // Validation schema
 export const ResetPasswordSchema = z.object({
