@@ -7,7 +7,7 @@ import CommonButton from "../../common/CommonButton";
 import { format } from "date-fns";
 import { availabilityIcons } from "../../../utils/Icons";
 import StepProgress from "../StepProgress";
-import { EnStepProgress } from "../../../utils/enums";
+import { EnBookingType, EnStepProgress } from "../../../utils/enums";
 
 const AppointmentBooked = () => {
   const {
@@ -18,13 +18,14 @@ const AppointmentBooked = () => {
     setFlowType,
     setHasAppointment,
     step,
+    newAppointmentData,
+    referenceNumber
   } = useAppointmentChecker();
 
   // Format date and time for display
   //@ts-ignore
-  const formattedDate = appointmentData?.date
-    ? //@ts-ignore
-      format(new Date(appointmentData.date), "MMMM dd, yyyy")
+  const formattedDate = newAppointmentData?.day
+    ? format(new Date(newAppointmentData.day), "MMMM dd, yyyy")
     : "Not selected";
   //@ts-ignore
   const formattedTime = appointmentData?.time
@@ -54,7 +55,7 @@ const AppointmentBooked = () => {
       <Typography
         align="center"
         variant="bodyLargeMedium"
-        sx={{ mb: 3 }}
+        sx={{ mb: 2 }}
         color="grey.600"
       >
         Your appointment is successfully scheduled. Here's your confirmation
@@ -66,13 +67,17 @@ const AppointmentBooked = () => {
         mb={2}
         sx={{ fontSize: { xs: 24, md: 28 } }}
       >
-        1452
+        {referenceNumber}
       </Typography>
       <Box display="flex" gap={2} justifyContent="start" alignItems={"center"}>
         <Typography variant="bodySmallMedium" color="grey.600">
           With
         </Typography>
-        <Typography variant="bodySmallMedium">Dr J, Johnson</Typography>
+        <Typography variant="bodySmallMedium">
+          {" "}
+          {(newAppointmentData?.practitioner as { name?: string })?.name ||
+            "N/A"}
+        </Typography>
       </Box>
       <Box
         display="flex"
@@ -85,13 +90,17 @@ const AppointmentBooked = () => {
           At
         </Typography>
         <Box>
-          <Typography variant="bodySmallMedium">Surgery Name</Typography>
-          <Typography variant="bodySmallMedium">9262 Runte St</Typography>
+          <Typography variant="bodySmallMedium">
+            {" "}
+            {(newAppointmentData?.businessName as { name?: string })?.name ||
+              "N/A"}
+          </Typography>
+          {/* <Typography variant="bodySmallMedium">9262 Runte St</Typography>
           <Typography variant="bodySmallMedium">San Francisco</Typography>
           <Typography variant="bodySmallMedium">Canada</Typography>
           <Typography variant="bodySmallMedium">
             (651) 522-3704 x8807
-          </Typography>
+          </Typography> */}
         </Box>
       </Box>
       <Box
@@ -104,7 +113,7 @@ const AppointmentBooked = () => {
         <Typography variant="bodySmallMedium" color="grey.600">
           Date
         </Typography>
-        <Typography variant="bodySmallMedium">Tue 05/02/2025</Typography>
+        <Typography variant="bodySmallMedium">{formattedDate}</Typography>
       </Box>
       <Box
         display="flex"
@@ -116,7 +125,9 @@ const AppointmentBooked = () => {
         <Typography variant="bodySmallMedium" color="grey.600">
           Length
         </Typography>
-        <Typography variant="bodySmallMedium">15 min</Typography>
+        <Typography variant="bodySmallMedium">
+          {newAppointmentData?.appointmentLength} mins
+        </Typography>
       </Box>
       <Box
         display="flex"
@@ -134,8 +145,19 @@ const AppointmentBooked = () => {
           justifyContent="start"
           alignItems={"center"}
         >
-          <img src={availabilityIcons.phone} alt="" />
-          <Typography variant="bodySmallMedium">Phone</Typography>
+          <img
+            src={
+              newAppointmentData?.appointmentType === EnBookingType.PHONE
+                ? availabilityIcons.phone
+                : availabilityIcons.in_person
+            }
+            alt=""
+          />
+          <Typography variant="bodySmallMedium">
+            {newAppointmentData?.appointmentType === EnBookingType.PHONE
+              ? "Phone"
+              : "In Person"}
+          </Typography>
         </Box>
       </Box>
       <Box my={4} display="flex" justifyContent="center">

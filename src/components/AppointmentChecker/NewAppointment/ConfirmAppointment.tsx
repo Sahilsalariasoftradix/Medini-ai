@@ -5,32 +5,80 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { availabilityIcons, EditFormIcon } from "../../../utils/Icons";
 import StepProgress from "../StepProgress";
-import { EnStepProgress } from "../../../utils/enums";
+import { EnBookingType, EnStepProgress } from "../../../utils/enums";
+import { createBooking } from "../../../api/userApi";
+import dayjs from "dayjs";
+import CommonSnackbar from "../../common/CommonSnackbar";
 
 const ConfirmAppointment = () => {
-  const { step, setStep, newAppointmentData } = useAppointmentChecker();
+  const {
+    step,
+    setStep,
+    newAppointmentData,
+    setReferenceNumber,
+  } = useAppointmentChecker();
+
   const [submitting, setSubmitting] = useState(false);
-
-  const handleConfirm = () => {
+  const { snackbar, setSnackbar } = useAppointmentChecker();
+  const submitBookingData = async () => {
     setSubmitting(true);
+    try {
+      // Convert time string (e.g., "14:30") to Date object
+      const timeArray = newAppointmentData?.time?.split(":").map(Number) || [
+        0, 0,
+      ];
+      const [hours, minutes] = timeArray;
+      const startTime = new Date(newAppointmentData?.day || new Date());
+      startTime.setHours(hours, minutes, 0, 0); // Set start time
 
-    // Simulate API call
-    setTimeout(() => {
-      // Submit appointment data here to your API
-      // Then navigate to the AppointmentBooked screen
+      // Add appointment length (in minutes)
+      const endTime = new Date(startTime);
+      endTime.setMinutes(
+        endTime.getMinutes() + Number(newAppointmentData?.appointmentLength)
+      );
+
+      const payload = {
+        //@ts-ignore
+        user_id: newAppointmentData?.practitioner?.id,
+        date: dayjs(newAppointmentData?.day).format("YYYY-MM-DD"),
+        start_time: newAppointmentData?.time,
+        end_time: `${endTime.getHours()}:${String(
+          endTime.getMinutes()
+        ).padStart(2, "0")}`, // Format as HH:mm
+        details: newAppointmentData?.details,
+        booking_type: newAppointmentData?.appointmentType,
+        email: newAppointmentData?.email,
+        first_name: newAppointmentData?.firstName,
+        last_name: newAppointmentData?.lastName,
+        phone: newAppointmentData?.phone,
+      };
+
+      //@ts-ignore
+      const resp = await createBooking(payload);
+      setReferenceNumber(resp.booking_id);
+      setTimeout(() => {
+        setStep(step + 1);
+      }, 500);
+      setSnackbar({
+        open: true,
+        message: "Appointment created successfully",
+        severity: "success",
+      });
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message as string,
+        severity: "error",
+      });
+    } finally {
       setSubmitting(false);
-      setStep(step + 1);
-    }, 1500);
+    }
   };
 
   // Format date and time for display
-  const formattedDate = newAppointmentData?.date
-    ? format(new Date(newAppointmentData.date), "MMMM dd, yyyy")
+  const formattedDate = newAppointmentData?.day
+    ? format(new Date(newAppointmentData.day), "MMMM dd, yyyy")
     : "Not selected";
-
-  //   const formattedTime = newAppointmentData?.time
-  //     ? format(new Date(newAppointmentData.time), "h:mm a")
-  //     : "Not selected";
 
   return (
     <Box>
@@ -93,14 +141,14 @@ const ConfirmAppointment = () => {
         </Typography>
       </Box>
 
-      <Box display={"flex"} mt={2} justifyContent={"space-between"}>
+      {/* <Box display={"flex"} mt={2} justifyContent={"space-between"}>
         <Typography variant="bodySmallMedium" color="grey.600">
           DOB:
         </Typography>
         <Typography variant="bodySmallMedium">
           {newAppointmentData?.dateOfBirth || "N/A"}
         </Typography>
-      </Box>
+      </Box> */}
 
       <Divider sx={{ my: 1 }} />
       <Box display={"flex"} mt={4} mb={2} justifyContent={"space-between"}>
@@ -128,14 +176,18 @@ const ConfirmAppointment = () => {
           Practitioner:
         </Typography>
         <Typography variant="bodySmallMedium">
-          {newAppointmentData?.practitioner || "N/A"}
+          {(newAppointmentData?.practitioner as { name?: string })?.name ||
+            "N/A"}
         </Typography>
       </Box>
       <Box display={"flex"} mt={2} justifyContent={"space-between"}>
         <Typography variant="bodySmallMedium" color="grey.600">
           Clinic:
         </Typography>
-        <Typography variant="bodySmallMedium">{"None"}</Typography>
+        <Typography variant="bodySmallMedium">
+          {(newAppointmentData?.businessName as { name?: string })?.name ||
+            "N/A"}
+        </Typography>
       </Box>
 
       <Box display={"flex"} mt={2} justifyContent={"space-between"}>
@@ -171,7 +223,9 @@ const ConfirmAppointment = () => {
             alt=""
           />
           <Typography variant="bodySmallMedium">
-            {newAppointmentData?.appointmentType || "N/A"}
+            {newAppointmentData?.appointmentType === EnBookingType.PHONE
+              ? "Phone"
+              : "In Person"}
           </Typography>
         </Box>
       </Box>
@@ -181,7 +235,7 @@ const ConfirmAppointment = () => {
           Appointment Length:
         </Typography>
         <Typography variant="bodySmallMedium">
-          {newAppointmentData?.appointmentLength || "N/A"}
+          {newAppointmentData?.appointmentLength || "N/A"} mins
         </Typography>
       </Box>
 
@@ -202,7 +256,7 @@ const ConfirmAppointment = () => {
           variant="contained"
           color="primary"
           fullWidth
-          onClick={handleConfirm}
+          onClick={submitBookingData}
           disabled={submitting}
           startIcon={
             submitting ? <CircularProgress size={20} color="inherit" /> : null
@@ -217,6 +271,13 @@ const ConfirmAppointment = () => {
           totalSteps={EnStepProgress.TOTAL_STEPS}
         />
       </Box>
+      <CommonSnackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+        severity={snackbar.severity}
+      />
     </Box>
   );
 };

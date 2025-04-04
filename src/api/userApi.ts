@@ -168,9 +168,14 @@ export const clearBooking = async (bookingIds: IBookingIds) => {
 };
 
 // Getting the bookings by user API
-export const getBookingsByUser = async (userId: number) => {
+export const getBookingsByUser = async (
+  userId: number,
+  phoneNumber: string
+) => {
   try {
-    const response = await apiClient.get(`bookings/user?user_id=${userId}`);
+    const response = await apiClient.get(
+      `bookings/user?user_id=${userId}&phone=${phoneNumber}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting bookings by user:", error);
@@ -178,9 +183,11 @@ export const getBookingsByUser = async (userId: number) => {
   }
 };
 
-export const getCallHistoryData = async (userId: number) => {
+export const getCallHistoryData = async (userId: number, status: string) => {
   try {
-    const response = await apiClient.get(`call-history?user_id=${userId}`);
+    const response = await apiClient.get(
+      `call-history?user_id=${userId}&status=${status}`
+    );
     return response.data?.data;
   } catch (error) {
     console.error("Error getting call history:", error);
@@ -191,12 +198,21 @@ export const deleteCall = async (callId: number) => {
   try {
     const response = await apiClient.delete(`outbound-call-grok`, {
       data: {
-        call_id: callId
-      }
+        call_id: callId,
+      },
     });
     return response.data?.data;
   } catch (error) {
     console.error("Error deleting call:", error);
+    throw error;
+  }
+};
+export const getCompanyDetails = async () => {
+  try {
+    const response = await apiClient.get(`company/users`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting company details:", error);
     throw error;
   }
 };

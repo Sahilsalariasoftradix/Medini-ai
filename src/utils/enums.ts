@@ -122,10 +122,16 @@ export enum EnStepProgress {
 export enum EnBookingType {
   IN_PERSON = "in-person",
   PHONE = "phone",
+  BOTH = "both",
 }
 export enum EnBookingDuration {
   DURATION_15 = "15",
   DURATION_30 = "30",
   DURATION_45 = "45",
   DURATION_60 = "60",
+}
+export enum EnGetCallHistory {
+  COMPLETED = "completed",
+  PENDING = "pending",
+ 
 }

@@ -25,7 +25,6 @@ import CommonTextField from "../../components/common/CommonTextField";
 import searchIcon from "../../assets/icons/Search.svg";
 import CommonButton from "../../components/common/CommonButton";
 import add from "../../assets/icons/add-icn.svg";
-import filter from "../../assets/icons/Filter.svg";
 import { useEffect, useMemo, useState } from "react";
 import { RoundCheckbox } from "../../components/common/RoundCheckbox";
 import {
@@ -44,6 +43,7 @@ import {
   IBooking,
   ICall,
   ICallHistory,
+  IContact,
   IFilm,
   IGetBookingsByUser,
   IGetContacts,
@@ -60,7 +60,10 @@ import addIcon from "../../assets/icons/add-icn.svg";
 import AddContact from "../../components/Booking/Form/AddContact";
 import CustomSelect from "../../components/common/CustomSelect";
 
-import { EnCallPurposeOptionsValues } from "../../utils/enums";
+import {
+  EnCallPurposeOptionsValues,
+  EnGetCallHistory,
+} from "../../utils/enums";
 import { useAuth } from "../../store/AuthContext";
 import CommonSnackbar from "../../components/common/CommonSnackbar";
 import {
@@ -81,6 +84,7 @@ import { callPurposeOptions, headCells } from "../../utils/common";
 import { calenderIcon } from "../../components/Booking/Form/SlotBookingForm";
 import { EnShowPurposeUI } from "../../utils/enums";
 import { CircularProgress } from "@mui/material";
+import useDebounce from "../../hooks/useDebounce";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -447,7 +451,8 @@ const CallCenter = () => {
   const [contacts, setContacts] = useState<IGetContacts>([]);
   // Search contact inputs
   const [openContactSearch, setOpenContactSearch] = useState(false);
-  const [selectedContact, setSelectedContact] = useState(null);
+  const [selectedContact, setSelectedContact] = useState<IContact | null>(null);
+
   const [openAddContact, setOpenAddContact] = useState(false);
   const [companyPhone, setCompanyPhone] = useState("");
   //@ts-ignore
@@ -462,6 +467,11 @@ const CallCenter = () => {
   const [currentEditingCall, setCurrentEditingCall] = useState<Data | null>(
     null
   );
+  const [callHistoryStatus, setCallHistoryStatus] = useState<EnGetCallHistory>(
+    EnGetCallHistory.PENDING
+  );
+  const [searchCalls, setSearchCalls] = useState("");
+  const debouncedSearchValue = useDebounce(searchCalls, 300);
 
   const {
     control,
@@ -527,7 +537,10 @@ const CallCenter = () => {
   const refreshCallHistory = async () => {
     setTableLoading(true);
     try {
-      const callHistory = await getCallHistoryData(userDetails?.user_id);
+      const callHistory = await getCallHistoryData(
+        userDetails?.user_id,
+        callHistoryStatus ? callHistoryStatus : ""
+      );
       setGetCallHistory(callHistory);
     } catch (error) {
       console.error("Error fetching call history:", error);
@@ -652,8 +665,10 @@ const CallCenter = () => {
           call.scheduled_time ? call.scheduled_time : call.time
         ).format("DD/MM/YYYY"),
         status: status,
-        length: call.duration ? call.duration + " mins" : "--",
-        details: "--",
+        length: call.payload?.appointment_length
+          ? call.payload.appointment_length + " mins"
+          : "--",
+        details: call.payload?.call_reason ? call.payload.call_reason : "--",
       };
     });
 
@@ -665,25 +680,35 @@ const CallCenter = () => {
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
     );
   }, [order, orderBy, page, rowsPerPage, getCallHistory]);
+  // console.log(selectedContact);
+
   useEffect(() => {
     (async () => {
       setTableLoading(true);
       try {
-        const bookings = await getBookingsByUser(userDetails?.user_id);
-        setGetBookingByUser(bookings);
+        if (selectedContact) {
+          const bookings = await getBookingsByUser(
+            userDetails?.user_id,
+            selectedContact?.phone
+          );
+          setGetBookingByUser(bookings);
+        }
       } catch (error) {
         console.error("Error fetching bookings:", error);
       } finally {
         setTableLoading(false);
       }
     })();
-  }, []);
+  }, [selectedContact]);
 
   useEffect(() => {
     (async () => {
       setTableLoading(true);
       try {
-        const callHistory = await getCallHistoryData(userDetails?.user_id);
+        const callHistory = await getCallHistoryData(
+          userDetails?.user_id,
+          callHistoryStatus ? callHistoryStatus : ""
+        );
         setGetCallHistory(callHistory);
       } catch (error) {
         console.error("Error fetching call history:", error);
@@ -691,10 +716,9 @@ const CallCenter = () => {
         setTableLoading(false);
       }
     })();
-  }, []);
+  }, [callHistoryStatus]);
 
   // Add a function to handle editing a call
-  console.log(getCallHistory);
   const handleEditCall = (callData: Data) => {
     setCurrentEditingCall(callData);
 
@@ -714,6 +738,7 @@ const CallCenter = () => {
       };
 
       // Pre-fill the form with existing data
+
       reset({
         contact: {
           title: `${contactInfo.firstName} ${contactInfo.lastName}`,
@@ -724,9 +749,18 @@ const CallCenter = () => {
         },
         callPurpose: callToEdit.call_purpose || "",
         //@ts-ignore
-        appointmentReason: callToEdit.call_reason || "",
+        appointmentReason: callToEdit.payload?.call_reason || "",
         scheduledCallTime:
           callToEdit.scheduled_time || dayjs().format("YYYY-MM-DD HH:mm:ss"),
+        appointmentLength: callToEdit.payload?.appointment_length
+          ? callToEdit.payload.appointment_length.toString()
+          : "",
+        bookingStartDate: callToEdit.payload?.book_from_date || "",
+        bookingEndDate: callToEdit.payload?.book_till_date || "",
+        inPersonOnly: callToEdit.payload?.is_in_person || false,
+        appointmentId: callToEdit.payload?.appointment_id
+          ? callToEdit.payload.appointment_id.toString()
+          : "",
 
         // Pre-fill other fields as needed
       });
@@ -893,6 +927,24 @@ const CallCenter = () => {
     }
   };
 
+  const handleOpenNewCall = () => {
+    setOpenAddCallDetails(true);
+    setSelectedContact(null);
+    setCurrentEditingCall(null); // Ensure we reset the editing state
+    // Reset the form with default values
+    reset({
+      contact: {},
+      callPurpose: "",
+      appointmentReason: "",
+      appointmentId: getBookingByUser?.bookings?.[0]?.booking_id?.toString() || "",
+      inPersonOnly: false,
+      bookingStartDate: "",
+      bookingEndDate: "",
+      appointmentLength: "15",
+      scheduledCallTime: dayjs().format("YYYY-MM-DD HH:mm:ss")
+    });
+  };
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -914,6 +966,8 @@ const CallCenter = () => {
           <CommonTextField
             startIcon={<img src={searchIcon} alt="down" />}
             placeholder="Search Calls"
+            value={debouncedSearchValue}
+            onChange={(e) => setSearchCalls(e.target.value)}
             sx={{ maxWidth: "300px", "& .MuiInputBase-input": { py: "11px" } }}
           />
 
@@ -929,18 +983,41 @@ const CallCenter = () => {
               sx={{
                 borderRadius: "50px",
                 boxShadow: "none",
-                backgroundColor: "grey.200",
+                backgroundColor: "grey.50",
                 padding: "8px",
+                "& .MuiButtonGroup-firstButton": {
+                  border:
+                    callHistoryStatus === EnGetCallHistory.PENDING
+                      ? "none"
+                      : "1px solid #E2E8F0",
+                },
               }}
             >
               <CommonButton
                 text="Pending Calls"
-                sx={{ borderRadius: "50px" }}
+                onClick={() => setCallHistoryStatus(EnGetCallHistory.PENDING)}
+                sx={{
+                  borderRadius: "50px",
+                  maxHeight: "40px",
+                }}
+                variant={
+                  callHistoryStatus === EnGetCallHistory.PENDING
+                    ? "contained"
+                    : "outlined"
+                }
               />
               <CommonButton
-                variant="outlined"
-                sx={{ borderRadius: "50px" }}
+                variant={
+                  callHistoryStatus === EnGetCallHistory.COMPLETED
+                    ? "contained"
+                    : "outlined"
+                }
+                sx={{
+                  borderRadius: "50px",
+                  maxHeight: "40px",
+                }}
                 text="Completed Calls"
+                onClick={() => setCallHistoryStatus(EnGetCallHistory.COMPLETED)}
               />
             </ButtonGroup>
           </Box>
@@ -955,21 +1032,18 @@ const CallCenter = () => {
             variant="contained"
             startIcon={<img src={add} alt="add" />}
             text="Add New Call"
-            onClick={() => {
-              setOpenAddCallDetails(true);
-              setSelectedContact(null);
-            }}
+            onClick={handleOpenNewCall}
             sx={{ py: "11px", px: "20px" }}
           />
-          <CommonButton
+          {/* <CommonButton
             variant="outlined"
             startIcon={<img src={filter} alt="filter" />}
             text="Filters"
             sx={{ py: "11px", px: "20px" }}
-          />
+          /> */}
         </Box>
       </Box>
-      <Box sx={{ width: "100%" }} mt={4}>
+      <Box sx={{ width: "100%" }} mt={3}>
         <Paper sx={{ width: "100%", mb: 2, boxShadow: "none", p: 0 }}>
           {tableLoading ? (
             <Box
@@ -1214,6 +1288,7 @@ const CallCenter = () => {
               // key={selectedContact}
               onOpen={handleOpen}
               onClose={handleClose}
+              //@ts-ignore
               setSelectedContact={setSelectedContact}
               options={contactOptions}
               loading={loading.input}
@@ -1270,7 +1345,6 @@ const CallCenter = () => {
                     newValue ? newValue.format("YYYY-MM-DD HH:mm:ss") : null
                   );
                 }}
-                
                 slotProps={{
                   textField: {
                     placeholder: "Select Date & Time",

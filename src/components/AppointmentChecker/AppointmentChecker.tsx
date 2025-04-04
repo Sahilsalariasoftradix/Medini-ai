@@ -18,6 +18,7 @@ import CommonButton from "../common/CommonButton";
 import OtpReceiver from "./ExistingAppointment/OtpReceiver";
 import StepFormLayout from "../StepForm/StepFormLayout";
 
+
 const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
   const {
     step,
@@ -41,6 +42,7 @@ const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
       setStep(1);
     }
   }, [hasAppointment]);
+
 
   const renderInitialQuestion = () => (
     <Box>

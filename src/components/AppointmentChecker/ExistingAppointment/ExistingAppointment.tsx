@@ -8,7 +8,6 @@ import {
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import CommonButton from "../../common/CommonButton";
 import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
-import { clinicOptions } from "./EditAppointment";
 import SearchInput from "../../common/SearchInput";
 import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
 import { useState } from "react";
@@ -24,6 +23,7 @@ const ExistingAppointment = () => {
     setExistingPhone,
     setSnackbar,
     snackbar,
+    companyDetails,
   } = useAppointmentChecker();
   const [formSubmitted, setFormSubmitted] = useState(false);
   const {
@@ -47,7 +47,7 @@ const ExistingAppointment = () => {
       return;
     }
     setFormSubmitted(true);
-    console.log(data);
+
     setExistingAppointmentData({
       ...data,
       phone: existingPhone,
@@ -108,16 +108,27 @@ const ExistingAppointment = () => {
               name="appointment_location"
               control={control}
               render={({ field }) => {
-                const selectedOption =
-                  clinicOptions.find(
-                    (option) => option.value === field.value
-                  ) || null;
+                const selectedOption = companyDetails.find(
+                  (company) => company.company_id === Number(field.value)
+                );
 
                 return (
                   <SearchInput
-                    options={clinicOptions}
+                    options={companyDetails.map((company) => {
+                      return {
+                        title: company.company_name,
+                        value: company.company_id.toString(),
+                      };
+                    })}
                     placeholder="Search for your appointment"
-                    value={selectedOption}
+                    value={
+                      selectedOption
+                        ? {
+                            title: selectedOption.company_name,
+                            value: selectedOption.company_id.toString(),
+                          }
+                        : ""
+                    }
                     onChange={(value) => {
                       if (
                         typeof value === "object" &&

@@ -1,16 +1,12 @@
-import { Box, Typography, FormHelperText } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
 import CommonButton from "../../common/CommonButton";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import CommonTextField from "../../common/CommonTextField";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
 import { useState } from "react";
-import { calenderIcon } from "../../Booking/Form/SlotBookingForm";
 import StepProgress from "../StepProgress";
 import { EnStepProgress } from "../../../utils/enums";
 import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
@@ -27,7 +23,7 @@ const validationSchema = z.object({
   //   .regex(/^\+?[0-9]{10,14}$/, "Invalid phone number format"),
   // address: z.string().optional(),
   bypass_key: z.string().optional(),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  // dateOfBirth: z.string().min(1, "Date of birth is required"),
 });
 
 // Create type from schema
@@ -51,14 +47,13 @@ const NewAppointmentStep1 = () => {
     register,
     handleSubmit,
     formState: { errors },
-    control,
   } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
       firstName: newAppointmentData?.firstName || "",
       lastName: newAppointmentData?.lastName || "",
       email: newAppointmentData?.email || "",
-      dateOfBirth: newAppointmentData?.dateOfBirth || "",
+      // dateOfBirth: newAppointmentData?.dateOfBirth || "",
       bypass_key: newAppointmentData?.bypass_key || "",
     },
   });
@@ -153,7 +148,7 @@ const NewAppointmentStep1 = () => {
             />
           </Grid>
            */}
-          <Grid size={12}>
+          {/* <Grid size={12}>
             <Typography variant="bodyMediumExtraBold" color="grey.600">
               Date of birth
             </Typography>
@@ -183,7 +178,7 @@ const NewAppointmentStep1 = () => {
               />
             </LocalizationProvider>
             <FormHelperText>{errors.dateOfBirth?.message}</FormHelperText>
-          </Grid>
+          </Grid> */}
         </Grid>
 
         <Box my={4} display="flex" gap={2}>
