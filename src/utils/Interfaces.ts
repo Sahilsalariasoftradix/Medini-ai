@@ -197,7 +197,20 @@ export interface IContact {
   phone: string;
   user_id?: string;
 }
-
+export interface IAvailability {
+  day_of_week: string | null;
+  phone_start_time: string | null;
+  phone_end_time: string | null;
+  in_person_start_time: string | null;
+  in_person_end_time: string | null;
+  break_start_time: string | null;
+  break_end_time: string | null;
+}
+export interface IGetBookingFiltered {
+  start_time: string;
+  end_time: string;
+  booking_type: EnBookingType.IN_PERSON | EnBookingType.PHONE;
+}
 export interface IBooking {
   booking_id?: number;
   user_id: number;
@@ -308,7 +321,6 @@ export interface Data {
   length: string;
   details: string;
   status?: EnShowPurposeUI;
-  
 }
 export interface HeadCell {
   disablePadding: boolean;
@@ -343,5 +355,26 @@ export interface ICallHistory {
   call_purpose: string;
   scheduled_time?: string;
   call_failed?: boolean;
+  payload: {
+    call_reason: string;
+    appointment_length: number;
+    appointment_reason: string;
+    book_from_date: string;
+    book_till_date: string;
+    is_in_person: boolean;
+    appointment_id: number;
+  } | null;
 }
-
+export interface ICompanyUsers {
+  user_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+}
+export interface ICompanyData {
+  company_id: number;
+  company_name: string;
+  max_appointment_time: number;
+  users: ICompanyUsers[];
+}

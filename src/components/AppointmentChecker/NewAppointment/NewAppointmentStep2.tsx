@@ -7,61 +7,97 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Grid from "@mui/material/Grid2";
 import * as z from "zod";
 import CommonTextField from "../../common/CommonTextField";
-import { EnStepProgress } from "../../../utils/enums";
+import {
+  EnBookingDuration,
+  EnBookingType,
+  EnStepProgress,
+} from "../../../utils/enums";
 import StepProgress from "../StepProgress";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import { useEffect, useState } from "react";
+import { calenderIcon } from "../../Booking/Form/SlotBookingForm";
+import { getAvailability, getBookings } from "../../../api/userApi";
+
+import {
+  IAvailability,
+  IGetBookingFiltered,
+  TGetBooking,
+} from "../../../utils/Interfaces";
+
+dayjs.extend(isSameOrAfter);
 
 // Define validation schema with zod
 const validationSchema = z.object({
-  businessName: z.string().min(1, "Business name is required"),
-  // date: z.instanceof(Date, { message: "Date is required" }),
-  // time: z.instanceof(Date, { message: "Time is required" }),
+  businessName: z.object({
+    id: z.string().min(1, "Business name is required"),
+    name: z.string().min(1, "Business name is required"),
+  }),
   time: z.string().min(1, "Time is required"),
   appointmentLength: z.string().min(1, "Appointment length is required"),
   appointmentType: z.string().min(1, "Appointment type is required"),
-  practitioner: z.string().min(1, "Practitioner is required"),
-  day: z.string().min(1, "Day is required"),
+  practitioner: z.object({
+    id: z.string().min(1, "Practitioner is required"),
+    name: z.string().min(1, "Practitioner is required"),
+  }),
+  day: z.instanceof(Date, { message: "Date is required" }),
+  details: z.string().min(1, "Details are required"),
 });
 
 // Create type from schema
 type FormValues = z.infer<typeof validationSchema>;
 
 const NewAppointmentStep2 = () => {
-  const { step, setStep, newAppointmentData, setNewAppointmentData } =
-    useAppointmentChecker();
+  const {
+    step,
+    setStep,
+    newAppointmentData,
+    setNewAppointmentData,
+    companyDetails,
+    practitioners,
+    setPractitioners,
+  } = useAppointmentChecker();
 
-  // Initialize with existing data if available
-  // const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
-  //   newAppointmentData?.date ? dayjs(newAppointmentData.date) : null
-  // );
-  // const [selectedTime, setSelectedTime] = useState<Dayjs | null>(
-  //   newAppointmentData?.time ? dayjs(newAppointmentData.time) : null
-  // );
-
+  // Initialize selectedDate state
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
+    newAppointmentData?.day ? dayjs(newAppointmentData.day) : dayjs()
+  );
+  const [availability, setAvailability] = useState<IAvailability[]>([]);
+  const [bookings, setBookings] = useState<TGetBooking[]>([]);
   // Initialize react-hook-form with controller for complex inputs
   const {
     // register,
     handleSubmit,
     control,
     formState: { errors },
+    watch,
     // setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
-      practitioner: newAppointmentData?.practitioner ?? "Dr Johnny",
-      // date: newAppointmentData?.date
-      //   ? new Date(newAppointmentData.date)
-      //   : undefined,
-      // time: newAppointmentData?.time
-      //   ? new Date(newAppointmentData.time)
-      //   : undefined,
-      time: newAppointmentData?.time ?? "10:00",
+      practitioner:
+        typeof newAppointmentData?.practitioner === "object"
+          ? newAppointmentData.practitioner
+          : { id: "", name: "" },
+
+      businessName:
+        typeof newAppointmentData?.businessName === "object"
+          ? newAppointmentData.businessName
+          : { id: "", name: "" },
+
+      time: newAppointmentData?.time ?? "",
       appointmentLength: newAppointmentData?.appointmentLength ?? "15",
-      appointmentType: newAppointmentData?.appointmentType ?? "inPerson",
-      businessName: newAppointmentData?.businessName ?? "Business Name 1",
-      day: newAppointmentData?.day ?? "Monday",
+      appointmentType:
+        newAppointmentData?.appointmentType ?? EnBookingType.IN_PERSON,
+      day: newAppointmentData?.day
+        ? new Date(newAppointmentData.day)
+        : new Date(),
+      details: newAppointmentData?.details ?? "",
     },
   });
-  console.log(errors);
 
   const onSubmit = (data: FormValues) => {
     // Save form data to context
@@ -73,72 +109,221 @@ const NewAppointmentStep2 = () => {
     // Navigate to confirmation step
     setStep(step + 1);
   };
-  console.log(errors);
 
-  // Static data for available times based on day
-  const availableTimesByDay = {
-    Monday: [
-      { time: "09:00", type: "inPerson" },
-      { time: "10:00", type: "both" },
-      { time: "11:00", type: "phoneCall" },
-      { time: "14:00", type: "inPerson" },
-      { time: "15:30", type: "both" },
-    ],
-    Tuesday: [
-      { time: "10:00", type: "phoneCall" },
-      { time: "11:30", type: "both" },
-      { time: "13:00", type: "inPerson" },
-      { time: "16:00", type: "inPerson" },
-    ],
-    Wednesday: [
-      { time: "09:30", type: "both" },
-      { time: "11:00", type: "phoneCall" },
-      { time: "14:00", type: "inPerson" },
-      { time: "17:00", type: "both" },
-    ],
-    Thursday: [
-      { time: "10:00", type: "inPerson" },
-      { time: "12:30", type: "both" },
-      { time: "15:00", type: "phoneCall" },
-      { time: "16:30", type: "inPerson" },
-    ],
-    Friday: [
-      { time: "09:00", type: "both" },
-      { time: "11:00", type: "inPerson" },
-      { time: "13:30", type: "phoneCall" },
-      { time: "16:00", type: "both" },
-    ],
-    Saturday: [
-      { time: "10:00", type: "inPerson" },
-      { time: "11:30", type: "phoneCall" },
-    ],
-    Sunday: [
-      { time: "11:00", type: "phoneCall" },
-      { time: "12:00", type: "both" },
-    ],
+  // Function to generate time slots in 15-minute intervals
+  const generateTimeSlots = (startTime: string, endTime: string): string[] => {
+    const slots: string[] = [];
+    const start = dayjs(`2000-01-01 ${startTime}`);
+    const end = dayjs(`2000-01-01 ${endTime}`);
+
+    let current = start;
+    while (current.isBefore(end)) {
+      slots.push(current.format("HH:mm"));
+      current = current.add(15, "minute");
+    }
+
+    return slots;
   };
-
-  // Filter times based on selected day and appointment type
+  // Filter times based on selected date and appointment type
   const getFilteredTimes = () => {
-    const day = control._formValues.day;
+    const date = selectedDate;
     const appointmentType = control._formValues.appointmentType;
 
-    if (!day || !appointmentType) return [];
+    if (!date || !appointmentType || !availability.length) return [];
 
-    const timesForDay =
-      availableTimesByDay[day as keyof typeof availableTimesByDay] || [];
+    const dayOfWeek = date.format("dddd").toLowerCase(); // Convert to lowercase to match API response
 
-    return timesForDay.filter((slot: { time: string; type: string }) => {
-      if (appointmentType === "phoneCall") {
-        // For phone calls, show all times
-        return true;
-      } else if (appointmentType === "inPerson") {
-        // For in-person, only show in-person times
-        return ["inPerson", "both"].includes(slot.type);
+    // Find availability for the selected day
+    const dayAvailability = availability.find(
+      (avail) => avail?.day_of_week?.toLowerCase() === dayOfWeek
+    );
+
+    if (!dayAvailability) return [];
+
+    const breakStart = dayAvailability.break_start_time;
+    const breakEnd = dayAvailability.break_end_time;
+
+    let availableSlots: { time: string; type: string }[] = [];
+
+    // Generate in-person slots
+    if (
+      dayAvailability.in_person_start_time &&
+      dayAvailability.in_person_end_time
+    ) {
+      const inPersonSlots = generateTimeSlots(
+        dayAvailability.in_person_start_time,
+        dayAvailability.in_person_end_time
+      );
+
+      // Filter out break time
+      const filteredInPersonSlots = inPersonSlots.filter((slot) => {
+        const slotTime = dayjs(`2000-01-01 ${slot}:00`);
+        const breakStartTime = dayjs(`2000-01-01 ${breakStart}`);
+        const breakEndTime = dayjs(`2000-01-01 ${breakEnd}`);
+
+        return !(
+          slotTime.isAfter(breakStartTime) && slotTime.isBefore(breakEndTime)
+        );
+      });
+
+      availableSlots = [
+        ...availableSlots,
+        ...filteredInPersonSlots.map((slot) => ({
+          time: slot,
+          type: EnBookingType.IN_PERSON,
+        })),
+      ];
+    }
+
+    // Generate phone call slots
+    if (dayAvailability.phone_start_time && dayAvailability.phone_end_time) {
+      const phoneSlots = generateTimeSlots(
+        dayAvailability.phone_start_time,
+        dayAvailability.phone_end_time
+      );
+
+      // Filter out break time
+      const filteredPhoneSlots = phoneSlots.filter((slot) => {
+        const slotTime = dayjs(`2000-01-01 ${slot}:00`);
+        const breakStartTime = dayjs(`2000-01-01 ${breakStart}`);
+        const breakEndTime = dayjs(`2000-01-01 ${breakEnd}`);
+
+        return !(
+          slotTime.isAfter(breakStartTime) && slotTime.isBefore(breakEndTime)
+        );
+      });
+
+      availableSlots = [
+        ...availableSlots,
+        ...filteredPhoneSlots.map((slot) => ({
+          time: slot,
+          type: EnBookingType.PHONE,
+        })),
+      ];
+    }
+
+    // Mark slots available for both types
+    const slotMap = new Map<string, string>();
+    availableSlots.forEach((slot) => {
+      if (slotMap.has(slot.time)) {
+        slotMap.set(slot.time, EnBookingType.BOTH);
+      } else {
+        slotMap.set(slot.time, slot.type);
+      }
+    });
+
+    // Convert map back to array
+    const uniqueSlots = Array.from(slotMap.entries()).map(([time, type]) => ({
+      time,
+      type,
+    }));
+
+    // Sort slots by time
+    uniqueSlots.sort((a, b) => a.time.localeCompare(b.time));
+
+    // Filter out already booked slots
+    const filteredSlots = uniqueSlots.filter((slot) => {
+      // Check if this slot conflicts with any booking
+      //@ts-ignore
+      return !bookings.some((booking: IGetBookingFiltered) => {
+        // Format times without 'T' to avoid timezone issues
+        const slotTime = dayjs(`2000-01-01 ${slot.time}`);
+        const bookingStart = dayjs(
+          `2000-01-01 ${booking.start_time.slice(0, 5)}`
+        );
+        const bookingEnd = dayjs(`2000-01-01 ${booking.end_time.slice(0, 5)}`);
+        // Check if the slot falls within the booking timeframe
+        const slotOverlapsBooking =
+          slotTime.isSameOrAfter(bookingStart) && slotTime.isBefore(bookingEnd);
+        // If the slot is at the same time as any booking, it's not available
+        if (slotTime.isSame(bookingStart)) {
+          return true;
+        }
+
+        // For phone call appointments, check if the booking is also a phone call
+        if (
+          slot.type === EnBookingType.PHONE ||
+          slot.type === EnBookingType.BOTH
+        ) {
+          if (booking.booking_type === EnBookingType.PHONE) {
+            return slotOverlapsBooking;
+          }
+        }
+
+        // For in-person appointments, check if the booking is also in-person
+        if (
+          slot.type === EnBookingType.IN_PERSON ||
+          slot.type === EnBookingType.BOTH
+        ) {
+          if (booking.booking_type === EnBookingType.IN_PERSON) {
+            return slotOverlapsBooking;
+          }
+        }
+
+        return false;
+      });
+    });
+
+    // Filter by appointment type
+    return filteredSlots.filter((slot) => {
+      if (appointmentType === EnBookingType.PHONE) {
+        // For phone call appointments, show both phone call slots and "both" type slots
+        return [EnBookingType.PHONE, EnBookingType.IN_PERSON].includes(
+          slot.type as EnBookingType
+        );
+      } else if (appointmentType === EnBookingType.IN_PERSON) {
+        // For in-person appointments, only show in-person slots
+        return slot.type === EnBookingType.IN_PERSON;
       }
       return false;
     });
   };
+
+  useEffect(() => {
+    getFilteredTimes();
+  }, [watch("appointmentType")]);
+
+  const handleBusinessChange = (companyId: string) => {
+    const selectedCompany = companyDetails?.find(
+      (company) => company.company_id == Number(companyId)
+    );
+    if (selectedCompany && selectedCompany.users) {
+      setPractitioners(selectedCompany.users);
+    } else {
+      setPractitioners([]);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        if (control._formValues.practitioner.id) {
+          const availability = await getAvailability({
+            user_id: Number(control._formValues.practitioner.id),
+            date: selectedDate!.format("YYYY-MM-DD"),
+            range: "day",
+          });
+          setAvailability(availability.availability);
+        }
+      } catch (error) {
+        console.error("Error fetching availability:", error);
+      }
+    };
+    const fetchBookings = async () => {
+      if (control._formValues.practitioner.id) {
+        const bookings = await getBookings({
+          user_id: Number(control._formValues.practitioner.id),
+          date: selectedDate!.format("YYYY-MM-DD"),
+          range: "day",
+        });
+        setBookings(bookings.bookings);
+      }
+    };
+    fetchAvailability();
+    fetchBookings();
+  }, [selectedDate, watch("practitioner")]);
+  // console.log(availability, "avb");
+  // console.log(bookings, "bookings");
 
   return (
     <Box>
@@ -160,17 +345,52 @@ const NewAppointmentStep2 = () => {
             <Controller
               name="businessName"
               control={control}
-              render={({ field }) => (
+              render={({ field: { onChange, value, ...restField } }) => (
                 <CommonTextField
-                  {...field}
+                  {...restField}
+                  value={value?.id || ""}
                   select
-                  defaultValue={"Business Name 1"}
                   fullWidth
                   error={!!errors.businessName}
                   helperText={errors.businessName?.message}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const selectedBusiness = companyDetails.find(
+                      (company) => company.company_id.toString() === selectedId
+                    );
+                    onChange(
+                      selectedBusiness
+                        ? {
+                          id: selectedBusiness.company_id.toString(),
+                          name: selectedBusiness.company_name,
+                        }
+                        : null
+                    );
+                    handleBusinessChange(selectedId);
+                  }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    MenuProps: {
+                      PaperProps: {
+                        style: {
+                          maxHeight: 200,
+                          overflow: "auto",
+                        },
+                      },
+                    },
+                  }}
                 >
-                  <MenuItem value="Business Name 1">Business Name 1</MenuItem>
-                  <MenuItem value="Business Name 2">Business Name 2 </MenuItem>
+                  <MenuItem value="">
+                    <em>Select Business Name</em>
+                  </MenuItem>
+                  {companyDetails.map((company) => (
+                    <MenuItem
+                      key={company.company_id}
+                      value={company.company_id.toString()}
+                    >
+                      {company.company_name}
+                    </MenuItem>
+                  ))}
                 </CommonTextField>
               )}
             />
@@ -186,20 +406,53 @@ const NewAppointmentStep2 = () => {
               <Controller
                 name="practitioner"
                 control={control}
-                render={({ field }) => (
+                render={({ field: { onChange, value, ...restField } }) => (
                   <CommonTextField
-                    {...field}
+                    {...restField}
+                    value={value?.id || ""} // Ensure it binds correctly
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const selectedPractitioner = practitioners.find(
+                        (practitioner) =>
+                          practitioner.user_id.toString() === selectedId
+                      );
+
+                      onChange(
+                        selectedPractitioner
+                          ? {
+                            id: selectedPractitioner.user_id.toString(),
+                            name: `${selectedPractitioner.first_name} ${selectedPractitioner.last_name}`,
+                          }
+                          : null
+                      );
+                    }}
                     select
                     fullWidth
                     error={!!errors.practitioner}
                     helperText={errors.practitioner?.message}
+                    SelectProps={{
+                      displayEmpty: true,
+                      MenuProps: {
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200,
+                            overflow: "auto",
+                          },
+                        },
+                      },
+                    }}
                   >
-                    <MenuItem value="Dr Johnny">Dr Johnny</MenuItem>
-                    <MenuItem value="Dr Jane">Dr Jane</MenuItem>
-                    <MenuItem value="Dr Heisenberg">Dr Heisenberg</MenuItem>
-                    <MenuItem value="Dr Tuco Salamanca">
-                      Dr Tuco Salamanca
+                    <MenuItem value="">
+                      <em>Select Practitioner</em>
                     </MenuItem>
+                    {practitioners.map((practitioner) => (
+                      <MenuItem
+                        key={practitioner.user_id}
+                        value={practitioner.user_id.toString()}
+                      >
+                        {practitioner.first_name} {practitioner.last_name}
+                      </MenuItem>
+                    ))}
                   </CommonTextField>
                 )}
               />
@@ -224,8 +477,10 @@ const NewAppointmentStep2 = () => {
                     error={!!errors.appointmentType}
                     helperText={errors.appointmentType?.message}
                   >
-                    <MenuItem value="inPerson">In Person</MenuItem>
-                    <MenuItem value="phoneCall">Phone Call</MenuItem>
+                    <MenuItem value={EnBookingType.IN_PERSON}>
+                      In Person
+                    </MenuItem>
+                    <MenuItem value={EnBookingType.PHONE}>Phone Call</MenuItem>
                   </CommonTextField>
                 )}
               />
@@ -234,40 +489,11 @@ const NewAppointmentStep2 = () => {
           <Grid size={12}>
             <Box my={2}>
               <Typography variant="bodyMediumExtraBold" color="grey.600">
-                Choose Day
-              </Typography>
-              <Controller
-                name="day"
-                control={control}
-                render={({ field }) => (
-                  <CommonTextField
-                    {...field}
-                    select
-                    defaultValue={"Monday"}
-                    fullWidth
-                    error={!!errors.day}
-                    helperText={errors.day?.message}
-                  >
-                    <MenuItem value="Monday">Monday</MenuItem>
-                    <MenuItem value="Tuesday">Tuesday</MenuItem>
-                    <MenuItem value="Wednesday">Wednesday</MenuItem>
-                    <MenuItem value="Thursday">Thursday</MenuItem>
-                    <MenuItem value="Friday">Friday</MenuItem>
-                    <MenuItem value="Saturday">Saturday</MenuItem>
-                    <MenuItem value="Sunday">Sunday</MenuItem>
-                  </CommonTextField>
-                )}
-              />
-            </Box>
-          </Grid>
-          {/* <Grid size={12}>
-            <Box my={2}>
-              <Typography variant="bodyMediumExtraBold" color="grey.600">
-                Date
+                Select Date
               </Typography>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <Controller
-                  name="date"
+                  name="day"
                   control={control}
                   render={({ field }) => (
                     <DatePicker
@@ -277,25 +503,22 @@ const NewAppointmentStep2 = () => {
                         if (newValue) {
                           const dateObj = newValue.toDate();
                           field.onChange(dateObj);
-                          setValue("date", dateObj, { shouldValidate: true });
                         }
                       }}
+                      slots={{ openPickerIcon: calenderIcon }}
                       slotProps={{
-                        field: {
-                          //@ts-ignore
+                        textField: {
                           fullWidth: true,
+                          error: !!errors.day,
+                          helperText: errors.day?.message,
                         },
                       }}
-                      slots={{ openPickerIcon: calenderIcon }}
-                      label=""
                     />
                   )}
                 />
               </LocalizationProvider>
-              <FormHelperText error>{errors.date?.message}</FormHelperText>
             </Box>
-          </Grid> */}
-
+          </Grid>
           <Grid size={12}>
             <Box>
               <Typography variant="bodyMediumExtraBold" color="grey.600">
@@ -316,16 +539,27 @@ const NewAppointmentStep2 = () => {
                         ? "No available times for selected day and appointment type"
                         : "")
                     }
+                    SelectProps={{
+                      displayEmpty: true,
+                      MenuProps: {
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200,
+                            overflow: "auto",
+                          },
+                        },
+                      },
+                    }}
                     disabled={getFilteredTimes().length === 0}
                   >
                     {getFilteredTimes().map((timeSlot) => (
                       <MenuItem key={timeSlot.time} value={timeSlot.time}>
                         {timeSlot.time}{" "}
-                        {timeSlot.type === "phoneCall"
+                        {/* {timeSlot.type === "phoneCall"
                           ? "(Phone only)"
                           : timeSlot.type === "inPerson"
                           ? "(In-person only)"
-                          : ""}
+                          : ""} */}
                       </MenuItem>
                     ))}
                   </CommonTextField>
@@ -353,14 +587,37 @@ const NewAppointmentStep2 = () => {
                     error={!!errors.appointmentLength}
                     helperText={errors.appointmentLength?.message}
                   >
-                    <MenuItem value="15">15 minutes</MenuItem>
-                    <MenuItem value="30">30 minutes</MenuItem>
-                    <MenuItem value="45">45 minutes</MenuItem>
-                    <MenuItem value="60">60 minutes</MenuItem>
+                    {Object.values(EnBookingDuration).map((duration) => (
+                      <MenuItem value={duration}>{duration} minutes</MenuItem>
+                    ))}
                   </CommonTextField>
                 )}
               />
             </Box>
+          </Grid>
+
+          <Grid size={12}>
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Typography variant="bodyMediumExtraBold" color="grey.600">
+                Reason for appointment
+              </Typography>
+              <img src={questionMark} alt="" />
+            </Box>
+            <Controller
+              name="details"
+              control={control}
+              render={({ field }) => (
+                <CommonTextField
+                  {...field}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  placeholder="Add reason for appointment"
+                  error={!!errors.details}
+                  helperText={errors.details?.message}
+                />
+              )}
+            />
           </Grid>
         </Grid>
 
