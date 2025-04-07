@@ -15,6 +15,7 @@ const CommonButton: React.FC<CommonButtonProps> = ({
   loading,
   ...rest
 }) => {
+
   return (
     <Button
       variant={variant}
@@ -24,6 +25,7 @@ const CommonButton: React.FC<CommonButtonProps> = ({
       fullWidth={fullWidth}
       {...rest}
     >
+
       {/* If loading, show spinner */}
       {loading ? (
         <CircularProgress

@@ -12,6 +12,7 @@ import SearchInput from "../../common/SearchInput";
 import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
 import { useState } from "react";
 import CommonSnackbar from "../../common/CommonSnackbar";
+import { sendVerificationCode } from "../../../api/userApi";
 
 const ExistingAppointment = () => {
   const {
@@ -24,8 +25,10 @@ const ExistingAppointment = () => {
     setSnackbar,
     snackbar,
     companyDetails,
+    startTimer,
   } = useAppointmentChecker();
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -38,6 +41,7 @@ const ExistingAppointment = () => {
   const onSubmit: SubmitHandler<ExistingAppointmentSchemaType> = async (
     data
   ) => {
+    setLoading(true);
     if (!existingPhone || existingPhone.length < 12) {
       setSnackbar({
         open: true,
@@ -52,7 +56,19 @@ const ExistingAppointment = () => {
       ...data,
       phone: existingPhone,
     });
-    setStep(step + 1);
+    try {
+      await sendVerificationCode(existingPhone, data.email);
+      setStep(step + 1);
+      startTimer();
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message as string,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <Box>
@@ -108,13 +124,12 @@ const ExistingAppointment = () => {
               name="appointment_location"
               control={control}
               render={({ field }) => {
-                const selectedOption = companyDetails.find(
+                const selectedOption = companyDetails?.find(
                   (company) => company.company_id === Number(field.value)
                 );
-
                 return (
                   <SearchInput
-                    options={companyDetails.map((company) => {
+                    options={(companyDetails || []).map((company) => {
                       return {
                         title: company.company_name,
                         value: company.company_id.toString(),
@@ -127,7 +142,7 @@ const ExistingAppointment = () => {
                             title: selectedOption.company_name,
                             value: selectedOption.company_id.toString(),
                           }
-                        : ""
+                        : null
                     }
                     onChange={(value) => {
                       if (
@@ -162,7 +177,9 @@ const ExistingAppointment = () => {
             text="Retrieve"
             fullWidth
             variant="contained"
+            disabled={loading}
             color="primary"
+            loading={loading}
           />
         </Box>
       </form>

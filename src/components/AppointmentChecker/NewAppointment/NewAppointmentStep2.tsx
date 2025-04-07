@@ -361,9 +361,9 @@ const NewAppointmentStep2 = () => {
                     onChange(
                       selectedBusiness
                         ? {
-                          id: selectedBusiness.company_id.toString(),
-                          name: selectedBusiness.company_name,
-                        }
+                            id: selectedBusiness.company_id.toString(),
+                            name: selectedBusiness.company_name,
+                          }
                         : null
                     );
                     handleBusinessChange(selectedId);
@@ -420,9 +420,9 @@ const NewAppointmentStep2 = () => {
                       onChange(
                         selectedPractitioner
                           ? {
-                            id: selectedPractitioner.user_id.toString(),
-                            name: `${selectedPractitioner.first_name} ${selectedPractitioner.last_name}`,
-                          }
+                              id: selectedPractitioner.user_id.toString(),
+                              name: `${selectedPractitioner.first_name} ${selectedPractitioner.last_name}`,
+                            }
                           : null
                       );
                     }}
@@ -599,7 +599,7 @@ const NewAppointmentStep2 = () => {
           <Grid size={12}>
             <Box display="flex" alignItems="center" gap={0.5}>
               <Typography variant="bodyMediumExtraBold" color="grey.600">
-                Reason for appointment
+                Details
               </Typography>
               <img src={questionMark} alt="" />
             </Box>

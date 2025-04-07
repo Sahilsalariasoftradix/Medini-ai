@@ -722,51 +722,75 @@ const CallCenter = () => {
   const handleEditCall = (callData: Data) => {
     setCurrentEditingCall(callData);
 
-    // Find the original call data from history
     const callToEdit = getCallHistory.find((call) => call.id === callData.id);
 
-    if (callToEdit) {
-      // Find contact info from contact list
-      const contactInfo = contacts.find(
-        (contact) =>
-          `${contact.firstName} ${contact.lastName}` === callToEdit.caller
-      ) || {
-        firstName: "",
-        lastName: "",
-        phone: callToEdit.to_phone,
-        email: "",
-      };
+    if (!callToEdit) return;
 
-      // Pre-fill the form with existing data
+    const contactInfo = contacts.find(
+      (contact) =>
+        `${contact.firstName} ${contact.lastName}` === callToEdit.caller
+    ) || {
+      firstName: "",
+      lastName: "",
+      phone: callToEdit.to_phone,
+      email: "",
+    };
 
-      reset({
-        contact: {
-          title: `${contactInfo.firstName} ${contactInfo.lastName}`,
-          firstName: contactInfo.firstName,
-          lastName: contactInfo.lastName,
-          email: contactInfo.email,
-          phone: contactInfo.phone || "",
-        },
-        callPurpose: callToEdit.call_purpose || "",
-        //@ts-ignore
-        appointmentReason: callToEdit.payload?.call_reason || "",
-        scheduledCallTime:
-          callToEdit.scheduled_time || dayjs().format("YYYY-MM-DD HH:mm:ss"),
-        appointmentLength: callToEdit.payload?.appointment_length
-          ? callToEdit.payload.appointment_length.toString()
-          : "",
-        bookingStartDate: callToEdit.payload?.book_from_date || "",
-        bookingEndDate: callToEdit.payload?.book_till_date || "",
-        inPersonOnly: callToEdit.payload?.is_in_person || false,
-        appointmentId: callToEdit.payload?.appointment_id
-          ? callToEdit.payload.appointment_id.toString()
-          : "",
+    const baseData = {
+      contact: {
+        title: `${contactInfo.firstName} ${contactInfo.lastName}`,
+        firstName: contactInfo.firstName,
+        lastName: contactInfo.lastName,
+        email: contactInfo.email,
+        phone: contactInfo.phone || "",
+      },
+      callPurpose: callToEdit.call_purpose || "",
+      //@ts-ignore
+      appointmentReason: callToEdit.payload?.call_reason || "",
+      scheduledCallTime:
+        callToEdit.scheduled_time || dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      appointmentLength: callToEdit.payload?.appointment_length
+        ? callToEdit.payload.appointment_length.toString()
+        : "",
+      bookingStartDate: callToEdit.payload?.book_from_date || "",
+      bookingEndDate: callToEdit.payload?.book_till_date || "",
+      inPersonOnly: callToEdit.payload?.is_in_person || false,
+      appointmentId: callToEdit.payload?.appointment_id
+        ? callToEdit.payload.appointment_id.toString()
+        : "",
+    };
 
-        // Pre-fill other fields as needed
-      });
+    let purposeOverrides = {};
 
-      setOpenAddCallDetails(true);
+    switch (callToEdit.call_purpose) {
+      case EnCallPurposeOptionsValues.RESCHEDULE:
+        purposeOverrides = {
+          callPurpose: EnCallPurposeOptionsValues.RESCHEDULE,
+          appointmentReason:
+            callToEdit.payload?.reschedule_appointment_reason || "",
+          inPersonOnly: callToEdit.payload?.reschedule_is_in_person || false,
+          bookingStartDate: callToEdit.payload?.reschedule_book_from_date || "",
+          bookingEndDate: callToEdit.payload?.reschedule_book_till_date || "",
+          appointmentId:
+            callToEdit.payload?.reschedule_booking_id?.toString() || "",
+          appointmentLength:
+            callToEdit.payload?.reschedule_appointment_length?.toString() || "",
+        };
+        break;
+      case EnCallPurposeOptionsValues.CANCEL:
+        purposeOverrides = {
+          callPurpose: EnCallPurposeOptionsValues.CANCEL,
+          appointmentId: callToEdit.payload?.booking_id_to_cancel || "",
+        };
+        break;
     }
+
+    reset({
+      ...baseData,
+      ...purposeOverrides,
+    });
+
+    setOpenAddCallDetails(true);
   };
 
   const onSubmit = async (data: AddCallSchema) => {
@@ -936,12 +960,13 @@ const CallCenter = () => {
       contact: {},
       callPurpose: "",
       appointmentReason: "",
-      appointmentId: getBookingByUser?.bookings?.[0]?.booking_id?.toString() || "",
+      appointmentId:
+        getBookingByUser?.bookings?.[0]?.booking_id?.toString() || "",
       inPersonOnly: false,
       bookingStartDate: "",
       bookingEndDate: "",
       appointmentLength: "15",
-      scheduledCallTime: dayjs().format("YYYY-MM-DD HH:mm:ss")
+      scheduledCallTime: dayjs().format("YYYY-MM-DD HH:mm:ss"),
     });
   };
 

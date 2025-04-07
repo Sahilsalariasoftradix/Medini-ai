@@ -23,6 +23,7 @@ interface CommonDialogProps {
   hideCloseIcon?: boolean;
   loading?:boolean;
   disabled?:boolean;
+  styles?:React.CSSProperties;
   confirmButtonType?:
     | "inherit"
     | "primary"
@@ -32,11 +33,7 @@ interface CommonDialogProps {
     | "info"
     | "warning";
 }
-const DialogStyles = {
-  border: "2px solid #E2E8F0",
-  boxShadow: "0px 5px 10px 0px #0000001A",
-  borderRadius: "16px",
-};
+
 const CommonDialog: React.FC<CommonDialogProps> = ({
   open,
   onClose,
@@ -50,8 +47,15 @@ const CommonDialog: React.FC<CommonDialogProps> = ({
   hideCloseIcon = false,
   confirmButtonType,
   loading,
-  disabled
+  disabled,
+  styles
 }) => {
+  const DialogStyles = {
+    border: "2px solid #E2E8F0",
+    boxShadow: "0px 5px 10px 0px #0000001A",
+    borderRadius: "16px",
+    ...styles
+  };
   return (
     <Dialog
       open={open}

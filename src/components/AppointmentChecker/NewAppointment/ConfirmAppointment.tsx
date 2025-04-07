@@ -6,20 +6,46 @@ import { useState } from "react";
 import { availabilityIcons, EditFormIcon } from "../../../utils/Icons";
 import StepProgress from "../StepProgress";
 import { EnBookingType, EnStepProgress } from "../../../utils/enums";
-import { createBooking } from "../../../api/userApi";
+import { createBooking, sendVerificationCode } from "../../../api/userApi";
 import dayjs from "dayjs";
 import CommonSnackbar from "../../common/CommonSnackbar";
+import CommonDialog from "../../common/CommonDialog";
+import OtpReceiver from "../ExistingAppointment/OtpReceiver";
 
 const ConfirmAppointment = () => {
-  const {
-    step,
-    setStep,
-    newAppointmentData,
-    setReferenceNumber,
-  } = useAppointmentChecker();
+  const { step, setStep, newAppointmentData, setReferenceNumber, startTimer, isResendDisabled, timer } =
+    useAppointmentChecker();
 
   const [submitting, setSubmitting] = useState(false);
   const { snackbar, setSnackbar } = useAppointmentChecker();
+  const [confirmPopup, setConfirmPopup] = useState(false);
+  const sendCode = async () => {
+    setSubmitting(true);
+    try {
+      // Only send code and start timer if the timer isn't already running
+      if (!isResendDisabled || timer === 0) {
+        await sendVerificationCode(
+          newAppointmentData?.phone || "",
+          newAppointmentData?.firstName || ""
+        );
+        setSnackbar({
+          open: true,
+          message: "Verification code sent successfully",
+          severity: "success",
+        });
+        startTimer();
+      }
+      setConfirmPopup(true);
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message as string,
+        severity: "error",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
   const submitBookingData = async () => {
     setSubmitting(true);
     try {
@@ -256,7 +282,9 @@ const ConfirmAppointment = () => {
           variant="contained"
           color="primary"
           fullWidth
-          onClick={submitBookingData}
+          onClick={() => {
+            sendCode();
+          }}
           disabled={submitting}
           startIcon={
             submitting ? <CircularProgress size={20} color="inherit" /> : null
@@ -271,6 +299,27 @@ const ConfirmAppointment = () => {
           totalSteps={EnStepProgress.TOTAL_STEPS}
         />
       </Box>
+      <CommonDialog
+        open={confirmPopup}
+        cancelText=""
+        onClose={() => {
+          setConfirmPopup(false);
+        }}
+        styles={{
+          borderRadius: "50px",
+        }}
+      >
+        <OtpReceiver
+          phoneNumber={newAppointmentData?.phone || ""}
+          required={true}
+          closePopup={() => setConfirmPopup(false)}
+          resendCode={() => sendCode()}
+          onSuccessfulVerification={() => {
+            setConfirmPopup(false);
+            submitBookingData();
+          }}
+        />
+      </CommonDialog>
       <CommonSnackbar
         open={snackbar.open}
         autoHideDuration={3000}

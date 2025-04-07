@@ -216,3 +216,49 @@ export const getCompanyDetails = async () => {
     throw error;
   }
 };
+
+export const sendVerificationCode = async (
+  phoneNumber: string,
+  customerName: string
+) => {
+  try {
+    const response = await apiClient.post(`customer/send-verification-code`, {
+      phoneNumber: phoneNumber,
+      customerName: customerName,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error sending verification code:", error);
+    throw error;
+  }
+};
+
+export const verifyVerificationCode = async (
+  phoneNumber: string,
+  verificationCode: string
+) => {
+  try {
+    const response = await apiClient.post(`customer/verify-code`, {
+      phoneNumber: phoneNumber,
+      code: verificationCode,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error verifying verification code:", error);
+    throw error;
+  }
+};
+export const getCustomerBookings = async (
+  companyId: number,
+  phoneNumber: string
+) => {
+  try {
+    const response = await apiClient.get(
+      `bookings/customer?phone=${phoneNumber}&company_id=${companyId}`
+    );
+    return response.data.bookings;
+  } catch (error) {
+    console.error("Error getting customer bookings:", error);
+    throw error;
+  }
+};

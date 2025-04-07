@@ -363,6 +363,13 @@ export interface ICallHistory {
     book_till_date: string;
     is_in_person: boolean;
     appointment_id: number;
+    booking_id_to_cancel: number;
+    reschedule_appointment_reason: string;
+    reschedule_is_in_person: boolean;
+    reschedule_book_from_date: string;
+    reschedule_book_till_date: string;
+    reschedule_appointment_length: number;
+    reschedule_booking_id:number;
   } | null;
 }
 export interface ICompanyUsers {
