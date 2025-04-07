@@ -37,6 +37,13 @@ interface AppointmentCheckerContextType {
   setPractitioners: (practitioners: ICompanyUsers[]) => void;
   setReferenceNumber: (referenceNumber: string) => void;
   referenceNumber: string;
+  userBookings: any[];
+  setUserBookings: (userBookings: any[]) => void;
+  timer: number;
+  isResendDisabled: boolean;
+  startTimer: () => void;
+  setTimer: (timer: number) => void;
+  setIsResendDisabled: (isResendDisabled: boolean) => void;
 }
 export const EditAppointmentSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -65,7 +72,6 @@ interface AppointmentData {
   clinicLocation: string;
   appointmentStatus?: "scheduled" | "confirmed" | "completed" | "cancelled";
   referenceNumber?: string;
-
 }
 
 const defaultAppointmentData: AppointmentData = {
@@ -123,10 +129,20 @@ export const AppointmentCheckerProvider = ({
   const [existingPhone, setExistingPhone] = useState<string>("");
   const [hasAppointment, setHasAppointment] = useState<boolean | null>(null);
   const [companyDetails, setCompanyDetails] = useState<ICompanyData[]>([]);
+
   const [practitioners, setPractitioners] = useState<ICompanyUsers[]>([]);
   const [referenceNumber, setReferenceNumber] = useState<string>("");
+  const [userBookings, setUserBookings] = useState<any[]>([]);
+  const [timer, setTimer] = useState(60); // Timer duration in seconds
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
+
+  const startTimer = () => {
+    setIsResendDisabled(true);
+    setTimer(60);
+  };
   const [existingAppointmentData, setExistingAppointmentData] =
     useState<ExistingAppointmentData | null>(null);
+
   const updateAppointmentData = (data: Partial<AppointmentData>) => {
     setAppointmentData((prev) => ({ ...prev, ...data }));
   };
@@ -148,9 +164,22 @@ export const AppointmentCheckerProvider = ({
     (async () => {
       const companyDetails = await getCompanyDetails();
       setCompanyDetails(companyDetails?.companies);
-
     })();
   }, []);
+  
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isResendDisabled && timer > 0) {
+      interval = setInterval(() => {
+        //@ts-ignore
+        setTimer((prev: number) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setIsResendDisabled(false);
+    }
+
+    return () => clearInterval(interval);
+  }, [timer, isResendDisabled]);
   return (
     <AppointmentCheckerContext.Provider
       value={{
@@ -177,7 +206,14 @@ export const AppointmentCheckerProvider = ({
         practitioners,
         setPractitioners,
         setReferenceNumber,
-        referenceNumber
+        referenceNumber,
+        userBookings,
+        setUserBookings,
+        timer,
+        isResendDisabled,
+        startTimer,
+        setTimer,
+        setIsResendDisabled,
       }}
     >
       {children}

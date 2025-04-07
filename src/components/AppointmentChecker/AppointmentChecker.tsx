@@ -17,7 +17,8 @@ import EditAppointment from "./ExistingAppointment/EditAppointment";
 import CommonButton from "../common/CommonButton";
 import OtpReceiver from "./ExistingAppointment/OtpReceiver";
 import StepFormLayout from "../StepForm/StepFormLayout";
-
+import { getCustomerBookings, sendVerificationCode } from "../../api/userApi";
+import CommonSnackbar from "../common/CommonSnackbar";
 
 const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
   const {
@@ -27,8 +28,16 @@ const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
     setFlowType,
     hasAppointment,
     setHasAppointment,
+    existingPhone,
+    existingAppointmentData,
+    setUserBookings,
+    userBookings,
     // resetAppointmentData,
+    startTimer,
   } = useAppointmentChecker();
+  console.log(userBookings, "bookings");
+
+  const { snackbar, setSnackbar } = useAppointmentChecker();
 
   useEffect(() => {
     if (hasAppointment === true) {
@@ -43,7 +52,26 @@ const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
     }
   }, [hasAppointment]);
 
-
+  const sendCode = async () => {
+    try {
+      await sendVerificationCode(
+        existingPhone,
+        existingAppointmentData?.email || ""
+      );
+      setSnackbar({
+        open: true,
+        message: "Verification code sent successfully",
+        severity: "success",
+      });
+      startTimer();
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message as string,
+        severity: "error",
+      });
+    }
+  };
   const renderInitialQuestion = () => (
     <Box>
       <Typography
@@ -108,7 +136,25 @@ const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
         case 2:
           return <ExistingAppointment />;
         case 3:
-          return <OtpReceiver />;
+          return (
+            <OtpReceiver
+              phoneNumber={existingPhone}
+              required={false}
+              closePopup={() => {}}
+              resendCode={() => {
+                sendCode();
+              }}
+              onSuccessfulVerification={() => {
+                getCustomerBookings(
+                  Number(existingAppointmentData?.appointment_location),
+                  existingPhone
+                ).then((bookings) => {
+                  setUserBookings(bookings);
+                  setStep(4);
+                });
+              }}
+            />
+          );
         case 4:
           return <AppointmentDetails />;
         case 5:
@@ -131,6 +177,14 @@ const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
       }}
     >
       <StepFormLayout>{renderContent()}</StepFormLayout>
+      <CommonSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={() =>
+          setSnackbar({ open: false, message: "", severity: "success" })
+        }
+      />
     </Box>
   );
 };

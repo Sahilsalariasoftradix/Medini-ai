@@ -3,24 +3,69 @@ import OTPInput from "../../common/CommonOtp";
 import CommonButton from "../../common/CommonButton";
 import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
 import { useState } from "react";
+import { verifyVerificationCode } from "../../../api/userApi";
 
-const OtpReceiver = () => {
+const OtpReceiver = ({
+  phoneNumber,
+  required,
+  // closePopup,
+  resendCode,
+  onSuccessfulVerification,
+}: {
+  phoneNumber: string;
+  required: boolean;
+  closePopup: () => void;
+  resendCode: () => void;
+  onSuccessfulVerification?: () => void;
+}) => {
   const { setStep, step } = useAppointmentChecker();
   const [otp, setOtp] = useState("");
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { timer, isResendDisabled } =
+    useAppointmentChecker();
 
   const handleOtpChange = (value: string) => {
     setOtp(value);
     setError(false); // Clear error when user starts typing
   };
 
+
+
+  const verifyCode = async () => {
+    setLoading(true);
+    try {
+      await verifyVerificationCode(phoneNumber, otp);
+      setSuccess(true);
+
+      if (onSuccessfulVerification) {
+        onSuccessfulVerification();
+      }
+    } catch (error: any) {
+      setError(true);
+      setErrorMessage(error.response?.data?.error || "Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const sendAgain = async () => {
+    setLoading(true);
+    setSuccess(false);
+    resendCode();
+    setOtp("");
+    setErrorMessage("");
+    setLoading(false);
+  };
   const handleProceed = () => {
-    if (!otp.trim() || otp.length != 5) {
+    if (!otp.trim() || otp.length != 6) {
       setError(true);
       return;
     }
-    setStep(step + 1);
+    verifyCode();
   };
+
   return (
     <Box>
       <Typography
@@ -36,7 +81,16 @@ const OtpReceiver = () => {
       </Box>
       {error && (
         <Typography align="center" color="error" variant="bodyMediumExtraBold">
-          Please enter the OTP before proceeding.
+          {errorMessage}
+        </Typography>
+      )}
+      {success && (
+        <Typography
+          align="center"
+          color="success"
+          variant="bodyMediumExtraBold"
+        >
+          OTP verified successfully.
         </Typography>
       )}
 
@@ -48,22 +102,34 @@ const OtpReceiver = () => {
       >
         Didn't receive the OTP?
       </Typography>
-      <Typography
-        align="center"
-        my={2}
-        variant="bodyMediumExtraBold"
-        color="grey.600"
-      >
-        Resend OTP
-      </Typography>
+      <Box sx={{ textAlign: "center" }}>
+        <Typography
+          align="center"
+          my={2}
+          variant="bodyMediumExtraBold"
+          color={"primary"}
+          onClick={isResendDisabled ? undefined : sendAgain}
+          sx={{
+            cursor: isResendDisabled ? "not-allowed" : "pointer",
+            display: "inline",
+          }}
+        >
+          {isResendDisabled ? `Resend OTP in ${timer}s` : "Resend OTP"}
+        </Typography>
+      </Box>
+
       <Box display={"flex"} gap={2} pt={2} pb={3}>
-        <CommonButton
-          fullWidth
-          text="Back"
-          variant="contained"
-          color="secondary"
-          onClick={() => setStep(step - 1)}
-        />
+        {!required && (
+          <CommonButton
+            fullWidth
+            text="Back"
+            variant="contained"
+            color="secondary"
+            onClick={() => setStep(step - 1)}
+            disabled={loading}
+            loading={loading}
+          />
+        )}
         <CommonButton
           type="submit"
           text="Proceed"
@@ -71,7 +137,8 @@ const OtpReceiver = () => {
           variant="contained"
           color="primary"
           onClick={handleProceed}
-          disabled={!otp.trim()} // Disable if OTP is empty
+          disabled={!otp.trim() || loading}
+          loading={loading}
         />
       </Box>
     </Box>

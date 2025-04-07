@@ -85,6 +85,12 @@ function OTP({
     currentIndex: number
   ) => {
     const currentValue = event.target.value;
+    
+    // Only proceed if the input is a number or empty
+    if (!/^\d*$/.test(currentValue)) {
+      return;
+    }
+    
     let indexToEnter = 0;
 
     while (indexToEnter <= currentIndex) {
@@ -203,7 +209,7 @@ export default function OTPInput({
         separator={<span>-</span>}
         value={value}
         onChange={onChange}
-        length={5}
+        length={6}
       />
       {/* <span>Entered value: {otp}</span> */}
     </Box>

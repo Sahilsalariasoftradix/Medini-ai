@@ -265,7 +265,7 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
         date: dayjs().format("YYYY-MM-DD"),
         range: EnAvailability.WEEK,
       });
-      console.log(bookings, "bookings");
+      console.log(bookings)
     } catch (error) {
       console.error("Error fetching bookings:", error);
     }
