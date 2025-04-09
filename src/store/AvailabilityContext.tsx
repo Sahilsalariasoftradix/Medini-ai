@@ -182,6 +182,7 @@ export function AvailabilityProvider({ children }: { children: ReactNode }) {
   const { userDetails } = useAuth();
   const fetchAvailabilityData = useCallback(
     async (date: Date) => {
+   
       if (!userDetails?.user_id) {
         console.log("No user ID available for availability fetch");
         return [];

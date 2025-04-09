@@ -135,3 +135,8 @@ export enum EnGetCallHistory {
   PENDING = "pending",
  
 }
+export enum EnGetBookingRange {
+  DAY = "day",
+  WEEK = "week",
+  MONTH = "month",
+}

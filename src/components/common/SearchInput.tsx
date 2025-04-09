@@ -24,6 +24,7 @@ export default function SearchInput({
   getOptionLabel = (option) => option.title,
   isEditing,
   setSelectedContact,
+  // onScroll,
 }: ISearchInputProps) {
   // console.log(error);
   return (
@@ -56,6 +57,10 @@ export default function SearchInput({
         disabled={disabled}
         value={value}
         defaultValue={isEditing ? defaultValue : value}
+        // ListboxProps={{
+        //   //@ts-ignore
+        //   onScroll: onScroll,
+        // }}
         renderInput={(params) => (
           <>
             <TextField

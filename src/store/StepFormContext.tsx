@@ -36,7 +36,10 @@ export type CompanyDetailsSchemaType = z.infer<typeof CompanyDetailsSchema>;
 export const ExistingAppointmentSchema = z.object({
   email: z.string().email("Invalid email address"),
   // phone: z.string().min(1, "Phone number is required"),
-  appointment_location: z.string().min(1, "Appointment location is required"),
+  appointment_location: z.object({
+    id: z.string().min(1, "Appointment location is required"),
+    name: z.string().min(1, "Appointment location is required"),
+  }),
 });
 
 export type ExistingAppointmentSchemaType = z.infer<
