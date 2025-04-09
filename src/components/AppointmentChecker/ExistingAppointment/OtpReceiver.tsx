@@ -32,8 +32,6 @@ const OtpReceiver = ({
     setError(false); // Clear error when user starts typing
   };
 
-
-
   const verifyCode = async () => {
     setLoading(true);
     try {
@@ -64,13 +62,15 @@ const OtpReceiver = ({
       return;
     }
     verifyCode();
+    // onSuccessfulVerification?.();
+    // setStep(step + 1);
   };
 
   return (
     <Box>
       <Typography
         my={2}
-        sx={{ fontSize: { xs: 24, md: 28 } }}
+        sx={{ fontSize: { xs: 24, md: 24 } }}
         align="center"
         variant="h3"
       >
@@ -84,7 +84,7 @@ const OtpReceiver = ({
           {errorMessage}
         </Typography>
       )}
-      {success && (
+      {success && !error && (
         <Typography
           align="center"
           color="success"
@@ -96,13 +96,13 @@ const OtpReceiver = ({
 
       <Typography
         align="center"
-        my={2}
+        mt={2}
         variant="bodyMediumExtraBold"
         color="grey.600"
       >
         Didn't receive the OTP?
       </Typography>
-      <Box sx={{ textAlign: "center" }}>
+      <Box my={1} sx={{ textAlign: "center" }}>
         <Typography
           align="center"
           my={2}

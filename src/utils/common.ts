@@ -196,7 +196,9 @@ export const callPurposeOptions = [
     value: EnCallPurposeOptionsValues.INFORMPATIENT,
   },
 ];
-
+export const formatDate = (date: string) => {
+  return dayjs(date).format("ddd DD/MM/YYYY");
+};
 export const headCells: readonly HeadCell[] = [
   {
     id: "contact",

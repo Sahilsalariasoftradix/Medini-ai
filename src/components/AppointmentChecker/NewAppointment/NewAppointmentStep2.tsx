@@ -18,7 +18,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { calenderIcon } from "../../Booking/Form/SlotBookingForm";
 import { getAvailability, getBookings } from "../../../api/userApi";
 
@@ -59,6 +59,10 @@ const NewAppointmentStep2 = () => {
     companyDetails,
     practitioners,
     setPractitioners,
+    loadMoreCompanies,
+    isLoadingMoreCompanies,
+    hasMoreCompanies,
+    // companyPagination,
   } = useAppointmentChecker();
 
   // Initialize selectedDate state
@@ -295,6 +299,7 @@ const NewAppointmentStep2 = () => {
   };
 
   useEffect(() => {
+   
     const fetchAvailability = async () => {
       try {
         if (control._formValues.practitioner.id) {
@@ -324,6 +329,30 @@ const NewAppointmentStep2 = () => {
   }, [selectedDate, watch("practitioner")]);
   // console.log(availability, "avb");
   // console.log(bookings, "bookings");
+
+  // Function to handle scroll in business name dropdown
+  const handleBusinessNameScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
+
+      // Make the threshold more generous - load when within 50px of bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+
+      if (isNearBottom && hasMoreCompanies && !isLoadingMoreCompanies) {
+        // console.log("Loading more companies...", {
+        //   scrollTop,
+        //   clientHeight,
+        //   scrollHeight,
+        //   distanceFromBottom: scrollHeight - scrollTop - clientHeight,
+        //   hasMore: hasMoreCompanies,
+        //   isLoading: isLoadingMoreCompanies,
+        //   currentPage: companyPagination?.currentPage,
+        // });
+        loadMoreCompanies();
+      }
+    },
+    [hasMoreCompanies, isLoadingMoreCompanies, loadMoreCompanies]
+  );
 
   return (
     <Box>
@@ -373,9 +402,10 @@ const NewAppointmentStep2 = () => {
                     MenuProps: {
                       PaperProps: {
                         style: {
-                          maxHeight: 200,
+                          maxHeight: 300,
                           overflow: "auto",
                         },
+                        onScroll: handleBusinessNameScroll,
                       },
                     },
                   }}
@@ -391,6 +421,26 @@ const NewAppointmentStep2 = () => {
                       {company.company_name}
                     </MenuItem>
                   ))}
+                  {isLoadingMoreCompanies && (
+                    <MenuItem disabled>
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        width="100%"
+                        py={1}
+                      >
+                        Loading more...
+                      </Box>
+                    </MenuItem>
+                  )}
+                  {!isLoadingMoreCompanies && hasMoreCompanies && (
+                    <MenuItem
+                      onClick={() => loadMoreCompanies()}
+                      sx={{ justifyContent: "center", color: "primary.main" }}
+                    >
+                      Load more companies...
+                    </MenuItem>
+                  )}
                 </CommonTextField>
               )}
             />

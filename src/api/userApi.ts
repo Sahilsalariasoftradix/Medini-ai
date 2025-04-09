@@ -183,12 +183,18 @@ export const getBookingsByUser = async (
   }
 };
 
-export const getCallHistoryData = async (userId: number, status: string) => {
+export const getCallHistoryData = async (
+  userId: number, 
+  status: string,
+  offset: number = 0,
+  limit: number = 10,
+  search: string = ""
+) => {
   try {
     const response = await apiClient.get(
-      `call-history?user_id=${userId}&status=${status}`
+      `call-history?user_id=${userId}&status=${status}&offset=${offset}&limit=${limit}${search ? `&search=${search}` : ''}`
     );
-    return response.data?.data;
+    return response.data;
   } catch (error) {
     console.error("Error getting call history:", error);
     throw error;
@@ -207,12 +213,12 @@ export const deleteCall = async (callId: number) => {
     throw error;
   }
 };
-export const getCompanyDetails = async () => {
+export const getCompanyDetails = async (page = 1) => {
   try {
-    const response = await apiClient.get(`company/users`);
+    const response = await apiClient.get(`company/users?page=${page}&limit=20`);
     return response.data;
   } catch (error) {
-    console.error("Error getting company details:", error);
+    console.error("Error fetching company details:", error);
     throw error;
   }
 };

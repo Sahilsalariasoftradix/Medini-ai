@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { drawerWidth } from "../sidebar/Sidebar";
 import { IHeaderProps } from "../../utils/Interfaces";
-import bell from "../../assets/icons/notifications.svg";
+// import bell from "../../assets/icons/notifications.svg";
 import { useState } from "react";
 import down from "../../assets/icons/arrow-down.svg";
 // import profile1 from "../../assets/images/profile-1.svg";
@@ -52,9 +52,9 @@ const Header = ({ isMobile, open }: Omit<IHeaderProps, "pageName">) => {
             {pageName}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton>
+            {/* <IconButton>
               <img src={bell} alt="bell" />
-            </IconButton>
+            </IconButton> */}
             <Box
               sx={{
                 display: "flex",

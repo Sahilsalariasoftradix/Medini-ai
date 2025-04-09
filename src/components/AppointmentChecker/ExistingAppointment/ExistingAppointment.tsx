@@ -1,4 +1,4 @@
-import { Box, FormHelperText, Typography } from "@mui/material";
+import { Box, Typography, MenuItem } from "@mui/material";
 import CommonTextField from "../../common/CommonTextField";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -8,11 +8,14 @@ import {
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import CommonButton from "../../common/CommonButton";
 import { useAppointmentChecker } from "../../../store/AppointmentCheckerContext";
-import SearchInput from "../../common/SearchInput";
+
 import { MuiPhone } from "../../Auth/SignUp/CustomPhoneInput";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CommonSnackbar from "../../common/CommonSnackbar";
-import { sendVerificationCode } from "../../../api/userApi";
+import {
+  getCustomerBookings,
+  sendVerificationCode,
+} from "../../../api/userApi";
 
 const ExistingAppointment = () => {
   const {
@@ -26,18 +29,35 @@ const ExistingAppointment = () => {
     snackbar,
     companyDetails,
     startTimer,
+    loadMoreCompanies,
+    hasMoreCompanies,
+    isLoadingMoreCompanies,
+    setUserBookings,
+    // userBookings,
   } = useAppointmentChecker();
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
     control,
+    watch,
   } = useForm<ExistingAppointmentSchemaType>({
     resolver: zodResolver(ExistingAppointmentSchema),
     defaultValues: existingAppointmentData || {},
   });
+
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (watch("appointment_location")?.id) {
+      getCustomerBookings(Number(watch("appointment_location")?.id), existingPhone).then((bookings) => {
+        setUserBookings(bookings);
+      });
+    }
+  }, [watch("appointment_location")]);
+
+
   const onSubmit: SubmitHandler<ExistingAppointmentSchemaType> = async (
     data
   ) => {
@@ -54,6 +74,14 @@ const ExistingAppointment = () => {
 
     setExistingAppointmentData({
       ...data,
+      appointment_location: {
+        id: data.appointment_location.id,
+        name:
+          companyDetails.find(
+            (company) =>
+              company.company_id.toString() === data.appointment_location.id
+          )?.company_name || "",
+      },
       phone: existingPhone,
     });
     try {
@@ -70,6 +98,20 @@ const ExistingAppointment = () => {
       setLoading(false);
     }
   };
+  // Function to handle scroll in business name dropdown
+  const handleBusinessNameScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
+
+      // Make the threshold more generous - load when within 50px of bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+
+      if (isNearBottom && hasMoreCompanies && !isLoadingMoreCompanies) {
+        loadMoreCompanies();
+      }
+    },
+    [hasMoreCompanies, isLoadingMoreCompanies, loadMoreCompanies]
+  );
   return (
     <Box>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -123,45 +165,75 @@ const ExistingAppointment = () => {
             <Controller
               name="appointment_location"
               control={control}
-              render={({ field }) => {
-                const selectedOption = companyDetails?.find(
-                  (company) => company.company_id === Number(field.value)
-                );
-                return (
-                  <SearchInput
-                    options={(companyDetails || []).map((company) => {
-                      return {
-                        title: company.company_name,
-                        value: company.company_id.toString(),
-                      };
-                    })}
-                    placeholder="Search for your appointment"
-                    value={
-                      selectedOption
-                        ? {
-                            title: selectedOption.company_name,
-                            value: selectedOption.company_id.toString(),
-                          }
-                        : null
-                    }
-                    onChange={(value) => {
-                      if (
-                        typeof value === "object" &&
-                        value !== null &&
-                        "value" in value
-                      ) {
-                        field.onChange(value.value);
-                      } else {
-                        field.onChange(value);
-                      }
-                    }}
-                  />
-                );
-              }}
+              render={({ field: { onChange, value, ...restField } }) => (
+                <CommonTextField
+                  {...restField}
+                  value={value?.id || ""}
+                  select
+                  fullWidth
+                  error={!!errors.appointment_location}
+                  helperText={errors.appointment_location?.message}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    onChange({
+                      id: selectedId,
+                      name:
+                        companyDetails.find(
+                          (company) =>
+                            company.company_id.toString() === selectedId
+                        )?.company_name || "",
+                    });
+                  }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    MenuProps: {
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300,
+                          overflow: "auto",
+                        },
+                        onScroll: handleBusinessNameScroll,
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Search for your appointment</em>
+                  </MenuItem>
+                  {(companyDetails || []).map((company) => (
+                    <MenuItem
+                      key={company.company_id}
+                      value={company.company_id.toString()}
+                    >
+                      {company.company_name}
+                    </MenuItem>
+                  ))}
+                  {isLoadingMoreCompanies && (
+                    <MenuItem disabled>
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        width="100%"
+                        py={1}
+                      >
+                        Loading more...
+                      </Box>
+                    </MenuItem>
+                  )}
+                  {!isLoadingMoreCompanies && hasMoreCompanies && (
+                    <MenuItem
+                      onClick={() => loadMoreCompanies()}
+                      sx={{ justifyContent: "center", color: "primary.main" }}
+                    >
+                      Load more companies...
+                    </MenuItem>
+                  )}
+                </CommonTextField>
+              )}
             />
-            <FormHelperText>
+            {/* <FormHelperText>
               {errors.appointment_location?.message}
-            </FormHelperText>
+            </FormHelperText> */}
           </Box>
         </Box>
         <Box display={"flex"} gap={2} pt={5} pb={3}>

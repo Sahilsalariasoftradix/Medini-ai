@@ -31,11 +31,13 @@ const AppointmentChecker: React.FC<AppointmentCheckerProps> = () => {
     existingPhone,
     existingAppointmentData,
     setUserBookings,
-    userBookings,
+    // userBookings,
+    // selectedBookingId,
+    // setSelectedBookingId,
     // resetAppointmentData,
     startTimer,
   } = useAppointmentChecker();
-  console.log(userBookings, "bookings");
+  // console.log(userBookings, "bookings");
 
   const { snackbar, setSnackbar } = useAppointmentChecker();
 
