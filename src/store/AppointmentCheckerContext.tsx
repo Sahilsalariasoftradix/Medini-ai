@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { z } from "zod";
 import { getCompanyDetails } from "../api/userApi";
-import { ICompanyData, ICompanyUsers } from "../utils/Interfaces";
+import { ICompanyData, ICompanyUsers, IGetCustomerBookings } from "../utils/Interfaces";
 
 // Define the shape of the context data
 interface AppointmentCheckerContextType {
@@ -33,6 +33,11 @@ interface AppointmentCheckerContextType {
   existingPhone: string;
   setExistingPhone: (phone: string) => void;
   companyDetails: ICompanyData[];
+  companyPagination?: {
+    currentPage: number;
+    totalPages: number;
+    isLoading: boolean;
+  };
   practitioners: ICompanyUsers[];
   setPractitioners: (practitioners: ICompanyUsers[]) => void;
   setReferenceNumber: (referenceNumber: string) => void;
@@ -44,6 +49,11 @@ interface AppointmentCheckerContextType {
   startTimer: () => void;
   setTimer: (timer: number) => void;
   setIsResendDisabled: (isResendDisabled: boolean) => void;
+  isLoadingMoreCompanies: boolean;
+  hasMoreCompanies: boolean;
+  loadMoreCompanies: () => void;
+  selectedBookingId: string | null;
+  setSelectedBookingId: (selectedBookingId: string | null) => void;
 }
 export const EditAppointmentSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -51,7 +61,7 @@ export const EditAppointmentSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
   email: z.string().email("Invalid email address"),
   bypass_key: z.string().optional(),
-  appointment_location: z.string().min(1, "Appointment location is required"),
+  // appointment_location: z.string().min(1, "Appointment location is required"),
   appointmentType: z.string().min(1, "Appointment type is required"),
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
@@ -107,7 +117,10 @@ export interface NewAppointmentData {
 export interface ExistingAppointmentData {
   phone: string;
   email: string;
-  appointment_location: string;
+  appointment_location: {
+    id: string;
+    name: string;
+  };
 }
 
 const AppointmentCheckerContext = createContext<
@@ -124,15 +137,20 @@ export const AppointmentCheckerProvider = ({
     defaultAppointmentData
   );
   const [flowType, setFlowType] = useState<"new" | "existing" | null>(null);
-
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [phone, setPhone] = useState<string>("");
   const [existingPhone, setExistingPhone] = useState<string>("");
   const [hasAppointment, setHasAppointment] = useState<boolean | null>(null);
   const [companyDetails, setCompanyDetails] = useState<ICompanyData[]>([]);
+  const [companyPagination, setCompanyPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    isLoading: false,
+  });
 
   const [practitioners, setPractitioners] = useState<ICompanyUsers[]>([]);
   const [referenceNumber, setReferenceNumber] = useState<string>("");
-  const [userBookings, setUserBookings] = useState<any[]>([]);
+  const [userBookings, setUserBookings] = useState<IGetCustomerBookings[]>([]);
   const [timer, setTimer] = useState(60); // Timer duration in seconds
   const [isResendDisabled, setIsResendDisabled] = useState(true);
 
@@ -160,13 +178,54 @@ export const AppointmentCheckerProvider = ({
     setFlowType(null);
     setHasAppointment(null);
   };
+
+  //* Function to load more companies
+  const loadMoreCompanies = async () => {
+    if (
+      companyPagination.currentPage >= companyPagination.totalPages ||
+      companyPagination.isLoading
+    ) {
+      return;
+    }
+
+    setCompanyPagination((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const nextPage = companyPagination.currentPage + 1;
+      const response = await getCompanyDetails(nextPage);
+
+      setCompanyDetails((prev) => [...prev, ...response.companies]);
+      setCompanyPagination({
+        currentPage: nextPage,
+        totalPages: response.pagination.total_pages,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Error loading more companies:", error);
+      setCompanyPagination((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  //*Initial Pagination company data
   useEffect(() => {
     (async () => {
-      const companyDetails = await getCompanyDetails();
-      setCompanyDetails(companyDetails?.companies);
+      setCompanyPagination((prev) => ({ ...prev, isLoading: true }));
+      try {
+        const response = await getCompanyDetails(1);
+        setCompanyDetails(response.companies);
+        setCompanyPagination({
+          currentPage: 1,
+          totalPages: response.pagination.total_pages,
+          isLoading: false,
+        });
+      } catch (error) {
+        console.error("Error fetching initial companies:", error);
+        setCompanyPagination((prev) => ({ ...prev, isLoading: false }));
+      }
     })();
   }, []);
-  
+
+  //*For the resend verification functionality
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isResendDisabled && timer > 0) {
@@ -180,6 +239,7 @@ export const AppointmentCheckerProvider = ({
 
     return () => clearInterval(interval);
   }, [timer, isResendDisabled]);
+  
   return (
     <AppointmentCheckerContext.Provider
       value={{
@@ -203,6 +263,7 @@ export const AppointmentCheckerProvider = ({
         existingPhone,
         setExistingPhone,
         companyDetails,
+        companyPagination,
         practitioners,
         setPractitioners,
         setReferenceNumber,
@@ -214,6 +275,12 @@ export const AppointmentCheckerProvider = ({
         startTimer,
         setTimer,
         setIsResendDisabled,
+        isLoadingMoreCompanies: companyPagination.isLoading,
+        hasMoreCompanies:
+          companyPagination.currentPage < companyPagination.totalPages,
+        loadMoreCompanies,
+        selectedBookingId,
+        setSelectedBookingId,
       }}
     >
       {children}

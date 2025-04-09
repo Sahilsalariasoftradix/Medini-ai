@@ -122,6 +122,7 @@ export interface ISearchInputProps {
   getOptionLabel?: (option: any) => string;
   isEditing?: boolean;
   setSelectedContact?: Dispatch<SetStateAction<null>>;
+  onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
 }
 
 export interface IAvailabilityRequest {
@@ -207,6 +208,7 @@ export interface IAvailability {
   break_end_time: string | null;
 }
 export interface IGetBookingFiltered {
+  id: number;
   start_time: string;
   end_time: string;
   booking_type: EnBookingType.IN_PERSON | EnBookingType.PHONE;
@@ -369,7 +371,7 @@ export interface ICallHistory {
     reschedule_book_from_date: string;
     reschedule_book_till_date: string;
     reschedule_appointment_length: number;
-    reschedule_booking_id:number;
+    reschedule_booking_id: number;
   } | null;
 }
 export interface ICompanyUsers {
@@ -384,4 +386,20 @@ export interface ICompanyData {
   company_name: string;
   max_appointment_time: number;
   users: ICompanyUsers[];
+}
+export interface IGetCustomerBookings {
+  booking_id: number;
+  user_first_name: string;
+  user_last_name: string;
+  booking_first_name: string;
+  booking_last_name: string;
+  booking_type: EnBookingType.IN_PERSON | EnBookingType.PHONE;
+  phone: string;
+  email: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  details: string;
+  user_id: number;
+  company_id: number;
 }
